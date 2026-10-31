@@ -27,7 +27,8 @@ vi.mock('@/lib/supabase/service', () => ({
           mocks.calls.push({ table, op, args });
           return builder;
         };
-      for (const op of ['select', 'eq', 'in', 'not', 'upsert', 'delete']) builder[op] = record(op);
+      for (const op of ['select', 'eq', 'in', 'not', 'upsert', 'delete', 'order'])
+        builder[op] = record(op);
       builder.maybeSingle = () => Promise.resolve(mocks.results.get(`${table}:single`));
       builder.then = (resolve: (value: Result | undefined) => unknown) =>
         resolve(mocks.results.get(table) ?? { data: [], error: null });
@@ -36,7 +37,7 @@ vi.mock('@/lib/supabase/service', () => ({
   }),
 }));
 
-import { GET, PUT } from '@/app/api/courses/[courseId]/competencies/route';
+import { DELETE, GET, PUT } from '@/app/api/courses/[courseId]/competencies/route';
 
 const params = () => ({ params: Promise.resolve({ courseId: COURSE_ID }) });
 
@@ -164,6 +165,10 @@ describe('/api/courses/[courseId]/competencies', () => {
 
   it('reads the links of the course and of its scenes', async () => {
     mocks.results.set('scenes', { data: [{ id: 's1' }], error: null });
+    mocks.results.set('referentiel_skills', {
+      data: [{ uri: URI, title_fr: 'programmation', title_ar: null, title_en: null }],
+      error: null,
+    });
     mocks.results.set('course_competencies', {
       data: [
         {
@@ -177,10 +182,62 @@ describe('/api/courses/[courseId]/competencies', () => {
     });
 
     const response = await GET(get(), params());
-    const payload = (await response.json()) as { course: unknown[]; scenes: unknown[] };
+    const payload = (await response.json()) as {
+      course: unknown[];
+      scenes: unknown[];
+      sceneList: unknown[];
+      titles: Record<string, unknown>;
+    };
 
     expect(response.status).toBe(200);
     expect(payload.course).toHaveLength(1);
+    expect(payload.sceneList).toEqual([{ id: 's1' }]);
+    expect(payload.titles).toHaveProperty([URI, 'fr'], 'programmation');
     expect(writes('scene_competencies', 'in')[0]?.args).toEqual(['scene_id', ['s1']]);
+  });
+});
+
+describe('DELETE /api/courses/[courseId]/competencies', () => {
+  const del = (body: unknown) =>
+    new NextRequest(`https://qalem.ma/api/courses/${COURSE_ID}/competencies`, {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  const removal = { sceneId: 's1', uri: URI, nature: 'travaillee' };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.calls.length = 0;
+    mocks.results.clear();
+    mocks.results.set('courses:single', {
+      data: { id: COURSE_ID, org_id: ORG_ID, owner_id: OWNER_ID, stage_id: 'stageAbc123' },
+      error: null,
+    });
+    mocks.guard.mockResolvedValue({ user: { id: ACTOR_ID, email: 'editor@qalem.ma' } });
+  });
+
+  it('refuses a caller who cannot edit the course and a scene of another classroom', async () => {
+    mocks.guard.mockResolvedValue({ response: NextResponse.json({}, { status: 403 }) });
+    expect((await DELETE(del(removal), params())).status).toBe(403);
+    expect(writes('scene_competencies', 'delete')).toHaveLength(0);
+
+    mocks.guard.mockResolvedValue({ user: { id: ACTOR_ID, email: 'editor@qalem.ma' } });
+    mocks.results.set('scenes:single', { data: null, error: null });
+    expect((await DELETE(del(removal), params())).status).toBe(400);
+    expect(writes('scene_competencies', 'delete')).toHaveLength(0);
+  });
+
+  it('removes exactly the link of the scene, the competence and the nature', async () => {
+    mocks.results.set('scenes:single', { data: { id: 's1' }, error: null });
+
+    const response = await DELETE(del(removal), params());
+
+    expect(response.status).toBe(200);
+    expect(writes('scene_competencies', 'eq').map((call) => call.args)).toEqual([
+      ['scene_id', 's1'],
+      ['competency_uri', URI],
+      ['nature', 'travaillee'],
+    ]);
   });
 });

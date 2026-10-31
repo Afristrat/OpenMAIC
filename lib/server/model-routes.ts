@@ -132,6 +132,7 @@ export const LLM_STAGES = [
   'maic-agent',
   'capture-decision',
   'widget-composition',
+  'competency-links',
 ] as const;
 
 export type LlmStage = (typeof LLM_STAGES)[number];

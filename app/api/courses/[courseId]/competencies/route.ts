@@ -62,7 +62,11 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   const supabase = createServiceSupabaseClient();
   const sceneIds = course.stage_id
-    ? await supabase.from('scenes').select('id').eq('stage_id', course.stage_id)
+    ? await supabase
+        .from('scenes')
+        .select('id, title, type')
+        .eq('stage_id', course.stage_id)
+        .order('order')
     : { data: [], error: null };
   if (sceneIds.error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read scenes');
 
@@ -82,7 +86,33 @@ export async function GET(request: NextRequest, { params }: Params) {
   if (courseLinks.error || sceneLinks.error) {
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read competency links');
   }
-  return apiSuccess({ course: courseLinks.data ?? [], scenes: sceneLinks.data ?? [] });
+
+  // Titres des compétences liées, pour afficher autre chose qu'une adresse.
+  const linkedUris = [
+    ...new Set([
+      ...(courseLinks.data ?? []).map((link) => link.competency_uri),
+      ...(sceneLinks.data ?? []).map((link) => link.competency_uri),
+    ]),
+  ];
+  const skills = linkedUris.length
+    ? await supabase
+        .from('referentiel_skills')
+        .select('uri, title_fr, title_ar, title_en')
+        .in('uri', linkedUris)
+    : { data: [], error: null };
+  if (skills.error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read skills');
+
+  return apiSuccess({
+    course: courseLinks.data ?? [],
+    scenes: sceneLinks.data ?? [],
+    sceneList: sceneIds.data ?? [],
+    titles: Object.fromEntries(
+      (skills.data ?? []).map((skill) => [
+        skill.uri,
+        { fr: skill.title_fr, ar: skill.title_ar, en: skill.title_en },
+      ]),
+    ),
+  });
 }
 
 export async function PUT(request: NextRequest, { params }: Params) {
@@ -179,4 +209,54 @@ export async function PUT(request: NextRequest, { params }: Params) {
     course: courseItems?.length ?? null,
     scenes: sceneItems?.length ?? null,
   });
+}
+
+const removalSchema = z.object({
+  sceneId: z.string().min(1),
+  uri: z.string().min(1).max(500),
+  nature: z.enum(['travaillee', 'evaluee']),
+});
+
+/** Retire un lien scène vers compétence, proposé ou confirmé. */
+export async function DELETE(request: NextRequest, { params }: Params) {
+  const { courseId } = await params;
+  const { course, error } = await readCourse(courseId);
+  if (error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read course');
+  if (!course?.org_id) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Course not found');
+
+  const auth = await requireSuperAdminOrOrgEditor(
+    request,
+    course.org_id,
+    course.owner_id,
+    course.stage_id ?? undefined,
+  );
+  if (auth.response) return auth.response;
+
+  const parsed = removalSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success || !course.stage_id) {
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid body');
+  }
+  const { sceneId, uri, nature } = parsed.data;
+
+  const supabase = createServiceSupabaseClient();
+  const { data: owned, error: sceneError } = await supabase
+    .from('scenes')
+    .select('id')
+    .eq('stage_id', course.stage_id)
+    .eq('id', sceneId)
+    .maybeSingle();
+  if (sceneError) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read scene');
+  if (!owned)
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Unknown scene for this course');
+
+  const { error: deleteError } = await supabase
+    .from('scene_competencies')
+    .delete()
+    .eq('scene_id', sceneId)
+    .eq('competency_uri', uri)
+    .eq('nature', nature);
+  if (deleteError) {
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to remove the scene link');
+  }
+  return apiSuccess({ removed: true });
 }

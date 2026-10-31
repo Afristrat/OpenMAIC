@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, BookMarked, Check, ExternalLink, Plus, Search } from 'lucide-react';
+import {
+  ArrowLeft,
+  BookMarked,
+  Check,
+  ExternalLink,
+  Plus,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +57,24 @@ type CourseLink = {
   referential_version: string;
   isco_08: string | null;
   nature: 'essentielle' | 'optionnelle';
+};
+
+type SceneInfo = { id: string; title: string | null; type: string };
+
+type SceneLink = {
+  scene_id: string;
+  competency_uri: string;
+  referential_version: string;
+  nature: 'travaillee' | 'evaluee';
+  statut: 'propose' | 'confirme';
+};
+
+/** Ce que la route `/api/courses/<id>/competencies` rend pour une formation. */
+type CourseData = {
+  course: CourseLink[];
+  scenes: SceneLink[];
+  sceneList: SceneInfo[];
+  titles: Record<string, Titles>;
 };
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -190,7 +217,9 @@ export default function ReferentielPage() {
   const [failed, setFailed] = useState(false);
   const [courses, setCourses] = useState<CourseOption[] | null>(null);
   const [courseId, setCourseId] = useState<string | null>(null);
-  const [linksByCourse, setLinksByCourse] = useState<Record<string, CourseLink[]>>({});
+  const [dataByCourse, setDataByCourse] = useState<Record<string, CourseData>>({});
+  const [proposing, setProposing] = useState(false);
+  const [proposeNote, setProposeNote] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
 
   useEffect(() => {
@@ -252,10 +281,8 @@ export default function ReferentielPage() {
   useEffect(() => {
     if (!courseId) return;
     const controller = new AbortController();
-    readJson<{ course: CourseLink[] }>(`/api/courses/${courseId}/competencies`, controller.signal)
-      .then((payload) =>
-        setLinksByCourse((current) => ({ ...current, [courseId]: payload.course })),
-      )
+    readJson<CourseData>(`/api/courses/${courseId}/competencies`, controller.signal)
+      .then((payload) => setDataByCourse((current) => ({ ...current, [courseId]: payload })))
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setSaveFailed(true);
@@ -265,7 +292,8 @@ export default function ReferentielPage() {
 
   const selected = detail?.occupation.id === selectedId ? detail : null;
   const selectedTitles = selected ? titlesFor(selected.occupation.titles, locale) : null;
-  const links = courseId ? linksByCourse[courseId] : undefined;
+  const courseData = courseId ? dataByCourse[courseId] : undefined;
+  const links = courseData?.course;
   const linked = links ? new Set(links.map((link) => link.competency_uri)) : null;
 
   const toggle = async (skill: Skill, nature: CourseLink['nature']) => {
@@ -296,7 +324,87 @@ export default function ReferentielPage() {
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       setSaveFailed(false);
-      setLinksByCourse((current) => ({ ...current, [courseId]: next }));
+      setDataByCourse((current) => {
+        const existing = current[courseId];
+        return existing ? { ...current, [courseId]: { ...existing, course: next } } : current;
+      });
+    } catch {
+      setSaveFailed(true);
+    }
+  };
+
+  const reloadCourse = async () => {
+    if (!courseId) return;
+    const payload = await readJson<CourseData>(`/api/courses/${courseId}/competencies`);
+    setDataByCourse((current) => ({ ...current, [courseId]: payload }));
+  };
+
+  const proposeLinks = async () => {
+    if (!courseId || proposing) return;
+    setProposing(true);
+    setProposeNote(null);
+    try {
+      const response = await fetch(`/api/courses/${courseId}/competencies/propose`, {
+        method: 'POST',
+        headers: { 'Idempotency-Key': crypto.randomUUID() },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const { proposed } = (await response.json()) as { proposed: number };
+      await reloadCourse();
+      setSaveFailed(false);
+      setProposeNote(
+        proposed > 0
+          ? t('referentiel.proposedCount', { count: proposed })
+          : t('referentiel.noProposal'),
+      );
+    } catch {
+      setProposeNote(t('referentiel.proposeError'));
+    } finally {
+      setProposing(false);
+    }
+  };
+
+  const confirmLink = async (link: SceneLink) => {
+    if (!courseId) return;
+    try {
+      const response = await fetch(`/api/courses/${courseId}/competencies`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          scenes: [
+            {
+              sceneId: link.scene_id,
+              uri: link.competency_uri,
+              version: link.referential_version,
+              nature: link.nature,
+              statut: 'confirme',
+            },
+          ],
+        }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      setSaveFailed(false);
+      await reloadCourse();
+    } catch {
+      setSaveFailed(true);
+    }
+  };
+
+  const removeLink = async (link: SceneLink) => {
+    if (!courseId) return;
+    try {
+      const response = await fetch(`/api/courses/${courseId}/competencies`, {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sceneId: link.scene_id,
+          uri: link.competency_uri,
+          nature: link.nature,
+        }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      setSaveFailed(false);
+      await reloadCourse();
     } catch {
       setSaveFailed(true);
     }
@@ -448,6 +556,104 @@ export default function ReferentielPage() {
                     </p>
                   )}
                 </div>
+
+                {courseData && (
+                  <div className="mt-4 rounded-md border p-3">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{t('referentiel.scenes')}</p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={proposing || courseData.course.length === 0}
+                        onClick={() => void proposeLinks()}
+                      >
+                        <Sparkles className="me-1 h-4 w-4" />
+                        {proposing ? t('referentiel.proposing') : t('referentiel.propose')}
+                      </Button>
+                    </div>
+                    <p className="mb-2 text-xs text-muted-foreground">
+                      {t('referentiel.sceneHint')}
+                    </p>
+                    {courseData.course.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        {t('referentiel.chooseFirst')}
+                      </p>
+                    )}
+                    {proposeNote && (
+                      <p role="status" className="mb-2 text-sm">
+                        {proposeNote}
+                      </p>
+                    )}
+                    <ul className="divide-y rounded-md border">
+                      {courseData.sceneList.map((scene) => {
+                        const sceneLinks = courseData.scenes.filter(
+                          (link) => link.scene_id === scene.id,
+                        );
+                        return (
+                          <li key={scene.id} className="px-3 py-2">
+                            <p className="text-sm font-medium" dir="auto">
+                              {scene.title || scene.id}
+                            </p>
+                            {sceneLinks.map((link) => {
+                              const skillTitles = courseData.titles[link.competency_uri];
+                              const label = skillTitles
+                                ? titlesFor(skillTitles, locale).main
+                                : (link.competency_uri.split('/').pop() ?? link.competency_uri);
+                              const confirmed = link.statut === 'confirme';
+                              return (
+                                <div
+                                  key={`${link.competency_uri}-${link.nature}`}
+                                  className="mt-1 flex items-center justify-between gap-2"
+                                >
+                                  <p className="min-w-0 text-sm" dir="auto">
+                                    {label}{' '}
+                                    <span className="text-xs text-muted-foreground">
+                                      ·{' '}
+                                      {link.nature === 'evaluee'
+                                        ? t('referentiel.natureEvaluee')
+                                        : t('referentiel.natureTravaillee')}{' '}
+                                      ·{' '}
+                                      {confirmed
+                                        ? t('referentiel.statusConfirm')
+                                        : t('referentiel.statusPropose')}
+                                    </span>
+                                  </p>
+                                  <div className="flex shrink-0 gap-1">
+                                    {!confirmed && (
+                                      <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="outline"
+                                        className="h-7 w-7"
+                                        aria-label={t('referentiel.confirmLink')}
+                                        title={t('referentiel.confirmLink')}
+                                        onClick={() => void confirmLink(link)}
+                                      >
+                                        <Check className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7"
+                                      aria-label={t('referentiel.removeLink')}
+                                      title={t('referentiel.removeLink')}
+                                      onClick={() => void removeLink(link)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
 
                 <SkillList
                   key={`${selected.occupation.id}-essential`}
