@@ -73,6 +73,15 @@ describe('GET /api/referentiel/occupations', () => {
     expect(calls('referentiel_occupations', 'limit')[0]?.args).toEqual([50]);
   });
 
+  it('requires every word of the search, in any order', async () => {
+    await search(searchRequest('q=web%20D%C3%A9veloppeur'));
+
+    expect(calls('referentiel_occupations', 'ilike').map((call) => call.args)).toEqual([
+      ['search_text', '%web%'],
+      ['search_text', '%developpeur%'],
+    ]);
+  });
+
   it('filters by ISCO prefix and returns titles in three languages with counts', async () => {
     mocks.results.set('referentiel_occupations', {
       data: [

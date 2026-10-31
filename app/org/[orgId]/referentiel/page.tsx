@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, BookMarked, ExternalLink, Search } from 'lucide-react';
+import { ArrowLeft, BookMarked, Check, ExternalLink, Plus, Search } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { Locale } from '@/lib/i18n/types';
 
 type Titles = { fr: string; ar: string | null; en: string | null };
@@ -22,12 +29,31 @@ type OccupationSummary = {
 type Skill = { uri: string; escoUri: string | null; titles: Titles };
 
 type OccupationDetail = {
-  occupation: { id: string; uri: string; titles: Titles; iscoCode: string | null };
+  occupation: {
+    id: string;
+    uri: string;
+    titles: Titles;
+    iscoCode: string | null;
+    referentielVersion: string;
+  };
   essential: Skill[];
   optional: Skill[];
 };
 
+type CourseOption = { id: string; title: string };
+
+/** Lien d'une formation vers une compétence, tel que la route `/api/courses/<id>/competencies` le rend. */
+type CourseLink = {
+  competency_uri: string;
+  referential_version: string;
+  isco_08: string | null;
+  nature: 'essentielle' | 'optionnelle';
+};
+
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
 const SEARCH_DELAY_MS = 300;
+const OPTIONAL_VISIBLE = 10;
 
 /** Titre dans la langue de l'interface, puis les autres langues en information secondaire. */
 function titlesFor(titles: Titles, locale: Locale): { main: string; others: string[] } {
@@ -50,7 +76,7 @@ function escoPage(kind: 'occupation' | 'skill', uri: string, locale: Locale): st
   return `https://esco.ec.europa.eu/${lang}/classification/${kind}?uri=${encodeURIComponent(uri)}`;
 }
 
-async function readJson<T>(url: string, signal: AbortSignal): Promise<T> {
+async function readJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(url, { signal, cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return (await response.json()) as T;
@@ -61,12 +87,23 @@ function SkillList({
   skills,
   locale,
   emptyLabel,
+  linked,
+  onToggle,
+  visibleCount,
+  t,
 }: {
   title: string;
   skills: Skill[];
   locale: Locale;
   emptyLabel: string;
+  /** Compétences déjà visées par la formation choisie ; null tant qu'aucune formation n'est choisie. */
+  linked: ReadonlySet<string> | null;
+  onToggle: (skill: Skill) => void;
+  visibleCount: number;
+  t: Translate;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? skills : skills.slice(0, visibleCount);
   return (
     <section className="mt-6">
       <h3 className="mb-2 text-sm font-semibold">
@@ -76,8 +113,10 @@ function SkillList({
         <p className="text-sm text-muted-foreground">{emptyLabel}</p>
       ) : (
         <ul className="divide-y rounded-md border">
-          {skills.map((skill) => {
+          {shown.map((skill) => {
             const { main, others } = titlesFor(skill.titles, locale);
+            const isLinked = linked?.has(skill.uri) ?? false;
+            const actionLabel = isLinked ? t('referentiel.unlink') : t('referentiel.link');
             return (
               <li key={skill.uri} className="flex items-start justify-between gap-3 px-3 py-2">
                 <div className="min-w-0">
@@ -90,21 +129,50 @@ function SkillList({
                     </p>
                   ))}
                 </div>
-                {skill.escoUri && (
-                  <a
-                    href={escoPage('skill', skill.escoUri, locale)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground"
-                    aria-label={main}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                )}
+                <div className="flex shrink-0 items-center gap-2">
+                  {linked && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant={isLinked ? 'default' : 'outline'}
+                      className="h-7 w-7"
+                      aria-pressed={isLinked}
+                      aria-label={actionLabel}
+                      title={actionLabel}
+                      onClick={() => onToggle(skill)}
+                    >
+                      {isLinked ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                    </Button>
+                  )}
+                  {skill.escoUri && (
+                    <a
+                      href={escoPage('skill', skill.escoUri, locale)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label={main}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
               </li>
             );
           })}
         </ul>
+      )}
+      {skills.length > visibleCount && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="mt-2"
+          onClick={() => setExpanded((value) => !value)}
+        >
+          {expanded
+            ? t('referentiel.showLess')
+            : t('referentiel.showMore', { count: skills.length - visibleCount })}
+        </Button>
       )}
     </section>
   );
@@ -120,6 +188,10 @@ export default function ReferentielPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<OccupationDetail | null>(null);
   const [failed, setFailed] = useState(false);
+  const [courses, setCourses] = useState<CourseOption[] | null>(null);
+  const [courseId, setCourseId] = useState<string | null>(null);
+  const [linksByCourse, setLinksByCourse] = useState<Record<string, CourseLink[]>>({});
+  const [saveFailed, setSaveFailed] = useState(false);
 
   useEffect(() => {
     const text = query.trim();
@@ -163,8 +235,74 @@ export default function ReferentielPage() {
     return () => controller.abort();
   }, [selectedId]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    readJson<{ courses: CourseOption[] }>(
+      `/api/referentiel/courses?orgId=${encodeURIComponent(orgId)}`,
+      controller.signal,
+    )
+      .then((payload) => setCourses(payload.courses))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        setCourses([]);
+      });
+    return () => controller.abort();
+  }, [orgId]);
+
+  useEffect(() => {
+    if (!courseId) return;
+    const controller = new AbortController();
+    readJson<{ course: CourseLink[] }>(`/api/courses/${courseId}/competencies`, controller.signal)
+      .then((payload) =>
+        setLinksByCourse((current) => ({ ...current, [courseId]: payload.course })),
+      )
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        setSaveFailed(true);
+      });
+    return () => controller.abort();
+  }, [courseId]);
+
   const selected = detail?.occupation.id === selectedId ? detail : null;
   const selectedTitles = selected ? titlesFor(selected.occupation.titles, locale) : null;
+  const links = courseId ? linksByCourse[courseId] : undefined;
+  const linked = links ? new Set(links.map((link) => link.competency_uri)) : null;
+
+  const toggle = async (skill: Skill, nature: CourseLink['nature']) => {
+    if (!courseId || !links || !selected) return;
+    const next: CourseLink[] = linked?.has(skill.uri)
+      ? links.filter((link) => link.competency_uri !== skill.uri)
+      : [
+          ...links,
+          {
+            competency_uri: skill.uri,
+            referential_version: selected.occupation.referentielVersion,
+            isco_08: selected.occupation.iscoCode,
+            nature,
+          },
+        ];
+    try {
+      const response = await fetch(`/api/courses/${courseId}/competencies`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          course: next.map((link) => ({
+            uri: link.competency_uri,
+            version: link.referential_version,
+            isco08: link.isco_08 ?? undefined,
+            nature: link.nature,
+          })),
+        }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      setSaveFailed(false);
+      setLinksByCourse((current) => ({ ...current, [courseId]: next }));
+    } catch {
+      setSaveFailed(true);
+    }
+  };
+
+  const covered = (skills: Skill[]) => skills.filter((skill) => linked?.has(skill.uri)).length;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -199,9 +337,9 @@ export default function ReferentielPage() {
         />
       </div>
 
-      {failed && (
+      {(failed || saveFailed) && (
         <p role="alert" className="mb-4 text-sm text-destructive">
-          {t('referentiel.error')}
+          {failed ? t('referentiel.error') : t('referentiel.saveError')}
         </p>
       )}
 
@@ -270,17 +408,68 @@ export default function ReferentielPage() {
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 </p>
+
+                <div className="mt-4 rounded-md border p-3">
+                  <p className="mb-2 text-sm font-medium">{t('referentiel.course')}</p>
+                  {courses && courses.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t('referentiel.noCourse')}</p>
+                  ) : (
+                    <Select
+                      value={courseId ?? undefined}
+                      onValueChange={(value) => {
+                        setSaveFailed(false);
+                        setCourseId(value);
+                      }}
+                    >
+                      <SelectTrigger aria-label={t('referentiel.course')}>
+                        <SelectValue placeholder={t('referentiel.coursePlaceholder')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(courses ?? []).map((course) => (
+                          <SelectItem key={course.id} value={course.id}>
+                            {course.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {linked && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {t('referentiel.coverageTitle')} :{' '}
+                      {t('referentiel.coverageEssential', {
+                        covered: covered(selected.essential),
+                        total: selected.essential.length,
+                      })}{' '}
+                      ·{' '}
+                      {t('referentiel.coverageOptional', {
+                        covered: covered(selected.optional),
+                        total: selected.optional.length,
+                      })}
+                    </p>
+                  )}
+                </div>
+
                 <SkillList
+                  key={`${selected.occupation.id}-essential`}
                   title={t('referentiel.essential')}
                   skills={selected.essential}
                   locale={locale}
                   emptyLabel={t('referentiel.noSkills')}
+                  linked={linked}
+                  onToggle={(skill) => void toggle(skill, 'essentielle')}
+                  visibleCount={selected.essential.length}
+                  t={t}
                 />
                 <SkillList
+                  key={`${selected.occupation.id}-optional`}
                   title={t('referentiel.optional')}
                   skills={selected.optional}
                   locale={locale}
                   emptyLabel={t('referentiel.noSkills')}
+                  linked={linked}
+                  onToggle={(skill) => void toggle(skill, 'optionnelle')}
+                  visibleCount={OPTIONAL_VISIBLE}
+                  t={t}
                 />
               </>
             ) : (

@@ -31,12 +31,11 @@ export async function GET(request: NextRequest) {
     )
     .order('title_fr')
     .limit(limit);
-  if (query) {
-    // Les jokers de LIKE saisis par la personne sont neutralisés : on cherche une sous-chaîne littérale.
-    request_ = request_.ilike(
-      'search_text',
-      `%${query.replace(/[\\%_]/g, (char) => `\\${char}`)}%`,
-    );
+  // Chaque mot doit figurer dans les titres, dans n'importe quel ordre. Les jokers de LIKE saisis par
+  // la personne sont neutralisés : on cherche des sous-chaînes littérales.
+  for (const word of query.split(' ').filter(Boolean)) {
+    const literal = word.replace(/[\\%_]/g, (char) => `\\${char}`);
+    request_ = request_.ilike('search_text', `%${literal}%`);
   }
   if (isco) request_ = request_.like('isco_code', `${isco}%`);
 
