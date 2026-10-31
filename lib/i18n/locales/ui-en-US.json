@@ -2696,6 +2696,7 @@
   "admin.transfer.done": "Course assigned to the destination organization.",
   "admin.transfer.failed": "Assignment failed.",
   "admin.transfer.loadFailed": "Could not load.",
+  "admin.transfer.loading": "Loading members…",
   "admin.transfer.noEligibleOwner": "No member allowed to author",
   "admin.transfer.organization": "Destination organization",
   "admin.transfer.owner": "Designated person",

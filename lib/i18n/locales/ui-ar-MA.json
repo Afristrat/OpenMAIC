@@ -2696,6 +2696,7 @@
   "admin.transfer.done": "تم إسناد الدورة إلى المؤسسة المستقبِلة.",
   "admin.transfer.failed": "فشل الإسناد.",
   "admin.transfer.loadFailed": "تعذّر التحميل.",
+  "admin.transfer.loading": "جارٍ تحميل الأعضاء…",
   "admin.transfer.noEligibleOwner": "لا يوجد عضو مخوَّل بإنشاء المحتوى",
   "admin.transfer.organization": "المؤسسة المستقبِلة",
   "admin.transfer.owner": "الشخص المعيَّن",

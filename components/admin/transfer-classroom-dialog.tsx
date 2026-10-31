@@ -46,6 +46,7 @@ export function TransferClassroomDialog({
   const { t } = useI18n();
   const [tenants, setTenants] = useState<TenantOption[]>([]);
   const [owners, setOwners] = useState<OwnerOption[]>([]);
+  const [ownersLoading, setOwnersLoading] = useState(false);
   const [toOrgId, setToOrgId] = useState('');
   const [newOwnerId, setNewOwnerId] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -73,6 +74,8 @@ export function TransferClassroomDialog({
     if (!toOrgId) return;
     let cancelled = false;
     setNewOwnerId('');
+    setOwners([]);
+    setOwnersLoading(true);
     fetch(`/api/admin/tenants/${encodeURIComponent(toOrgId)}/eligible-owners`)
       .then((response) => response.json() as Promise<{ owners?: OwnerOption[] }>)
       .then((payload) => {
@@ -83,6 +86,9 @@ export function TransferClassroomDialog({
       })
       .catch(() => {
         if (!cancelled) toast.error(t('admin.transfer.loadFailed'));
+      })
+      .finally(() => {
+        if (!cancelled) setOwnersLoading(false);
       });
     return () => {
       cancelled = true;
@@ -143,13 +149,15 @@ export function TransferClassroomDialog({
               className={FIELD_CLASS}
               value={newOwnerId}
               onChange={(event) => setNewOwnerId(event.target.value)}
-              disabled={!toOrgId || owners.length === 0}
+              disabled={!toOrgId || ownersLoading || owners.length === 0}
               data-testid="transfer-owner"
             >
               <option value="">
-                {toOrgId && owners.length === 0
-                  ? t('admin.transfer.noEligibleOwner')
-                  : t('admin.transfer.chooseOwner')}
+                {ownersLoading
+                  ? t('admin.transfer.loading')
+                  : toOrgId && owners.length === 0
+                    ? t('admin.transfer.noEligibleOwner')
+                    : t('admin.transfer.chooseOwner')}
               </option>
               {owners.map((owner) => (
                 <option key={owner.id} value={owner.id}>

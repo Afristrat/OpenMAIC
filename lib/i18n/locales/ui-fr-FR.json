@@ -2696,6 +2696,7 @@
   "admin.transfer.done": "Formation affectée à l’organisation d’accueil.",
   "admin.transfer.failed": "L’affectation a échoué.",
   "admin.transfer.loadFailed": "Chargement impossible.",
+  "admin.transfer.loading": "Chargement des membres…",
   "admin.transfer.noEligibleOwner": "Aucun membre habilité à créer",
   "admin.transfer.organization": "Organisation d’accueil",
   "admin.transfer.owner": "Personne désignée",
