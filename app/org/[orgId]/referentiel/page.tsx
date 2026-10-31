@@ -39,7 +39,10 @@ function titlesFor(titles: Titles, locale: Locale): { main: string; others: stri
         : ['fr', 'ar', 'en'];
   const values = order.map((key) => titles[key]).filter((value): value is string => Boolean(value));
   const [main = titles.fr, ...rest] = values;
-  return { main, others: rest.filter((value) => value !== main) };
+  return {
+    main,
+    others: rest.filter((value, index) => value !== main && rest.indexOf(value) === index),
+  };
 }
 
 function escoPage(kind: 'occupation' | 'skill', uri: string, locale: Locale): string {
