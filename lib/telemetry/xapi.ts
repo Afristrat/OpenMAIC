@@ -93,6 +93,23 @@ function userMbox(userId: string): string {
   return `mailto:${userId}@qalem.local`;
 }
 
+const ACCOUNT_HOME_PAGE = 'https://qalem.ma';
+
+/**
+ * Outbound actor: the stored statement keeps its opaque mbox (database scopes for export and
+ * erasure key on it), but what leaves Qalem names the pseudonym as an account, never an mbox.
+ * Returns null when the mbox is not one of Qalem's own pseudonyms, so nothing else is ever sent.
+ */
+function outboundStatement(statement: XAPIStatement): Record<string, unknown> | null {
+  const match = /^mailto:([0-9a-zA-Z_-]+)@qalem\.(?:invalid|local)$/.exec(statement.actor.mbox);
+  if (!match) return null;
+  const { mbox: _mbox, ...agent } = statement.actor;
+  return {
+    ...statement,
+    actor: { ...agent, account: { homePage: ACCOUNT_HOME_PAGE, name: match[1] } },
+  };
+}
+
 /** Build an activity IRI for a Qalem resource */
 function activityId(stageId: string, sceneId?: string): string {
   const base = `https://qalem.app/stages/${stageId}`;
@@ -128,6 +145,8 @@ export async function sendStatement(
       endpoint.hash
     )
       return false;
+    const outbound = outboundStatement(statement);
+    if (!outbound) return false;
     endpoint.pathname = `${endpoint.pathname.replace(/\/$/, '')}/statements`;
     endpoint.searchParams.set('statementId', statementId);
     // L'endpoint LRS est saisi par l'organisation : safeFetch (garde SSRF, connexion épinglée sur
@@ -143,7 +162,7 @@ export async function sendStatement(
           'X-Experience-API-Version': '1.0.3',
           Authorization: config.auth,
         },
-        body: JSON.stringify({ ...statement, id: statementId }),
+        body: JSON.stringify({ ...outbound, id: statementId }),
       },
       { maxRedirects: 0 },
     );

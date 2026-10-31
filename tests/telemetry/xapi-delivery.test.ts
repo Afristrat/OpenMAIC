@@ -71,6 +71,24 @@ it('retries with the same identity and payload, requiring native acknowledgement
   guard.safeFetch.mockRejectedValueOnce(new Error('network'));
   expect(await sendStatement(statement, config, id)).toBe(false);
 });
+it('sends the pseudonym as an account actor and never an mbox', async () => {
+  guard.safeFetch.mockReset().mockImplementation(async () => delivered(204));
+  const id = xapiDeliveryId('tenant', 'event');
+  expect(await sendStatement(statement, config, id)).toBe(true);
+  const sent = JSON.parse(guard.safeFetch.mock.calls[0][1].body);
+  expect(sent.actor).toEqual({
+    objectType: 'Agent',
+    account: { homePage: 'https://qalem.ma', name: 'opaque' },
+  });
+  expect(JSON.stringify(sent)).not.toContain('mbox');
+  const foreign = {
+    ...statement,
+    actor: { mbox: 'mailto:real@example.com', objectType: 'Agent' as const },
+  };
+  guard.safeFetch.mockClear();
+  expect(await sendStatement(foreign, config, id)).toBe(false);
+  expect(guard.safeFetch).not.toHaveBeenCalled();
+});
 it('never sends to a destination refused by the SSRF guard', async () => {
   guard.safeFetch
     .mockReset()
