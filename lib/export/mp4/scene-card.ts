@@ -16,6 +16,13 @@ const SKIPPED_KEYS = new Set([
   'stroke',
   'theme',
   'themeColors',
+  // Géométrie, police et type de graphique : du réglage, jamais du texte à lire.
+  'path',
+  'viewBox',
+  'fontName',
+  'defaultFontName',
+  'chartType',
+  'textType',
 ]);
 
 const TECHNICAL_VALUE =

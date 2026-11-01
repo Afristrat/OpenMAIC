@@ -44,4 +44,18 @@ describe('MP4 scene cards', () => {
     expect(text).toBe('Routage intelligent');
     expect(text).not.toMatch(/#[0-9a-f]{6}/i);
   });
+
+  it('ignores shape paths, font names and chart types of a real slide', () => {
+    const text = sceneReadableText({
+      canvas: {
+        elements: [
+          { type: 'shape', path: 'M 0 0 L 1 0 L 1 1 L 0 1 Z', viewBox: [1, 1], fill: '#f4f7fb' },
+          { type: 'text', defaultFontName: 'Microsoft YaHei', content: '<p>Votre classeur</p>' },
+          { type: 'chart', chartType: 'bar', data: { labels: ['Jan', 'Fév'] } },
+        ],
+      },
+    });
+
+    expect(text).toBe('Votre classeur Jan Fév');
+  });
 });
