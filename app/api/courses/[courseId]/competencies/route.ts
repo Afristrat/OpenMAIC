@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
+import { requireCourseEditor } from '@/lib/server/course-editor-access';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { NextRequest } from 'next/server';
@@ -37,28 +37,11 @@ const bodySchema = z
 
 type Params = { params: Promise<{ courseId: string }> };
 
-async function readCourse(courseId: string) {
-  const { data, error } = await createServiceSupabaseClient()
-    .from('courses')
-    .select('id, org_id, owner_id, stage_id')
-    .eq('id', courseId)
-    .maybeSingle();
-  return { course: data, error };
-}
-
 export async function GET(request: NextRequest, { params }: Params) {
   const { courseId } = await params;
-  const { course, error } = await readCourse(courseId);
-  if (error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read course');
-  if (!course?.org_id) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Course not found');
-
-  const auth = await requireSuperAdminOrOrgEditor(
-    request,
-    course.org_id,
-    course.owner_id,
-    course.stage_id ?? undefined,
-  );
-  if (auth.response) return auth.response;
+  const access = await requireCourseEditor(request, courseId);
+  if (access.response) return access.response;
+  const { course } = access;
 
   const supabase = createServiceSupabaseClient();
   const sceneIds = course.stage_id
@@ -117,17 +100,9 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 export async function PUT(request: NextRequest, { params }: Params) {
   const { courseId } = await params;
-  const { course, error } = await readCourse(courseId);
-  if (error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read course');
-  if (!course?.org_id) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Course not found');
-
-  const auth = await requireSuperAdminOrOrgEditor(
-    request,
-    course.org_id,
-    course.owner_id,
-    course.stage_id ?? undefined,
-  );
-  if (auth.response) return auth.response;
+  const access = await requireCourseEditor(request, courseId);
+  if (access.response) return access.response;
+  const { course, user } = access;
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid body');
@@ -143,7 +118,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       referential_version: item.version,
       isco_08: item.isco08 ?? null,
       nature: item.nature,
-      created_by: auth.user.id,
+      created_by: user.id,
     }));
     if (rows.length > 0) {
       const { error: upsertError } = await supabase
@@ -192,7 +167,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         referential_version: item.version,
         nature: item.nature,
         statut: item.statut,
-        confirmed_by: item.statut === 'confirme' ? auth.user.id : null,
+        confirmed_by: item.statut === 'confirme' ? user.id : null,
         confirmed_at: item.statut === 'confirme' ? now : null,
       }));
       const { error: upsertError } = await supabase
@@ -220,17 +195,9 @@ const removalSchema = z.object({
 /** Retire un lien scène vers compétence, proposé ou confirmé. */
 export async function DELETE(request: NextRequest, { params }: Params) {
   const { courseId } = await params;
-  const { course, error } = await readCourse(courseId);
-  if (error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read course');
-  if (!course?.org_id) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Course not found');
-
-  const auth = await requireSuperAdminOrOrgEditor(
-    request,
-    course.org_id,
-    course.owner_id,
-    course.stage_id ?? undefined,
-  );
-  if (auth.response) return auth.response;
+  const access = await requireCourseEditor(request, courseId);
+  if (access.response) return access.response;
+  const { course } = access;
 
   const parsed = removalSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success || !course.stage_id) {

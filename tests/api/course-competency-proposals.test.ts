@@ -12,12 +12,18 @@ type Result = { data: unknown; error: { message: string } | null };
 
 const mocks = vi.hoisted(() => ({
   guard: vi.fn(),
+  requireAuth: vi.fn(),
+  isSuperAdmin: vi.fn(),
   callLLM: vi.fn(),
   results: new Map<string, Result>(),
   calls: [] as { table: string; op: string; args: unknown[] }[],
 }));
 
-vi.mock('@/lib/api/auth', () => ({ requireSuperAdminOrOrgEditor: mocks.guard }));
+vi.mock('@/lib/api/auth', () => ({
+  requireAuth: mocks.requireAuth,
+  isSuperAdminEmail: mocks.isSuperAdmin,
+  requireSuperAdminOrOrgEditor: mocks.guard,
+}));
 vi.mock('@/lib/ai/llm', () => ({ callLLM: mocks.callLLM }));
 vi.mock('@/lib/server/resolve-model', () => ({
   resolveModelFromRequest: async () => ({ model: 'fake-model', thinkingConfig: undefined }),
@@ -87,6 +93,8 @@ describe('POST /api/courses/[courseId]/competencies/propose', () => {
       error: null,
     });
     mocks.guard.mockResolvedValue({ user: { id: 'u', email: 'editor@qalem.ma' } });
+    mocks.requireAuth.mockResolvedValue({ user: { id: 'u', email: 'editor@qalem.ma' } });
+    mocks.isSuperAdmin.mockReturnValue(false);
     mocks.callLLM.mockResolvedValue({
       text: JSON.stringify({
         links: [
@@ -98,9 +106,9 @@ describe('POST /api/courses/[courseId]/competencies/propose', () => {
     });
   });
 
-  it('answers 404 for an unknown course and 403 for a caller who cannot edit it, before any LLM call', async () => {
+  it('answers 403 for an unknown course and for a caller who cannot edit a real one, before any LLM call', async () => {
     mocks.results.set('courses:single', { data: null, error: null });
-    expect((await POST(post(), params())).status).toBe(404);
+    expect((await POST(post(), params())).status).toBe(403);
 
     mocks.results.set('courses:single', {
       data: { id: COURSE_ID, org_id: ORG_ID, owner_id: OWNER_ID, stage_id: 'stageAbc123' },

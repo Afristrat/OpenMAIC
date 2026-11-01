@@ -1,4 +1,4 @@
-import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
+import { requireCourseEditor } from '@/lib/server/course-editor-access';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { competenciesOfOccupation, fetchCasePackage } from '@/lib/referentiel/case-client';
 import { computeOccupationCoverage } from '@/lib/referentiel/coverage';
@@ -25,22 +25,9 @@ export async function GET(
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'document and occupation are required');
   }
 
+  const access = await requireCourseEditor(request, courseId);
+  if (access.response) return access.response;
   const supabase = createServiceSupabaseClient();
-  const { data: course, error } = await supabase
-    .from('courses')
-    .select('id, org_id, owner_id, stage_id')
-    .eq('id', courseId)
-    .maybeSingle();
-  if (error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read course');
-  if (!course?.org_id) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Course not found');
-
-  const auth = await requireSuperAdminOrOrgEditor(
-    request,
-    course.org_id,
-    course.owner_id,
-    course.stage_id ?? undefined,
-  );
-  if (auth.response) return auth.response;
 
   const links = await supabase
     .from('course_competencies')

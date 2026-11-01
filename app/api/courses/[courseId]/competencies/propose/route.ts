@@ -1,5 +1,5 @@
 import { callLLM } from '@/lib/ai/llm';
-import { requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
+import { requireCourseEditor } from '@/lib/server/course-editor-access';
 import { runWithUsageMeteringContext, withStableIdempotencyKey } from '@/lib/billing/usage-context';
 import { createLogger } from '@/lib/logger';
 import {
@@ -29,25 +29,13 @@ export async function POST(
   { params }: { params: Promise<{ courseId: string }> },
 ) {
   const { courseId } = await params;
-  const supabase = createServiceSupabaseClient();
-  const { data: course, error } = await supabase
-    .from('courses')
-    .select('id, org_id, owner_id, stage_id')
-    .eq('id', courseId)
-    .maybeSingle();
-  if (error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read course');
-  if (!course?.org_id) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Course not found');
+  const access = await requireCourseEditor(request, courseId);
+  if (access.response) return access.response;
+  const { course, user } = access;
   if (!course.stage_id) {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Course has no classroom');
   }
-
-  const auth = await requireSuperAdminOrOrgEditor(
-    request,
-    course.org_id,
-    course.owner_id,
-    course.stage_id,
-  );
-  if (auth.response) return auth.response;
+  const supabase = createServiceSupabaseClient();
 
   try {
     const [links, scenesResult] = await Promise.all([
@@ -97,7 +85,7 @@ export async function POST(
     const { system, prompt } = proposalPrompt(scenes, competencies);
     const response = await runWithUsageMeteringContext(
       withStableIdempotencyKey(request.headers),
-      auth.user.id,
+      user.id,
       course.org_id,
       () =>
         callLLM(

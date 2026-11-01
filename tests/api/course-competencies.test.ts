@@ -12,11 +12,17 @@ type Result = { data: unknown; error: { message: string } | null };
 
 const mocks = vi.hoisted(() => ({
   guard: vi.fn(),
+  requireAuth: vi.fn(),
+  isSuperAdmin: vi.fn(),
   results: new Map<string, Result>(),
   calls: [] as { table: string; op: string; args: unknown[] }[],
 }));
 
-vi.mock('@/lib/api/auth', () => ({ requireSuperAdminOrOrgEditor: mocks.guard }));
+vi.mock('@/lib/api/auth', () => ({
+  requireAuth: mocks.requireAuth,
+  isSuperAdminEmail: mocks.isSuperAdmin,
+  requireSuperAdminOrOrgEditor: mocks.guard,
+}));
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({
     from(table: string) {
@@ -63,14 +69,16 @@ describe('/api/courses/[courseId]/competencies', () => {
       error: null,
     });
     mocks.guard.mockResolvedValue({ user: { id: ACTOR_ID, email: 'editor@qalem.ma' } });
+    mocks.requireAuth.mockResolvedValue({ user: { id: 'u', email: 'editor@qalem.ma' } });
+    mocks.isSuperAdmin.mockReturnValue(false);
   });
 
-  it('answers 404 for an unknown course before any authorization or write', async () => {
+  it('answers 403, like a real course the caller cannot edit, for an unknown course', async () => {
     mocks.results.set('courses:single', { data: null, error: null });
 
     const response = await PUT(put({ course: [] }), params());
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(403);
     expect(mocks.guard).not.toHaveBeenCalled();
     expect(writes('course_competencies', 'upsert')).toHaveLength(0);
   });
@@ -215,6 +223,8 @@ describe('DELETE /api/courses/[courseId]/competencies', () => {
       error: null,
     });
     mocks.guard.mockResolvedValue({ user: { id: ACTOR_ID, email: 'editor@qalem.ma' } });
+    mocks.requireAuth.mockResolvedValue({ user: { id: 'u', email: 'editor@qalem.ma' } });
+    mocks.isSuperAdmin.mockReturnValue(false);
   });
 
   it('refuses a caller who cannot edit the course and a scene of another classroom', async () => {
@@ -223,6 +233,10 @@ describe('DELETE /api/courses/[courseId]/competencies', () => {
     expect(writes('scene_competencies', 'delete')).toHaveLength(0);
 
     mocks.guard.mockResolvedValue({ user: { id: ACTOR_ID, email: 'editor@qalem.ma' } });
+
+    mocks.requireAuth.mockResolvedValue({ user: { id: 'u', email: 'editor@qalem.ma' } });
+
+    mocks.isSuperAdmin.mockReturnValue(false);
     mocks.results.set('scenes:single', { data: null, error: null });
     expect((await DELETE(del(removal), params())).status).toBe(400);
     expect(writes('scene_competencies', 'delete')).toHaveLength(0);

@@ -11,12 +11,18 @@ type Result = { data: unknown; error: { message: string } | null };
 
 const mocks = vi.hoisted(() => ({
   guard: vi.fn(),
+  requireAuth: vi.fn(),
+  isSuperAdmin: vi.fn(),
   fetchCasePackage: vi.fn(),
   competenciesOfOccupation: vi.fn(),
   results: new Map<string, Result>(),
 }));
 
-vi.mock('@/lib/api/auth', () => ({ requireSuperAdminOrOrgEditor: mocks.guard }));
+vi.mock('@/lib/api/auth', () => ({
+  requireAuth: mocks.requireAuth,
+  isSuperAdminEmail: mocks.isSuperAdmin,
+  requireSuperAdminOrOrgEditor: mocks.guard,
+}));
 vi.mock('@/lib/referentiel/case-client', () => ({
   fetchCasePackage: mocks.fetchCasePackage,
   competenciesOfOccupation: mocks.competenciesOfOccupation,
@@ -55,6 +61,8 @@ describe('GET /api/courses/[courseId]/coverage', () => {
     });
     mocks.results.set('course_competencies', { data: [{ competency_uri: SKILL }], error: null });
     mocks.guard.mockResolvedValue({ user: { id: 'u', email: 'editor@qalem.ma' } });
+    mocks.requireAuth.mockResolvedValue({ user: { id: 'u', email: 'editor@qalem.ma' } });
+    mocks.isSuperAdmin.mockReturnValue(false);
     mocks.fetchCasePackage.mockResolvedValue({ package: true });
     mocks.competenciesOfOccupation.mockReturnValue({
       occupation: {
@@ -83,9 +91,9 @@ describe('GET /api/courses/[courseId]/coverage', () => {
     expect(mocks.fetchCasePackage).not.toHaveBeenCalled();
   });
 
-  it('answers 404 for an unknown course and 403 for a caller who cannot edit it', async () => {
+  it('answers 403 for an unknown course and for a caller who cannot edit a real one', async () => {
     mocks.results.set('courses:single', { data: null, error: null });
-    expect((await GET(get(valid), params())).status).toBe(404);
+    expect((await GET(get(valid), params())).status).toBe(403);
 
     mocks.results.set('courses:single', {
       data: { id: COURSE_ID, org_id: ORG_ID, owner_id: OWNER_ID, stage_id: null },
