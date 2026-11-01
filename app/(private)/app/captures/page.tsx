@@ -63,6 +63,8 @@ export default function CapturesPage(): React.ReactElement {
   const [extension, setExtension] = useState<ExtensionStatus | null>(null);
   const [pairState, setPairState] = useState<PairState>('idle');
   const [planning, setPlanning] = useState(false);
+  const [addingScenes, setAddingScenes] = useState(false);
+  const [sceneNotice, setSceneNotice] = useState<string | null>(null);
 
   const loadCourses = useCallback(async () => {
     setLoading(true);
@@ -164,6 +166,31 @@ export default function CapturesPage(): React.ReactElement {
         (total, session) => total + session.steps.filter((s) => s.review === 'approved').length,
         0,
       ) ?? 0;
+
+  const addScenes = async (): Promise<void> => {
+    if (!courseId) return;
+    setAddingScenes(true);
+    setActionError(false);
+    setSceneNotice(null);
+    try {
+      const response = await fetch(`/api/courses/${courseId}/capture-scenes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale }),
+      });
+      if (response.status === 409) {
+        setSceneNotice(t('captures.addScenes.noClassroom'));
+        return;
+      }
+      if (!response.ok) throw new Error('Capture scenes refused');
+      const { added } = z.object({ added: z.number() }).parse(await response.json());
+      setSceneNotice(t('captures.addScenes.done', { n: String(added) }));
+    } catch {
+      setActionError(true);
+    } finally {
+      setAddingScenes(false);
+    }
+  };
 
   const plan = async (): Promise<void> => {
     if (!currentOrg || !courseId) return;
@@ -306,7 +333,21 @@ export default function CapturesPage(): React.ReactElement {
               >
                 {t('captures.plan', { n: String(approvedCount) })}
               </button>
+              <button
+                type="button"
+                onClick={() => void addScenes()}
+                disabled={approvedCount === 0 || addingScenes}
+                className="rounded-lg border border-purple-600 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-50 dark:text-purple-300 dark:hover:bg-purple-950"
+              >
+                {t('captures.addScenes', { n: String(approvedCount) })}
+              </button>
             </div>
+
+            {sceneNotice && (
+              <p role="status" className="text-sm text-gray-700 dark:text-gray-300">
+                {sceneNotice}
+              </p>
+            )}
 
             {actionError && (
               <p role="alert" className="text-sm text-red-600">
