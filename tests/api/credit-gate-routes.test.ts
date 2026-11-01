@@ -28,6 +28,10 @@ vi.mock('@/lib/server/course-generation-access', () => ({
   FreeCourseLimitError: class FreeCourseLimitError extends Error {},
 }));
 vi.mock('@/lib/server/classroom-storage', () => ({ buildRequestOrigin: () => 'https://qalem.ma' }));
+vi.mock('@/lib/server/plan-framework', () => ({
+  requireCompetencyFramework: async () => null,
+}));
+
 vi.mock('@/lib/server/classroom-job-store', () => ({
   createClassroomGenerationJob: mocks.createJob,
   markClassroomGenerationJobFailed: vi.fn(),

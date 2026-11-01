@@ -19,6 +19,9 @@ vi.mock('@/lib/server/classroom-plan-job-store', () => ({
 }));
 
 vi.mock('@/lib/jobs/queue', () => ({ enqueueClassroomPlan: mocks.enqueue }));
+vi.mock('@/lib/server/plan-framework', () => ({
+  requireCompetencyFramework: async () => null,
+}));
 
 import { POST } from '@/app/api/generate-classroom/plan/route';
 
