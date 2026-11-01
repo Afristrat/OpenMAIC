@@ -1,5 +1,6 @@
 import { requireAuth } from '@/lib/api/auth';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
+import { readReferentielSkills } from '@/lib/server/referentiel-skills';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type { NextRequest } from 'next/server';
 
@@ -36,12 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!occupation) return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Occupation not found');
 
   const uris = [...occupation.essential_uris, ...occupation.optional_uris];
-  const { data: skills, error: skillsError } = uris.length
-    ? await supabase
-        .from('referentiel_skills')
-        .select('uri, title_fr, title_ar, title_en')
-        .in('uri', uris)
-    : { data: [], error: null };
+  const { data: skills, error: skillsError } = await readReferentielSkills(supabase, uris);
   if (skillsError) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read skills');
 
   const byUri = new Map((skills ?? []).map((skill) => [skill.uri, skill]));

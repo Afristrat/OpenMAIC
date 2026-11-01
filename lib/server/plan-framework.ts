@@ -10,6 +10,7 @@ import {
   type CompetencyFrameworkInput,
   type ResolvedCompetencyFramework,
 } from '@/lib/referentiel/plan-framework';
+import { readReferentielSkills } from '@/lib/server/referentiel-skills';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 type OccupationRow = {
@@ -46,15 +47,12 @@ export async function resolveCompetencyFramework(
       'Chaque compétence visée doit appartenir au métier choisi, et au moins une est nécessaire.',
     );
   }
-  const { data: titles, error: titlesError } = await supabase
-    .from('referentiel_skills')
-    .select('uri, title_fr')
-    .in(
-      'uri',
-      accepted.map((skill) => skill.uri),
-    );
+  const { data: titles, error: titlesError } = await readReferentielSkills(
+    supabase,
+    accepted.map((skill) => skill.uri),
+  );
   if (titlesError) throw new Error(`Failed to read the skills: ${titlesError.message}`);
-  const titleOf = new Map((titles ?? []).map((row) => [row.uri as string, row.title_fr as string]));
+  const titleOf = new Map(titles.map((row) => [row.uri, row.title_fr]));
   return {
     occupation: {
       uri: occupation.uri,
