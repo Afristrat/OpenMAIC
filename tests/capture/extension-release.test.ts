@@ -20,7 +20,9 @@ describe('archive de l’extension servie par le site', () => {
   });
 
   it('satisfait la version minimale exigée par le pont de la page', () => {
-    expect(compareVersions(EXTENSION_RELEASE.version, MIN_EXTENSION_VERSION)).toBeGreaterThanOrEqual(0);
+    expect(
+      compareVersions(EXTENSION_RELEASE.version, MIN_EXTENSION_VERSION),
+    ).toBeGreaterThanOrEqual(0);
     expect(EXTENSION_RELEASE.file).toContain(EXTENSION_RELEASE.version);
   });
 });
