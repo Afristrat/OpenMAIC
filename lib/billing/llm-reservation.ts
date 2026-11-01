@@ -47,21 +47,40 @@ export function estimateMaxInputTokens(
 }
 
 /**
- * Sérialisation d'une requête pour mesurer son entrée. Les octets d'une image ou d'un fichier ne
- * sont pas du texte : un `Buffer` s'écrit en JSON comme une liste de nombres (3 à 4 caractères par
- * octet) et une capture de 100 Ko réservait alors près de 40 crédits pour 1 500 jetons réels. Ces
- * contenus sont comptés une fois, par le forfait de MULTIMODAL_PART_TOKEN_ALLOWANCE par partie.
+ * Le champ `image` d'une partie de message de type `image` n'est pas du texte : un `Buffer` s'écrit
+ * en JSON comme une liste de nombres (3 à 4 caractères par octet) et une capture de 100 Ko
+ * réservait alors près de 40 crédits pour 1 500 jetons réels. Une image coûte un nombre borné de
+ * jetons que fixe le fournisseur : elle est comptée une fois, par le forfait de
+ * MULTIMODAL_PART_TOKEN_ALLOWANCE par partie. Seul ce champ est remplacé : toute autre chaîne,
+ * même débutant par `data:` ou même de forme `Buffer`, garde sa taille entière, pour qu'aucun texte
+ * fourni par un client ne se réserve pour presque rien.
  */
+function collapseImagePart(part: unknown): unknown {
+  if (typeof part !== 'object' || part === null) return part;
+  const record = part as Record<string, unknown>;
+  if (record.type !== 'image' || record.image === undefined) return part;
+  return { ...record, image: { imageInput: true } };
+}
+
+function collapseImageParts(request: unknown): unknown {
+  if (typeof request !== 'object' || request === null) return request;
+  const { messages } = request as { messages?: unknown };
+  if (!Array.isArray(messages)) return request;
+  return {
+    ...(request as Record<string, unknown>),
+    messages: messages.map((message: unknown) => {
+      if (typeof message !== 'object' || message === null) return message;
+      const { content } = message as { content?: unknown };
+      return Array.isArray(content)
+        ? { ...(message as Record<string, unknown>), content: content.map(collapseImagePart) }
+        : message;
+    }),
+  };
+}
+
+/** Sérialisation d'une requête pour mesurer son entrée (voir collapseImagePart). */
 export function serializeRequestForReservation(request: unknown): string {
-  return JSON.stringify(request, (_key, value: unknown) => {
-    if (value instanceof Uint8Array) return { binaryBytes: value.byteLength };
-    if (typeof value === 'object' && value !== null) {
-      const { type, data } = value as { type?: unknown; data?: unknown };
-      if (type === 'Buffer' && Array.isArray(data)) return { binaryBytes: data.length };
-    }
-    if (typeof value === 'string' && value.startsWith('data:')) return { dataUrl: true };
-    return value;
-  });
+  return JSON.stringify(collapseImageParts(request));
 }
 
 /**

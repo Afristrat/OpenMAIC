@@ -68,32 +68,52 @@ describe('réservation LLM réaliste', () => {
 });
 
 describe("sérialisation d'une requête pour la réservation", () => {
-  it("ne compte pas les octets d'une image comme du texte (une capture de 100 Ko ne réserve pas 40 crédits)", () => {
-    const image = Buffer.alloc(100_000, 7);
-    const serialized = serializeRequestForReservation({
-      system: 'Vérifie la cohérence.',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Narration' },
-            { type: 'image', image },
-          ],
-        },
-      ],
-    });
-    expect(serialized.length).toBeLessThan(500);
-    expect(serialized).toContain('Narration');
-    expect(serialized).toContain('"binaryBytes":100000');
+  const imageRequest = (image: unknown) => ({
+    system: 'Vérifie la cohérence.',
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Narration' },
+          { type: 'image', image },
+        ],
+      },
+    ],
   });
 
-  it('traite de même un Uint8Array et une URL data:, mais garde le texte intact', () => {
-    expect(serializeRequestForReservation({ image: new Uint8Array(5_000) })).toBe(
-      '{"image":{"binaryBytes":5000}}',
-    );
+  it("ne compte pas les octets d'une image comme du texte (une capture de 100 Ko ne réserve pas 40 crédits)", () => {
+    for (const image of [
+      Buffer.alloc(100_000, 7),
+      new Uint8Array(100_000),
+      `data:image/png;base64,${'A'.repeat(130_000)}`,
+    ]) {
+      const serialized = serializeRequestForReservation(imageRequest(image));
+      expect(serialized.length).toBeLessThan(500);
+      expect(serialized).toContain('Narration');
+    }
+  });
+
+  it("garde sa taille entière à un texte qui commence par data: ou qui imite la forme d'un Buffer", () => {
+    const longText = `data: ${'x'.repeat(50_000)}`;
     expect(
-      serializeRequestForReservation({ url: `data:image/png;base64,${'A'.repeat(90_000)}` }),
-    ).toBe('{"url":{"dataUrl":true}}');
+      serializeRequestForReservation({
+        messages: [{ role: 'user', content: [{ type: 'text', text: longText }] }],
+      }).length,
+    ).toBeGreaterThan(50_000);
+    expect(
+      serializeRequestForReservation({
+        messages: [{ role: 'user', content: longText }],
+        metadata: { type: 'Buffer', data: new Array(20_000).fill(1) },
+      }).length,
+    ).toBeGreaterThan(50_000);
+  });
+
+  it("ne touche qu'au champ image des parties de type image", () => {
+    const file = { type: 'file', data: 'A'.repeat(30_000), mediaType: 'application/pdf' };
+    const serialized = serializeRequestForReservation({
+      messages: [{ role: 'user', content: [file] }],
+    });
+    expect(serialized.length).toBeGreaterThan(30_000);
     expect(serializeRequestForReservation({ text: 'Bonjour' })).toBe('{"text":"Bonjour"}');
   });
 });
