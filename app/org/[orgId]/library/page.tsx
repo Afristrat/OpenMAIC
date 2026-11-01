@@ -268,6 +268,10 @@ export default function LibraryPage() {
         emailSent?: boolean;
         error?: string;
       };
+      if (response.status === 409) {
+        toast.error(t('transmission.inviteSeatLimit'));
+        return;
+      }
       if (!response.ok || !payload.inviteUrl)
         throw new Error(payload.error ?? 'Invitation unavailable');
       if (payload.emailSent) {

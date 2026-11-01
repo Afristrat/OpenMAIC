@@ -10,6 +10,10 @@ import { missingSpeechAudioMessage, summarizeSpeechAudio } from '@/lib/audio/spe
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { chapterFileName } from './chapter-file-name';
 import { buildSceneCardSvg } from './scene-card';
+import {
+  loadOrganizationBillboardBrand,
+  renderOrganizationBillboards,
+} from './organization-billboards';
 import type { SpeechAction } from '@/lib/types/action';
 
 const execFileAsync = promisify(execFile);
@@ -280,10 +284,21 @@ export async function buildClassroomVideo(
   onProgress?: ProgressListener,
 ): Promise<{ video: Buffer; sceneCount: number }> {
   return withRenderedScenes(stageId, onProgress, async (scenes, directory) => {
+    // Cartons d'entrée et de sortie à l'identité de l'organisation (voir sa marque de présentation).
+    const billboards = await renderOrganizationBillboards({
+      directory,
+      brand: await loadOrganizationBillboardBrand(stageId).catch(() => null),
+      runFfmpeg,
+    });
+    const segmentPaths = [
+      ...(billboards.entry ? [billboards.entry] : []),
+      ...scenes.map(({ path }) => path),
+      ...(billboards.exit ? [billboards.exit] : []),
+    ];
     const concatFile = join(directory, 'segments.txt');
     await writeFile(
       concatFile,
-      scenes.map(({ path }) => `file '${path.replaceAll("'", "'\\''")}'`).join('\n'),
+      segmentPaths.map((path) => `file '${path.replaceAll("'", "'\\''")}'`).join('\n'),
     );
     const outputPath = join(directory, 'classroom.mp4');
     await runFfmpeg([

@@ -504,7 +504,7 @@
       "outputs": [
         {
           "path": "lib/prompts/templates/requirements-to-outlines/system.md",
-          "sha256": "79cdd4b94777a0bb433d6c55f4fba0196f20591c0a684a927eb48eff67561f3f"
+          "sha256": "045e03f676b808606d1b04b828f124877f32a2fef8b5b0ca74e19bc1c573453f"
         }
       ]
     },
@@ -540,7 +540,7 @@
       "outputs": [
         {
           "path": "lib/prompts/templates/slide-actions/system.md",
-          "sha256": "14b698f1fc1bfc4a70a6cc7755ce369663032d8385803d29541675628fe91687"
+          "sha256": "fd3c8d208d1b88bdcafb538119070feb8dab5d0dfc1cf98ad054cf8913c8240e"
         }
       ]
     },
@@ -650,15 +650,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "7eb672038944776ef34694e0b24e291a401c6baa552386876955c02d44e8ce04"
+          "sha256": "4e89252517253cf483491529e325178bcce2f6c1a80e998d3ff0107e02f8ab69"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "7dcefc5fb65d37141e5998b130c4dfa691eb6b25041204858d226e2525183d4f"
+          "sha256": "448fd4d6a6419b3f7008d49bdf66d58c05da0a6cb2d38e3bba510306352e9a5f"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "421bfe78fe0f38bfbd225c175f6ddeb1eb4a6c0d3b408703397bee0094fae7d4"
+          "sha256": "1c6eff13c82e41ad4ee731b6ed3140402f1083a6c57bfc4a0e0d4686d8851ff6"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -708,15 +708,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "7eb672038944776ef34694e0b24e291a401c6baa552386876955c02d44e8ce04"
+          "sha256": "4e89252517253cf483491529e325178bcce2f6c1a80e998d3ff0107e02f8ab69"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "7dcefc5fb65d37141e5998b130c4dfa691eb6b25041204858d226e2525183d4f"
+          "sha256": "448fd4d6a6419b3f7008d49bdf66d58c05da0a6cb2d38e3bba510306352e9a5f"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "421bfe78fe0f38bfbd225c175f6ddeb1eb4a6c0d3b408703397bee0094fae7d4"
+          "sha256": "1c6eff13c82e41ad4ee731b6ed3140402f1083a6c57bfc4a0e0d4686d8851ff6"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -766,15 +766,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "7eb672038944776ef34694e0b24e291a401c6baa552386876955c02d44e8ce04"
+          "sha256": "4e89252517253cf483491529e325178bcce2f6c1a80e998d3ff0107e02f8ab69"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "7dcefc5fb65d37141e5998b130c4dfa691eb6b25041204858d226e2525183d4f"
+          "sha256": "448fd4d6a6419b3f7008d49bdf66d58c05da0a6cb2d38e3bba510306352e9a5f"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "421bfe78fe0f38bfbd225c175f6ddeb1eb4a6c0d3b408703397bee0094fae7d4"
+          "sha256": "1c6eff13c82e41ad4ee731b6ed3140402f1083a6c57bfc4a0e0d4686d8851ff6"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -824,15 +824,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "7eb672038944776ef34694e0b24e291a401c6baa552386876955c02d44e8ce04"
+          "sha256": "4e89252517253cf483491529e325178bcce2f6c1a80e998d3ff0107e02f8ab69"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "7dcefc5fb65d37141e5998b130c4dfa691eb6b25041204858d226e2525183d4f"
+          "sha256": "448fd4d6a6419b3f7008d49bdf66d58c05da0a6cb2d38e3bba510306352e9a5f"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "421bfe78fe0f38bfbd225c175f6ddeb1eb4a6c0d3b408703397bee0094fae7d4"
+          "sha256": "1c6eff13c82e41ad4ee731b6ed3140402f1083a6c57bfc4a0e0d4686d8851ff6"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -882,15 +882,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "7eb672038944776ef34694e0b24e291a401c6baa552386876955c02d44e8ce04"
+          "sha256": "4e89252517253cf483491529e325178bcce2f6c1a80e998d3ff0107e02f8ab69"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "7dcefc5fb65d37141e5998b130c4dfa691eb6b25041204858d226e2525183d4f"
+          "sha256": "448fd4d6a6419b3f7008d49bdf66d58c05da0a6cb2d38e3bba510306352e9a5f"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "421bfe78fe0f38bfbd225c175f6ddeb1eb4a6c0d3b408703397bee0094fae7d4"
+          "sha256": "1c6eff13c82e41ad4ee731b6ed3140402f1083a6c57bfc4a0e0d4686d8851ff6"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",

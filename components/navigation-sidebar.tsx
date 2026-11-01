@@ -32,6 +32,7 @@ import {
   Monitor,
   Check,
   Loader2,
+  BookMarked,
 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useTheme } from '@/lib/hooks/use-theme';
@@ -165,6 +166,12 @@ export function NavigationSidebar(): React.ReactElement {
           href: `/org/${orgId}/library`,
           labelKey: 'nav.library',
           icon: <Library className="size-5" />,
+          show: isAuthenticated,
+        },
+        {
+          href: `/org/${orgId}/referentiel`,
+          labelKey: 'nav.referentiel',
+          icon: <BookMarked className="size-5" />,
           show: isAuthenticated,
         },
         {

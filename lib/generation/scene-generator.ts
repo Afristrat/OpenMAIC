@@ -46,6 +46,11 @@ import {
   INTERACTIVE_DESIGN_PROMPT_MODULE,
 } from '@/lib/branding/interactive-design-system';
 import { parseActionsFromStructuredOutput } from './action-parser';
+import {
+  ensureLearnerDiscussion,
+  ensureTeacherTakesUpInterventions,
+  learnerDiscussionInstruction,
+} from './teacher-follow-up';
 import { parseJsonResponse } from './json-repair';
 import { loadPlugins } from '@/lib/plugins/loader';
 import { validatePluginData } from '@/lib/plugins/schema-validator';
@@ -2512,6 +2517,7 @@ export async function generateSceneActions(
         const systemPrompt = [
           prompts.system,
           visualGroundingInstruction,
+          learnerDiscussionInstruction(outline),
           groundingFeedback
             ? `Your previous output was rejected: ${groundingFeedback}\nRegenerate the complete action sequence without claiming that an absent visual or downloadable resource exists.`
             : '',
@@ -2549,7 +2555,10 @@ export async function generateSceneActions(
       sourceGrounding,
     );
     return appendResourcePauseActions(
-      removeUntrustedResourceDetails(preparedActions, outline),
+      removeUntrustedResourceDetails(
+        ensureLearnerDiscussion(preparedActions, outline, agents, languageDirective),
+        outline,
+      ),
       outline,
       languageDirective,
       agents,
@@ -2803,7 +2812,7 @@ async function ensureCanonicalAgentInterventions(
     );
   }
 
-  return coveredActions;
+  return ensureTeacherTakesUpInterventions(coveredActions, agents, aiCall, languageDirective);
 }
 
 /**

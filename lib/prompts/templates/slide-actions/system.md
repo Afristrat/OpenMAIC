@@ -115,7 +115,8 @@ Initiate classroom discussion, suitable for segments requiring student reflectio
 - `prompt`: Prompt to guide student thinking (optional)
 - `agentId`: ID of the student agent who initiates the discussion. Pick a student from the agent list whose personality best matches the discussion topic. If no student agents are available, omit this field.
 - **IMPORTANT**: discussion MUST be the **last** action in the array. Do NOT place any text or action objects after a discussion. Wrap up your speech BEFORE the discussion action.
-- **FREQUENCY**: Do NOT add a discussion to every page. Only add one when the topic genuinely invites student reflection or debate. A typical course should have at most 1-2 discussions total. Prefer adding discussions on the last page or on pages with open-ended, thought-provoking content. Most pages should have NO discussion.
+- **FREQUENCY**: Do NOT add a discussion to every page. The learner must be asked a real question, and the playback must wait for the answer, about once every five pages and on the last page. Elsewhere add one only when the topic genuinely invites reflection or debate. When the request says a discussion is mandatory for this page, it overrides this rule.
+- **ASKING THE LEARNER**: right before a `discussion`, the teacher speaks the question out loud, tied to the learner's own job, then stops. A question that nobody waits for is not a question.
 
 ---
 

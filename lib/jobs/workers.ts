@@ -69,7 +69,8 @@ import { dispatchWebhook } from '@/lib/webhooks/dispatcher';
 import { sendWebPushToUser } from '@/lib/server/web-push';
 import { readOrganizationLrsConfig } from '@/lib/server/org-lrs-config';
 import { sendStatement, type XAPIStatement } from '@/lib/telemetry/xapi';
-import { authorizeXapiDelivery, xapiDeliveryId } from '@/lib/telemetry/xapi-delivery';
+import { authorizeXapiDelivery } from '@/lib/telemetry/xapi-delivery';
+import { confirmedCompetencies, deliveryPlan } from '@/lib/telemetry/competency-extensions';
 import {
   claimDueReviewNotifications,
   deliverReviewNotification,
@@ -398,12 +399,18 @@ export function startAllWorkers(): void {
         if (config.endpoint !== item.lrs_target)
           throw new Error('LRS destination changed; pending delivery requires reconciliation');
         if (!(await authorizeXapiDelivery(item.id))) return;
-        const sent = await sendStatement(
-          item.statement as unknown as XAPIStatement,
-          config,
-          xapiDeliveryId(item.org_id, item.dedupe_key),
+        const statement = item.statement as unknown as XAPIStatement;
+        const plan = deliveryPlan(
+          statement,
+          await confirmedCompetencies(statement, supabase),
+          item.org_id,
+          item.dedupe_key,
         );
-        if (!sent) throw new Error('LRS rejected or did not answer the xAPI statement');
+        // Un relevé par compétence confirmée ; les identités sont stables, un rejeu ne crée aucun doublon.
+        for (const delivery of plan) {
+          const sent = await sendStatement(delivery.statement, config, delivery.statementId);
+          if (!sent) throw new Error('LRS rejected or did not answer the xAPI statement');
+        }
         const { error: updateError } = await supabase
           .from('xapi_outbox')
           .update({ status: 'sent', sent_at: new Date().toISOString(), last_error: null })

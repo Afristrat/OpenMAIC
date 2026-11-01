@@ -255,6 +255,7 @@ When a learner genuinely needs a reusable workbook to complete an exercise, appl
 - When narration will tell the learner to inspect an image, diagram or schema, schedule a suitable source image, generated image, native chart or native table in that same scene. Never describe a visual that the scene does not actually contain.
 - Use a globally unique id such as `resource_1`.
 - `fileName` must end in the extension matching `format`.
+- Write `prompt` entirely in the course language given by the language directive (French for a French course, Arabic for an Arabic course), never in English unless the course is in English. It is visible to the author and drives the language of the generated file.
 - For `xlsx`, `prompt` must specify the workbook sheets, columns, useful example data, formulas if needed, and the learner task precisely enough to generate a production-ready workbook.
 - When the requested exercise is a rolling 13-week cash-flow forecast, set `evaluationProfile` to `"cash-flow-13-week"`. This creates a Python-generated workbook that the learner can upload for deterministic checking. Do not use this profile for another topic or another horizon.
 - For `docx`, `prompt` must specify the required sections, instructions, examples, prompts and learner work areas precisely enough to generate a complete editable document.
@@ -267,7 +268,7 @@ When a learner genuinely needs a reusable workbook to complete an exercise, appl
     "title": "Budget de trésorerie sur 13 semaines",
     "fileName": "tresorerie-13-semaines.xlsx",
     "evaluationProfile": "cash-flow-13-week",
-    "prompt": "Create a rolling 13-week direct cash-flow exercise using internal ISO currency code MAD, with learner-facing French labels written as dirham/dirhams, weekly receipts, payments, opening and closing cash, a safety threshold, one scenario decision, and clear learner instructions."
+    "prompt": "Créer un exercice de trésorerie directe glissante sur 13 semaines, avec le code devise interne MAD et des libellés affichés à l'apprenant en dirhams, les encaissements et décaissements hebdomadaires, la trésorerie d'ouverture et de clôture, un seuil de sécurité, une décision de scénario et des consignes claires pour l'apprenant."
   }
 ]
 ```

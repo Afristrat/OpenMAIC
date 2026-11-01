@@ -1,0 +1,229 @@
+import { z } from 'zod';
+import { requireCourseEditor } from '@/lib/server/course-editor-access';
+import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import type { NextRequest } from 'next/server';
+
+/**
+ * Liens d'une formation et de ses scènes vers le référentiel commun de compétences.
+ * Niveau formation : compétences visées par le cours. Niveau scène : compétences travaillées ou
+ * évaluées, proposées puis confirmées par une personne. On ne stocke que l'URI et la version lue.
+ */
+
+const courseLink = z.object({
+  uri: z.string().min(1).max(500),
+  version: z.string().min(1).max(100),
+  isco08: z
+    .string()
+    .regex(/^[0-9]{4}$/)
+    .optional(),
+  nature: z.enum(['essentielle', 'optionnelle']).default('essentielle'),
+});
+
+const sceneLink = z.object({
+  sceneId: z.string().min(1),
+  uri: z.string().min(1).max(500),
+  version: z.string().min(1).max(100),
+  nature: z.enum(['travaillee', 'evaluee']).default('travaillee'),
+  statut: z.enum(['propose', 'confirme']).default('propose'),
+});
+
+const bodySchema = z
+  .object({
+    course: z.array(courseLink).max(500).optional(),
+    scenes: z.array(sceneLink).max(2000).optional(),
+  })
+  .refine((body) => body.course !== undefined || body.scenes !== undefined);
+
+type Params = { params: Promise<{ courseId: string }> };
+
+export async function GET(request: NextRequest, { params }: Params) {
+  const { courseId } = await params;
+  const access = await requireCourseEditor(request, courseId);
+  if (access.response) return access.response;
+  const { course } = access;
+
+  const supabase = createServiceSupabaseClient();
+  const sceneIds = course.stage_id
+    ? await supabase
+        .from('scenes')
+        .select('id, title, type')
+        .eq('stage_id', course.stage_id)
+        .order('order')
+    : { data: [], error: null };
+  if (sceneIds.error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read scenes');
+
+  const [courseLinks, sceneLinks] = await Promise.all([
+    supabase
+      .from('course_competencies')
+      .select('competency_uri, referential_version, isco_08, nature')
+      .eq('course_id', courseId),
+    supabase
+      .from('scene_competencies')
+      .select('scene_id, competency_uri, referential_version, nature, statut')
+      .in(
+        'scene_id',
+        (sceneIds.data ?? []).map((scene) => scene.id),
+      ),
+  ]);
+  if (courseLinks.error || sceneLinks.error) {
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read competency links');
+  }
+
+  // Titres des compétences liées, pour afficher autre chose qu'une adresse.
+  const linkedUris = [
+    ...new Set([
+      ...(courseLinks.data ?? []).map((link) => link.competency_uri),
+      ...(sceneLinks.data ?? []).map((link) => link.competency_uri),
+    ]),
+  ];
+  const skills = linkedUris.length
+    ? await supabase
+        .from('referentiel_skills')
+        .select('uri, title_fr, title_ar, title_en')
+        .in('uri', linkedUris)
+    : { data: [], error: null };
+  if (skills.error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read skills');
+
+  return apiSuccess({
+    course: courseLinks.data ?? [],
+    scenes: sceneLinks.data ?? [],
+    sceneList: sceneIds.data ?? [],
+    titles: Object.fromEntries(
+      (skills.data ?? []).map((skill) => [
+        skill.uri,
+        { fr: skill.title_fr, ar: skill.title_ar, en: skill.title_en },
+      ]),
+    ),
+  });
+}
+
+export async function PUT(request: NextRequest, { params }: Params) {
+  const { courseId } = await params;
+  const access = await requireCourseEditor(request, courseId);
+  if (access.response) return access.response;
+  const { course, user } = access;
+
+  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid body');
+  const { course: courseItems, scenes: sceneItems } = parsed.data;
+
+  const supabase = createServiceSupabaseClient();
+
+  if (courseItems) {
+    const rows = courseItems.map((item) => ({
+      course_id: courseId,
+      org_id: course.org_id,
+      competency_uri: item.uri,
+      referential_version: item.version,
+      isco_08: item.isco08 ?? null,
+      nature: item.nature,
+      created_by: user.id,
+    }));
+    if (rows.length > 0) {
+      const { error: upsertError } = await supabase
+        .from('course_competencies')
+        .upsert(rows, { onConflict: 'course_id,competency_uri' });
+      if (upsertError) {
+        return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to save course competencies');
+      }
+    }
+    // Insérer d'abord puis retirer : un échec en cours de route laisse un sur-ensemble, jamais un trou.
+    const kept = courseItems.map((item) => item.uri);
+    const removal = supabase.from('course_competencies').delete().eq('course_id', courseId);
+    const { error: deleteError } = await (kept.length > 0
+      ? removal.not(
+          'competency_uri',
+          'in',
+          `(${kept.map((uri) => `"${uri.replace(/"/g, '\\"')}"`).join(',')})`,
+        )
+      : removal);
+    if (deleteError) {
+      return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to prune course competencies');
+    }
+  }
+
+  if (sceneItems) {
+    const ids = [...new Set(sceneItems.map((item) => item.sceneId))];
+    if (ids.length > 0) {
+      if (!course.stage_id) {
+        return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Course has no classroom');
+      }
+      const { data: owned, error: scenesError } = await supabase
+        .from('scenes')
+        .select('id')
+        .eq('stage_id', course.stage_id)
+        .in('id', ids);
+      if (scenesError)
+        return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read scenes');
+      if ((owned ?? []).length !== ids.length) {
+        return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Unknown scene for this course');
+      }
+      const now = new Date().toISOString();
+      const rows = sceneItems.map((item) => ({
+        scene_id: item.sceneId,
+        org_id: course.org_id,
+        competency_uri: item.uri,
+        referential_version: item.version,
+        nature: item.nature,
+        statut: item.statut,
+        confirmed_by: item.statut === 'confirme' ? user.id : null,
+        confirmed_at: item.statut === 'confirme' ? now : null,
+      }));
+      const { error: upsertError } = await supabase
+        .from('scene_competencies')
+        .upsert(rows, { onConflict: 'scene_id,competency_uri,nature' });
+      if (upsertError) {
+        return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to save scene competencies');
+      }
+    }
+  }
+
+  return apiSuccess({
+    courseId,
+    course: courseItems?.length ?? null,
+    scenes: sceneItems?.length ?? null,
+  });
+}
+
+const removalSchema = z.object({
+  sceneId: z.string().min(1),
+  uri: z.string().min(1).max(500),
+  nature: z.enum(['travaillee', 'evaluee']),
+});
+
+/** Retire un lien scène vers compétence, proposé ou confirmé. */
+export async function DELETE(request: NextRequest, { params }: Params) {
+  const { courseId } = await params;
+  const access = await requireCourseEditor(request, courseId);
+  if (access.response) return access.response;
+  const { course } = access;
+
+  const parsed = removalSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success || !course.stage_id) {
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invalid body');
+  }
+  const { sceneId, uri, nature } = parsed.data;
+
+  const supabase = createServiceSupabaseClient();
+  const { data: owned, error: sceneError } = await supabase
+    .from('scenes')
+    .select('id')
+    .eq('stage_id', course.stage_id)
+    .eq('id', sceneId)
+    .maybeSingle();
+  if (sceneError) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read scene');
+  if (!owned)
+    return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Unknown scene for this course');
+
+  const { error: deleteError } = await supabase
+    .from('scene_competencies')
+    .delete()
+    .eq('scene_id', sceneId)
+    .eq('competency_uri', uri)
+    .eq('nature', nature);
+  if (deleteError) {
+    return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to remove the scene link');
+  }
+  return apiSuccess({ removed: true });
+}
