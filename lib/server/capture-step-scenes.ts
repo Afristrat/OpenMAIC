@@ -140,9 +140,9 @@ export async function addCaptureStepsToCourse(input: {
     throw new CaptureStepScenesError('NO_STEPS', 'Aucune étape validée avec capture.');
   }
 
-  const agentId = kept
+  const [agentId] = kept
     .flatMap((scene) => scene.actions ?? [])
-    .find((action) => action.type === 'speech' && action.agentId)?.agentId;
+    .flatMap((action) => (action.type === 'speech' && action.agentId ? [action.agentId] : []));
   const firstOrder = kept.reduce((highest, scene) => Math.max(highest, scene.order), 0) + 1;
   const created = buildCaptureStepScenes({
     stageId: input.stageId,

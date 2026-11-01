@@ -4,6 +4,7 @@
  * est donc exactement ce qui est montré. Aucun modèle n'intervient : la sortie est déterministe.
  */
 
+import type { PPTElement } from '@openmaic/dsl';
 import type { Scene } from '@/lib/types/stage';
 
 export const CAPTURE_SCENE_PREFIX = 'capture_';
@@ -175,7 +176,7 @@ export function buildCaptureStepScenes(input: {
     const markerId = `marker_${step.id}`;
     const captionId = `caption_${step.id}`;
 
-    const elements: Array<Record<string, unknown>> = [
+    const elements: PPTElement[] = [
       {
         id: titleId,
         type: 'text',
@@ -229,8 +230,6 @@ export function buildCaptureStepScenes(input: {
       defaultFontName: 'Microsoft YaHei',
     });
 
-    // Assertion assumée : `Scene` impose les types d'éléments et d'actions de l'éditeur, dont ces
-    // objets sont la forme persistée ; le test de la brique vérifie les champs lus à la lecture.
     return {
       id: sceneId,
       stageId: input.stageId,
@@ -265,6 +264,6 @@ export function buildCaptureStepScenes(input: {
           ...(input.agentId ? { agentId: input.agentId } : {}),
         },
       ],
-    } as Scene;
+    };
   });
 }
