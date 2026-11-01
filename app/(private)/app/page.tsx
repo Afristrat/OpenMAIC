@@ -51,6 +51,8 @@ import { SettingsDialog } from '@/components/settings';
 import { GenerationToolbar } from '@/components/generation/generation-toolbar';
 import { clearPersistedSourceSelection } from '@/components/generation/source-library-popover';
 import { LearningContextPicker } from '@/components/generation/LearningContextPicker';
+import { CompetencyFrameworkPicker } from '@/components/generation/competency-framework-picker';
+import type { CompetencyFrameworkInput } from '@/lib/referentiel/plan-framework';
 import { OutlinesEditor, type SyllabusAssistTarget } from '@/components/generation/outlines-editor';
 import {
   SourceConflictDialog,
@@ -469,6 +471,9 @@ function HomePage() {
   const [themeOpen, setThemeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlanning, setIsPlanning] = useState(false);
+  // Métier ESCO visé et compétences : exigés dès le plan et à la création.
+  const [framework, setFramework] = useState<CompetencyFrameworkInput | null>(null);
+  const [frameworkMissing, setFrameworkMissing] = useState(false);
   const [planTracking, setPlanTracking] = useState<GenerationTrackerProps | null>(null);
   const [designSystemEnabled, setDesignSystemEnabled] = useState<boolean | undefined>(undefined);
   const [brandCharter, setBrandCharter] = useState<BrandCharter | null>(null);
@@ -832,6 +837,7 @@ function HomePage() {
       learningApproach,
       interactionLevel,
       learningContext: normalizeLearningContext(form.learningContext),
+      ...(framework ? { competencyFramework: framework } : {}),
       requirement: input.requirement,
       enableWebSearch: form.webSearch,
       enableImageGeneration: imageGenerationEnabled,
@@ -1028,6 +1034,11 @@ function HomePage() {
       setError(t('animation.selectionRequired'));
       return;
     }
+    if (!framework) {
+      setFrameworkMissing(true);
+      setError(t('framework.required'));
+      return;
+    }
     if (sourceIngestionBlocked) {
       setError(t('sources.resolveRejected'));
       return;
@@ -1090,6 +1101,13 @@ function HomePage() {
         throw new Error(insufficientCreditsMessage(result));
       }
       if (!response.ok || !result.jobId) {
+        if (
+          typeof result.details === 'string' &&
+          result.details.startsWith('COMPETENCY_FRAMEWORK')
+        ) {
+          setFrameworkMissing(true);
+          throw new Error(result.error || t('framework.required'));
+        }
         throw new Error(result.details || result.error || t('generation.planGenerationFailed'));
       }
       const location = new URL(window.location.href);
@@ -1137,6 +1155,16 @@ function HomePage() {
 
   const handleConfirmPlan = async () => {
     if (!draftPlan || !pendingGenerationRequest || isStartingGeneration) return;
+    // Une formation déjà enregistrée peut porter ses compétences : le serveur tranche. Toute autre reprise exige le cadre.
+    if (
+      !framework &&
+      !pendingGenerationRequest.competencyFramework &&
+      !pendingGenerationRequest.courseId
+    ) {
+      setFrameworkMissing(true);
+      setError(t('framework.required'));
+      return;
+    }
     setIsStartingGeneration(true);
     setError(null);
     try {
@@ -1150,7 +1178,11 @@ function HomePage() {
           'Content-Type': 'application/json',
           'Idempotency-Key': crypto.randomUUID(),
         },
-        body: JSON.stringify({ ...pendingGenerationRequest, approvedPlan: draftPlan }),
+        body: JSON.stringify({
+          ...pendingGenerationRequest,
+          ...(framework ? { competencyFramework: framework } : {}),
+          approvedPlan: draftPlan,
+        }),
       });
       const result = await response.json();
       if (response.status === 402) {
@@ -1158,6 +1190,13 @@ function HomePage() {
         throw new Error(insufficientCreditsMessage(result));
       }
       if (!response.ok || !result.jobId) {
+        if (
+          typeof result.details === 'string' &&
+          result.details.startsWith('COMPETENCY_FRAMEWORK')
+        ) {
+          setFrameworkMissing(true);
+          throw new Error(result.error || t('framework.required'));
+        }
         throw new Error(result.details || result.error || t('upload.generateFailed'));
       }
       if (typeof pendingGenerationRequest.sourceManifestId === 'string') {
@@ -1338,6 +1377,16 @@ function HomePage() {
                 status={creditStatus}
                 rechecking={creditRefreshing}
                 onRecheck={() => void refreshCredits()}
+              />
+            </div>
+            <div className="px-4 pt-4 md:px-8">
+              <CompetencyFrameworkPicker
+                value={framework}
+                onChange={(next) => {
+                  setFramework(next);
+                  if (next) setFrameworkMissing(false);
+                }}
+                invalid={frameworkMissing && !framework}
               />
             </div>
             <OutlinesEditor
@@ -1758,6 +1807,17 @@ function HomePage() {
             </div>
           </div>
         </motion.div>
+
+        <div className="mt-3 w-full px-1" data-testid="competency-framework">
+          <CompetencyFrameworkPicker
+            value={framework}
+            onChange={(next) => {
+              setFramework(next);
+              if (next) setFrameworkMissing(false);
+            }}
+            invalid={frameworkMissing && !framework}
+          />
+        </div>
 
         <div
           className="mt-2 flex w-full flex-wrap items-center gap-2 px-1"

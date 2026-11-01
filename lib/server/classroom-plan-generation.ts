@@ -25,6 +25,8 @@ import { normalizePdfImages } from '@/lib/server/pdf-source';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
 import { assertCourseGenerationAccess } from '@/lib/server/course-generation-access';
 import { loadCaptureDirective } from '@/lib/server/capture-directive';
+import { frameworkDirective } from '@/lib/referentiel/plan-framework';
+import { resolveCompetencyFramework } from '@/lib/server/plan-framework';
 import { optimizationReportSchema } from '@/lib/generation/optimization-report';
 import { isDesignSystemV1Enabled } from '@/lib/branding/design-directive';
 import {
@@ -100,6 +102,11 @@ export async function generateClassroomPlan(
   if (optimizationDirective) requirements.requirement += `\n\n${optimizationDirective}`;
   const captureDirective = await loadCaptureDirective(input);
   if (captureDirective) requirements.requirement += `\n\n${captureDirective}`;
+  // Le plan part du référentiel : le métier ESCO visé et ses compétences orientent objectifs et scènes.
+  if (input.competencyFramework) {
+    const framework = await resolveCompetencyFramework(input.competencyFramework);
+    requirements.requirement += `\n\n${frameworkDirective(framework)}`;
+  }
   const resolved = await resolveModel(
     input.modelString ? { modelString: input.modelString } : { stage: 'generate-classroom' },
   );

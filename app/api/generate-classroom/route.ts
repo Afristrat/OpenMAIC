@@ -13,6 +13,8 @@ import { validateBody } from '@/lib/api/validate';
 import { generateClassroomSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
 import type { TTSProviderId } from '@/lib/audio/types';
+import { FrameworkError } from '@/lib/referentiel/plan-framework';
+import { requireCompetencyFramework } from '@/lib/server/plan-framework';
 import { enqueueClassroomGeneration } from '@/lib/jobs/queue';
 import {
   assertCourseGenerationAccess,
@@ -37,6 +39,11 @@ export async function POST(req: NextRequest) {
     const auth = await requireSuperAdminOrOrgAuthor(req, parsed.orgId);
     if (auth.response) return auth.response;
     await assertCourseGenerationAccess(parsed, auth.user.id);
+    // Métier ESCO et compétences visées : exigés à la création, vérifiés contre le référentiel.
+    await requireCompetencyFramework({
+      courseId: parsed.courseId,
+      framework: parsed.competencyFramework,
+    });
     const creditRejection = await rejectIfInsufficientCredits(parsed.orgId);
     if (creditRejection) return creditRejection;
 
@@ -95,6 +102,7 @@ export async function POST(req: NextRequest) {
         : {}),
       ...(parsed.activeSkillId ? { activeSkillId: parsed.activeSkillId } : {}),
       ...(parsed.approvedPlan ? { approvedPlan: parsed.approvedPlan } : {}),
+      ...(parsed.competencyFramework ? { competencyFramework: parsed.competencyFramework } : {}),
     };
 
     const baseUrl = buildRequestOrigin(req);
@@ -126,6 +134,9 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     if (error instanceof FreeCourseLimitError)
       return apiError('QUOTA_EXCEEDED', 429, error.message);
+    if (error instanceof FrameworkError) {
+      return apiError('INVALID_REQUEST', 422, error.message, error.code);
+    }
     if (error instanceof CourseAccessError) return apiError('INVALID_REQUEST', 403, error.message);
     log.error(
       `Classroom generation job creation failed [requirement="${requirementSnippet ?? 'unknown'}..."]:`,

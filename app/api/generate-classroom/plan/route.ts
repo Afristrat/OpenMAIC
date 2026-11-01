@@ -12,6 +12,8 @@ import {
 } from '@/lib/server/classroom-plan-job-store';
 import { enqueueClassroomPlan } from '@/lib/jobs/queue';
 import type { TTSProviderId } from '@/lib/audio/types';
+import { FrameworkError } from '@/lib/referentiel/plan-framework';
+import { requireCompetencyFramework } from '@/lib/server/plan-framework';
 import {
   assertCourseGenerationAccess,
   CourseAccessError,
@@ -31,6 +33,11 @@ export async function POST(request: NextRequest) {
     const auth = await requireSuperAdminOrOrgAuthor(request, parsed.orgId);
     if (auth.response) return auth.response;
     await assertCourseGenerationAccess(parsed, auth.user.id);
+    // Métier ESCO et compétences visées : exigés dès le plan, vérifiés contre le référentiel.
+    await requireCompetencyFramework({
+      courseId: parsed.courseId,
+      framework: parsed.competencyFramework,
+    });
     const creditRejection = await rejectIfInsufficientCredits(parsed.orgId);
     if (creditRejection) return creditRejection;
 
@@ -76,6 +83,7 @@ export async function POST(request: NextRequest) {
           )
         : undefined,
       activeSkillId: parsed.activeSkillId,
+      ...(parsed.competencyFramework ? { competencyFramework: parsed.competencyFramework } : {}),
     };
 
     jobId = `plan-${nanoid(10)}`;
@@ -100,6 +108,9 @@ export async function POST(request: NextRequest) {
       202,
     );
   } catch (error) {
+    if (error instanceof FrameworkError) {
+      return apiError('INVALID_REQUEST', 422, error.message, error.code);
+    }
     if (error instanceof CourseAccessError) return apiError('INVALID_REQUEST', 403, error.message);
     return apiError(
       'INTERNAL_ERROR',

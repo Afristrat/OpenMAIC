@@ -9,6 +9,7 @@ import { optimizationReportSchema } from '@/lib/generation/optimization-report';
 import { isIso4217CurrencyCode } from '@/lib/formation-engine/learning-context';
 import { designDirectiveSchema } from '@/lib/branding/design-directive';
 import { safeHttpUrl } from '@/lib/utils/safe-url';
+import { competencyFrameworkSchema } from '@/lib/referentiel/plan-framework';
 
 // ---------------------------------------------------------------------------
 // Organizations
@@ -670,6 +671,8 @@ export const generateClassroomSchema = z
       .optional(),
     activeSkillId: z.string().min(1).max(120).optional(),
     approvedPlan: approvedClassroomPlanSchema.optional(),
+    /** Métier ESCO et compétences visées : exigés par les routes de plan et de création. */
+    competencyFramework: competencyFrameworkSchema.optional(),
   })
   .refine((input) => !(input.sourceManifestId && input.pdfContent), {
     message: 'sourceManifestId and pdfContent are mutually exclusive',

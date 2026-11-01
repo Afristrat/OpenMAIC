@@ -32,6 +32,8 @@ import { enrichSourcesWithCrawl4AI } from '@/lib/server/crawl4ai';
 import type { BaiduSubSources, WebSearchProviderId } from '@/lib/web-search/types';
 import { persistClassroom } from '@/lib/server/classroom-storage';
 import { persistGeneratedCourse, type CourseLocale } from '@/lib/server/course-storage';
+import type { CompetencyFrameworkInput } from '@/lib/referentiel/plan-framework';
+import { resolveCompetencyFramework, saveCourseCompetencies } from '@/lib/server/plan-framework';
 import {
   assertCourseGenerationAccess,
   resolveGenerationResourceOwner,
@@ -144,6 +146,8 @@ export interface GenerateClassroomInput {
   learningContext?: LearningContext;
   /** Persisted courses from S1-003 override the deterministic current-flow identity. */
   courseId?: string;
+  /** ESCO occupation and target skills, verified by the plan and creation routes. */
+  competencyFramework?: CompetencyFrameworkInput;
   /** Immutable selection snapshot from the organization source library. */
   sourceManifestId?: string;
   language?: CourseLocale;
@@ -1245,7 +1249,7 @@ export async function generateClassroom(
       options.baseUrl,
     );
     await assertCourseGenerationAccess(input, options.ownerId);
-    await persistGeneratedCourse({
+    const persistedCourseId = await persistGeneratedCourse({
       courseId: input.courseId,
       ownerId: resourceOwnerId,
       orgId: input.orgId,
@@ -1262,6 +1266,17 @@ export async function generateClassroom(
       sourceManifestId: resolvedSources.manifest?.id,
       plan: { ...outlinesResult.data, outlines },
     });
+
+    // Le cadre a été exigé et vérifié avant la mise en file (routes de plan et de création) ; ici il est
+    // relu dans le miroir puis enregistré avec la formation, jamais cru sur parole.
+    if (input.competencyFramework) {
+      await saveCourseCompetencies({
+        courseId: persistedCourseId,
+        orgId: input.orgId,
+        userId: resourceOwnerId,
+        framework: await resolveCompetencyFramework(input.competencyFramework),
+      });
+    }
 
     log.info(`Classroom persisted: ${persisted.id}, URL: ${persisted.url}`);
 
