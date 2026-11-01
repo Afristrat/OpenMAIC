@@ -38,6 +38,7 @@ type Titles = z.infer<typeof titles>;
 
 const ESCO_OCCUPATION_PREFIX = 'http://data.europa.eu/esco/occupation/';
 const MIN_QUERY_LENGTH = 2;
+const ISCO_QUERY = /^[0-9]{1,4}$/;
 
 function pickTitle(value: Titles, locale: string): string {
   if (locale.startsWith('ar') && value.ar) return value.ar;
@@ -100,7 +101,9 @@ export function CompetencyFrameworkPicker({
     }
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      void fetch(`/api/referentiel/occupations?q=${encodeURIComponent(text)}&limit=8`, {
+      // Un code de 1 à 4 chiffres cherche par groupe ISCO-08 : issue quand le titre du métier est introuvable.
+      const search = ISCO_QUERY.test(text) ? `isco=${text}` : `q=${encodeURIComponent(text)}`;
+      void fetch(`/api/referentiel/occupations?${search}&limit=8`, {
         signal: controller.signal,
         cache: 'no-store',
       })
