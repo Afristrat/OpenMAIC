@@ -26,6 +26,8 @@ const log = createLogger('CoherenceCheck');
 
 export const maxDuration = 300;
 
+const MAX_VERDICT_TOKENS = 1200;
+
 type SceneReport = {
   sceneId: string;
   title: string;
@@ -96,6 +98,8 @@ export async function POST(
             {
               model,
               system,
+              // Un verdict tient en quelques centaines de jetons : borner la sortie borne aussi la réservation de crédits.
+              maxOutputTokens: MAX_VERDICT_TOKENS,
               messages: [
                 {
                   role: 'user',
