@@ -6,7 +6,12 @@ export function exportJobArtifactPath(
   exportJobId: string,
   format: ExportJobFormat,
 ): string {
-  // L'export MP4 livre un fichier par chapitre, réunis dans une archive ZIP.
-  const extension = format === 'mp4' ? 'zip' : trackingAdapters[format].archiveExtension;
+  // `mp4` livre un fichier par chapitre réunis dans une archive ZIP ; `video` est le cours en un seul MP4.
+  const extension =
+    format === 'video'
+      ? 'mp4'
+      : format === 'mp4'
+        ? 'zip'
+        : trackingAdapters[format].archiveExtension;
   return `${stageId}/${exportJobId}.${extension}`;
 }

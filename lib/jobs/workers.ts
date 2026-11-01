@@ -607,9 +607,20 @@ export function startAllWorkers(): void {
           await supabase.from('export_jobs').update({ status: 'generating' }).eq('id', exportJobId);
 
           const isMp4 = exportJob.format === 'mp4';
+          const isVideo = exportJob.format === 'video';
           let file: Buffer;
           let sceneCount: number;
-          if (isMp4) {
+          if (isVideo) {
+            const result = await buildClassroomVideo(exportJob.stage_id as string, (progress) =>
+              reportExportProgress(supabase, exportJobId, {
+                phase: progress.phase,
+                progress_done: progress.done,
+                progress_total: progress.total,
+              }),
+            );
+            file = result.video;
+            sceneCount = result.sceneCount;
+          } else if (isMp4) {
             // L'avancement alimente l'écran de l'auteur ; son échec ne doit jamais interrompre le rendu.
             const result = await buildClassroomChapterVideos(
               exportJob.stage_id as string,
@@ -640,7 +651,7 @@ export function startAllWorkers(): void {
           const { error: uploadError } = await supabase.storage
             .from('exports')
             .upload(storagePath, file, {
-              contentType: 'application/zip',
+              contentType: isVideo ? 'video/mp4' : 'application/zip',
               upsert: true,
             });
           if (uploadError) {

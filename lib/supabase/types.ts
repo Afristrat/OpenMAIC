@@ -606,7 +606,7 @@ export type VideoCapsuleUpdate = Partial<
 // Export Jobs (chantier 1 — CRÉER, S1-007, packages SCORM/cmi5)
 // ---------------------------------------------------------------------------
 
-export type ExportJobFormat = 'scorm12' | 'scorm2004' | 'cmi5' | 'mp4';
+export type ExportJobFormat = 'scorm12' | 'scorm2004' | 'cmi5' | 'mp4' | 'video';
 
 export type ExportJobStatus = 'queued' | 'generating' | 'done' | 'error';
 

@@ -29,7 +29,7 @@ const QUEUED_REUSE_WINDOW_MS = 30 * 60 * 1000;
 /** Un job en cours n'est repris que s'il a donné signe de vie récemment (chaque scène rendue le met à jour). */
 const ACTIVE_REUSE_WINDOW_MS = 20 * 60 * 1000;
 
-const SUPPORTED_FORMATS: ExportJobFormat[] = ['scorm12', 'scorm2004', 'cmi5', 'mp4'];
+const SUPPORTED_FORMATS: ExportJobFormat[] = ['scorm12', 'scorm2004', 'cmi5', 'mp4', 'video'];
 
 interface CreateExportJobBody {
   stageId?: string;
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       return apiError(
         'MISSING_SPEECH_AUDIO',
         422,
-        missingSpeechAudioMessage(voices, format === 'mp4' ? 'MP4' : 'LMS'),
+        missingSpeechAudioMessage(voices, format === 'mp4' || format === 'video' ? 'MP4' : 'LMS'),
       );
     }
 
