@@ -47,6 +47,24 @@ export function estimateMaxInputTokens(
 }
 
 /**
+ * Sérialisation d'une requête pour mesurer son entrée. Les octets d'une image ou d'un fichier ne
+ * sont pas du texte : un `Buffer` s'écrit en JSON comme une liste de nombres (3 à 4 caractères par
+ * octet) et une capture de 100 Ko réservait alors près de 40 crédits pour 1 500 jetons réels. Ces
+ * contenus sont comptés une fois, par le forfait de MULTIMODAL_PART_TOKEN_ALLOWANCE par partie.
+ */
+export function serializeRequestForReservation(request: unknown): string {
+  return JSON.stringify(request, (_key, value: unknown) => {
+    if (value instanceof Uint8Array) return { binaryBytes: value.byteLength };
+    if (typeof value === 'object' && value !== null) {
+      const { type, data } = value as { type?: unknown; data?: unknown };
+      if (type === 'Buffer' && Array.isArray(data)) return { binaryBytes: data.length };
+    }
+    if (typeof value === 'string' && value.startsWith('data:')) return { dataUrl: true };
+    return value;
+  });
+}
+
+/**
  * Les appelants passent la fenêtre de sortie du modèle (32 768 pour kimi-k2.6, 128 000 pour
  * d'autres) : c'est cette valeur, et non le défaut, qui a produit la réservation de 22,5
  * crédits du 2026-10-24. Toute demande est donc bornée au plafond mesuré, et le même plafond

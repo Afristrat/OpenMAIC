@@ -28,6 +28,7 @@ import {
   clampToReservedQuantity,
   estimateMaxInputTokens,
   resolveMeteredMaxOutputTokens,
+  serializeRequestForReservation,
   TOOL_SCHEMA_FALLBACK_BYTES,
 } from '@/lib/billing/llm-reservation';
 import { recordReservationOverrun } from '@/lib/billing/reservation-overruns';
@@ -200,7 +201,7 @@ function multimodalPartCount(params: GenerateTextParams | StreamTextParams): num
 }
 
 function maxInputTokens(params: GenerateTextParams | StreamTextParams): number {
-  const serialized = JSON.stringify(_extractRequestInfo(params));
+  const serialized = serializeRequestForReservation(_extractRequestInfo(params));
   return estimateMaxInputTokens(new TextEncoder().encode(serialized).byteLength, {
     toolSchemaBytes: toolSchemaBytes(params),
     multimodalParts: multimodalPartCount(params),

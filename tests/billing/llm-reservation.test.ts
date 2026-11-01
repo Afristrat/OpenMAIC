@@ -7,6 +7,7 @@ import {
   clampToReservedQuantity,
   estimateMaxInputTokens,
   resolveMeteredMaxOutputTokens,
+  serializeRequestForReservation,
 } from '@/lib/billing/llm-reservation';
 
 // Débit mesuré en production (973 appels réglés) : sortie max 14 855 jetons, entrée max 27 195.
@@ -63,5 +64,36 @@ describe('réservation LLM réaliste', () => {
       base + 2 * MULTIMODAL_PART_TOKEN_ALLOWANCE,
     );
     expect(TOOL_SCHEMA_FALLBACK_BYTES).toBeGreaterThan(0);
+  });
+});
+
+describe("sérialisation d'une requête pour la réservation", () => {
+  it("ne compte pas les octets d'une image comme du texte (une capture de 100 Ko ne réserve pas 40 crédits)", () => {
+    const image = Buffer.alloc(100_000, 7);
+    const serialized = serializeRequestForReservation({
+      system: 'Vérifie la cohérence.',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Narration' },
+            { type: 'image', image },
+          ],
+        },
+      ],
+    });
+    expect(serialized.length).toBeLessThan(500);
+    expect(serialized).toContain('Narration');
+    expect(serialized).toContain('"binaryBytes":100000');
+  });
+
+  it('traite de même un Uint8Array et une URL data:, mais garde le texte intact', () => {
+    expect(serializeRequestForReservation({ image: new Uint8Array(5_000) })).toBe(
+      '{"image":{"binaryBytes":5000}}',
+    );
+    expect(
+      serializeRequestForReservation({ url: `data:image/png;base64,${'A'.repeat(90_000)}` }),
+    ).toBe('{"url":{"dataUrl":true}}');
+    expect(serializeRequestForReservation({ text: 'Bonjour' })).toBe('{"text":"Bonjour"}');
   });
 });
