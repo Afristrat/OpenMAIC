@@ -23,8 +23,7 @@ export async function readReferentielSkills(
     const { data, error } = await supabase
       .from('referentiel_skills')
       .select('uri, title_fr, title_ar, title_en')
-      .in('uri', uris.slice(start, start + SKILL_BATCH_SIZE))
-      .returns<ReferentielSkillRow[]>();
+      .in('uri', uris.slice(start, start + SKILL_BATCH_SIZE));
     if (error) return { data: [], error };
     rows.push(...(data ?? []));
   }

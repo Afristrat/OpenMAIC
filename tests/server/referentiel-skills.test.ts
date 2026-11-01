@@ -9,19 +9,17 @@ function fakeClient(batches: Batch[], failAt?: number): SupabaseClient {
   return {
     from: () => ({
       select: () => ({
-        in: (_column: string, uris: Batch) => ({
-          returns: async () => {
-            batches.push(uris);
-            if (failAt === batches.length) return { data: null, error: { message: 'boom' } };
-            return {
-              data: uris.map((uri) => ({ uri, title_fr: uri, title_ar: null, title_en: null })),
-              error: null,
-            };
-          },
-        }),
+        in: async (_column: string, uris: Batch) => {
+          batches.push(uris);
+          if (failAt === batches.length) return { data: null, error: { message: 'boom' } };
+          return {
+            data: uris.map((uri) => ({ uri, title_fr: uri, title_ar: null, title_en: null })),
+            error: null,
+          };
+        },
       }),
     }),
-  } as unknown as SupabaseClient; // faux client minimal : seule la chaîne from/select/in/returns est utilisée
+  } as unknown as SupabaseClient; // faux client minimal : seule la chaîne from/select/in est utilisée
 }
 
 describe('readReferentielSkills', () => {
