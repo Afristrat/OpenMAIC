@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 
 const ORG_ID = '00000000-0000-4000-8000-000000000015';
+const FRAMEWORK = {
+  occupationUri: 'http://data.europa.eu/esco/occupation/11111111-1111-4111-8111-111111111111',
+  skillUris: ['http://data.europa.eu/esco/skill/a'],
+};
 
 const mocks = vi.hoisted(() => ({
   persistClassroom: vi.fn(),
@@ -18,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   download: vi.fn(),
   createGenerationJob: vi.fn(),
   enqueueGeneration: vi.fn(),
+  requireFramework: vi.fn(),
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -68,10 +73,15 @@ vi.mock('@/lib/billing/credit-preflight', () => ({
 
 vi.mock('@/lib/jobs/queue', () => ({ enqueueClassroomGeneration: mocks.enqueueGeneration }));
 
+vi.mock('@/lib/server/plan-framework', () => ({
+  requireCompetencyFramework: mocks.requireFramework,
+}));
+
 import { GET as getClassroom, POST as postClassroom } from '@/app/api/classroom/route';
 import { GET as getClassroomMedia } from '@/app/api/classroom-media/[classroomId]/[...path]/route';
 import { GET as getClassroomResource } from '@/app/r/[classroomId]/[resourceId]/[fileName]/route';
 import { POST as generateClassroom } from '@/app/api/generate-classroom/route';
+import { FrameworkError } from '@/lib/referentiel/plan-framework';
 
 function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -103,6 +113,7 @@ describe('classroom tenant boundary', () => {
     mocks.readClassroomOwnership.mockResolvedValue({ ownerId: 'session-owner', orgId: ORG_ID });
     mocks.isClassroomPublic.mockResolvedValue(false);
     mocks.listClassrooms.mockResolvedValue([]);
+    mocks.requireFramework.mockResolvedValue(null);
   });
 
   it('derives ownerId from the authenticated session and ignores an injected ownerId', async () => {
@@ -263,6 +274,35 @@ describe('classroom tenant boundary', () => {
     expect(mocks.enqueueGeneration).not.toHaveBeenCalled();
   });
 
+  it('refuses a creation without the ESCO occupation and target skills, before any job exists', async () => {
+    mocks.requireFramework.mockRejectedValueOnce(
+      new FrameworkError('COMPETENCY_FRAMEWORK_REQUIRED', 'Choisissez le métier ESCO visé.'),
+    );
+
+    const response = await generateClassroom(
+      new NextRequest('https://qalem.ma/api/generate-classroom', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: ORG_ID,
+          requirement: 'Former une cohorte au pilotage budgétaire',
+          learningApproach: 'andragogy',
+          interactionLevel: 'balanced',
+          learningContext: { territory: 'Maroc', currencyCode: 'mad' },
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ details: 'COMPETENCY_FRAMEWORK_REQUIRED' });
+    expect(mocks.requireFramework).toHaveBeenCalledWith({
+      courseId: undefined,
+      framework: undefined,
+    });
+    expect(mocks.createGenerationJob).not.toHaveBeenCalled();
+    expect(mocks.enqueueGeneration).not.toHaveBeenCalled();
+  });
+
   it('persists per-agent voice choices in the durable generation job', async () => {
     mocks.createGenerationJob.mockResolvedValue({
       status: 'queued',
@@ -284,6 +324,7 @@ describe('classroom tenant boundary', () => {
           learningApproach: 'andragogy',
           interactionLevel: 'balanced',
           learningContext: { territory: 'Maroc', currencyCode: 'mad' },
+          competencyFramework: FRAMEWORK,
           agentVoiceOverrides,
         }),
       }),
@@ -295,6 +336,7 @@ describe('classroom tenant boundary', () => {
       expect.objectContaining({
         orgId: ORG_ID,
         learningContext: { territory: 'Maroc', currencyCode: 'MAD' },
+        competencyFramework: FRAMEWORK,
         agentVoiceOverrides,
       }),
       'session-owner',
