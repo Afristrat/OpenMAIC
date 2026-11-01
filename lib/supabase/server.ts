@@ -17,7 +17,14 @@ export async function createServerSupabaseClient() {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-        cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        // Next refuses cookie writes while a Server Component renders. A session refresh triggered there
+        // raised outside any try/catch and left the render pending until Cloudflare cut it with a 524.
+        // The refreshed cookie is written by route handlers and the proxy; here the write is skipped.
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        } catch {
+          // Called from a Server Component: nothing to persist, the caller handles the missing session.
+        }
       },
     },
   });
