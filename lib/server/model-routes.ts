@@ -133,6 +133,7 @@ export const LLM_STAGES = [
   'capture-decision',
   'widget-composition',
   'competency-links',
+  'coherence-check',
 ] as const;
 
 export type LlmStage = (typeof LLM_STAGES)[number];
