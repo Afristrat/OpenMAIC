@@ -49,6 +49,8 @@ x-qalem-environment: &qalem-environment
   # Les workers n'ont pas accès au DNS public Supabase depuis leur réseau
   # Coolify. Kong partage l'alias interne persistant sur ce même réseau.
   SUPABASE_INTERNAL_URL: http://qalem-internal-kong:8000
+  # Clé de Qalem auprès du serveur Higgs (une clé par consommateur côté Higgs).
+  TTS_HIGGS_API_KEY: ${TTS_HIGGS_API_KEY:-}
   TTS_HIGGS_BASE_URL: ${TTS_HIGGS_BASE_URL}
   TTS_HIGGS_MODELS: ${TTS_HIGGS_MODELS}
   VIDEO_COMFYUI_BASE_URL: ${VIDEO_COMFYUI_BASE_URL}
