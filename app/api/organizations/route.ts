@@ -12,6 +12,7 @@ import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response
 import { validateBody } from '@/lib/api/validate';
 import { organizationsCreateSchema } from '@/lib/api/schemas';
 import { isSuperAdminEmail, requireSuperAdmin } from '@/lib/api/auth';
+import { claimPendingInvitations } from '@/lib/server/claim-pending-invitations';
 
 export async function GET(): Promise<Response> {
   const supabase = await createServerSupabaseClient();
@@ -23,6 +24,10 @@ export async function GET(): Promise<Response> {
   if (authError || !user) {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 401, 'Authentication required');
   }
+
+  // Premier appel de toute session : une invitation en attente pour ce compte est appliquée ici,
+  // sans lien à ouvrir. Elle n'est jamais bloquante pour la liste.
+  await claimPendingInvitations(user).catch(() => 0);
 
   // A platform super-administrator is deliberately not made a member of every
   // tenant. It still needs an organization context to preview voices and
