@@ -79,6 +79,7 @@ import { CreditStatusNotice } from '@/components/billing/credit-status-notice';
 import { formatCredits, readInsufficientCredits } from '@/lib/billing/credit-status-view';
 import { TemplateSelector } from '@/components/org/template-selector';
 import { tryCreateClient } from '@/lib/supabase/client';
+import { canPublishToLibrary } from '@/lib/org/can-publish-to-library';
 import { publishStagesToLibrary, summarizePublication } from '@/lib/org/publish-to-library';
 import { supabaseShareRepository } from '@/lib/org/supabase-share-repository';
 import { db } from '@/lib/utils/database';
@@ -632,9 +633,8 @@ function HomePage() {
     }
   };
 
-  // Publication groupée dans la bibliothèque : mêmes rôles que la base (admin, manager, formateur).
-  const canPublishToLibrary =
-    currentOrg != null && ['admin', 'manager', 'formateur'].includes(currentOrg.userRole);
+  // Publication groupée dans la bibliothèque : mêmes rôles que la base (admin, manager).
+  const canPublishSelection = currentOrg != null && canPublishToLibrary(currentOrg.userRole);
   const [publishMode, setPublishMode] = useState(false);
   const [selectedForLibrary, setSelectedForLibrary] = useState<ReadonlySet<string>>(new Set());
   const [publishing, setPublishing] = useState(false);
@@ -2131,7 +2131,7 @@ function HomePage() {
                 )}
               </AnimatePresence>
 
-              {canPublishToLibrary && classrooms.length > 0 && !publishMode && (
+              {canPublishSelection && classrooms.length > 0 && !publishMode && (
                 <button
                   type="button"
                   onClick={() => setPublishMode(true)}

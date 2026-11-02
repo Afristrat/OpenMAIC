@@ -2,7 +2,7 @@
  * Publication de formations dans la bibliothèque partagée d'une organisation, en un seul geste.
  *
  * Les droits ne sont pas décidés ici : le déclencheur `guard_share` de la base refuse toute
- * publication hors des rôles admin, manager ou formateur, et hors des formations dont l'acteur est
+ * publication hors des rôles admin ou manager, et hors des formations dont l'acteur est
  * propriétaire (ou admin/manager de l'organisation source). Un refus remonte comme `denied`,
  * formation par formation, sans bloquer les autres.
  */

@@ -34,6 +34,7 @@ import {
   Share2,
   User,
 } from 'lucide-react';
+import { canPublishToLibrary } from '@/lib/org/can-publish-to-library';
 import type { OrgMemberRole } from '@/lib/supabase/types';
 
 interface SharedClassroom {
@@ -85,7 +86,7 @@ export default function LibraryPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [isInvitingRecipient, setIsInvitingRecipient] = useState(false);
 
-  const canShare = userRole === 'admin' || userRole === 'manager' || userRole === 'formateur';
+  const canShare = canPublishToLibrary(userRole);
   const canInvite = userRole === 'admin' || userRole === 'manager';
   const canResynchronizeBrand =
     hasTenantBrandSystem && ['admin', 'manager', 'author', 'formateur'].includes(userRole ?? '');
