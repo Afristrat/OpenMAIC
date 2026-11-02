@@ -12,8 +12,9 @@ import {
   narrationOf,
   parseCoherence,
   type CoherenceLanguage,
-  type SceneCoherence,
+  type SceneCoherenceReport,
 } from '@/lib/export/coherence';
+import { blockingScenes } from '@/lib/export/coherence-gate';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { requireCourseEditor } from '@/lib/server/course-editor-access';
@@ -28,18 +29,70 @@ export const maxDuration = 300;
 
 const MAX_VERDICT_TOKENS = 1200;
 
-type SceneReport = {
-  sceneId: string;
-  title: string;
-  verdict: SceneCoherence['verdict'] | 'unverified' | 'unreadable';
-  problems: SceneCoherence['problems'];
-};
+function countsOf(reports: SceneCoherenceReport[]) {
+  const count = (verdict: SceneCoherenceReport['verdict']) =>
+    reports.filter((report) => report.verdict === verdict).length;
+  return {
+    coherent: count('coherent'),
+    partial: count('partial'),
+    incoherent: count('incoherent'),
+    unverified: count('unverified'),
+    unreadable: count('unreadable'),
+  };
+}
+
+type SceneRow = { id: unknown; updated_at: unknown };
+
+function reportsBlocking(
+  reports: SceneCoherenceReport[],
+  scenes: SceneRow[] | null,
+  checkedAt: string,
+) {
+  const updated = new Map<string, string | null>();
+  for (const scene of scenes ?? []) {
+    updated.set(String(scene.id), typeof scene.updated_at === 'string' ? scene.updated_at : null);
+  }
+  return blockingScenes(reports, updated, checkedAt);
+}
 
 function languageOf(value: unknown): CoherenceLanguage {
   const code = typeof value === 'string' ? value.toLowerCase() : '';
   if (code.startsWith('ar')) return 'ar';
   if (code.startsWith('en')) return 'en';
   return 'fr';
+}
+
+/** GET : le dernier rapport enregistré du cours et les scènes qui bloquent encore sa publication. */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ courseId: string }> },
+) {
+  const { courseId } = await params;
+  const access = await requireCourseEditor(request, courseId);
+  if (access.response) return access.response;
+  const { course } = access;
+  const supabase = createServiceSupabaseClient();
+
+  const { data: row, error } = await supabase
+    .from('course_coherence_reports')
+    .select('reports, counts, checked_at')
+    .eq('course_id', course.id)
+    .maybeSingle();
+  if (error) return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Failed to read the report');
+  if (!row) return apiSuccess({ report: null });
+
+  const { data: scenes } = course.stage_id
+    ? await supabase.from('scenes').select('id, updated_at').eq('stage_id', course.stage_id)
+    : { data: null };
+  const reports = row.reports as SceneCoherenceReport[];
+  return apiSuccess({
+    report: {
+      reports,
+      counts: row.counts,
+      checkedAt: row.checked_at as string,
+      blocking: reportsBlocking(reports, scenes, row.checked_at as string),
+    },
+  });
 }
 
 export async function POST(
@@ -60,7 +113,7 @@ export async function POST(
       supabase.from('courses').select('language').eq('id', course.id).maybeSingle(),
       supabase
         .from('scenes')
-        .select('id, title, order, actions')
+        .select('id, title, order, actions, updated_at')
         .eq('stage_id', course.stage_id)
         .order('order'),
     ]);
@@ -74,7 +127,7 @@ export async function POST(
       'coherence-check',
     );
 
-    const reports: SceneReport[] = [];
+    const reports: SceneCoherenceReport[] = [];
     for (const scene of scenes ?? []) {
       const narration = narrationOf(scene.actions);
       if (!narration) continue;
@@ -121,14 +174,23 @@ export async function POST(
       );
     }
 
-    const counts = {
-      coherent: reports.filter((report) => report.verdict === 'coherent').length,
-      partial: reports.filter((report) => report.verdict === 'partial').length,
-      incoherent: reports.filter((report) => report.verdict === 'incoherent').length,
-      unverified: reports.filter((report) => report.verdict === 'unverified').length,
-      unreadable: reports.filter((report) => report.verdict === 'unreadable').length,
-    };
-    return apiSuccess({ reports, counts });
+    const counts = countsOf(reports);
+    const checkedAt = new Date().toISOString();
+    const { error: saveError } = await supabase.from('course_coherence_reports').upsert({
+      course_id: course.id,
+      reports,
+      counts,
+      checked_by: user.id,
+      checked_at: checkedAt,
+    });
+    // Le rapport est déjà facturé : un échec d'enregistrement se dit, il ne cache pas le résultat.
+    if (saveError) log.error('Coherence report not saved:', saveError.message);
+    return apiSuccess({
+      reports,
+      counts,
+      checkedAt,
+      blocking: reportsBlocking(reports, scenes, checkedAt),
+    });
   } catch (caught) {
     const creditsResponse = creditsErrorResponse(caught);
     if (creditsResponse) return creditsResponse;

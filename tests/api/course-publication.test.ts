@@ -17,6 +17,8 @@ const mocks = vi.hoisted(() => ({
   updateSecondEq: vi.fn(),
   publishToLibrary: vi.fn(),
   shareRepository: vi.fn(),
+  coherenceMaybeSingle: vi.fn(),
+  scenesEq: vi.fn(),
 }));
 
 vi.mock('@/lib/api/auth', () => ({ requireSuperAdminOrOrgAdmin: mocks.requireAdmin }));
@@ -64,7 +66,15 @@ describe('PATCH /api/courses/[courseId]/publication', () => {
     mocks.update.mockReturnValue({ eq: mocks.updateFirstEq });
     mocks.shareRepository.mockReturnValue({ repository: true });
     mocks.publishToLibrary.mockResolvedValue([{ stageId: STAGE_ID, outcome: 'published' }]);
-    mocks.from.mockReturnValue({ select: mocks.readSelect, update: mocks.update });
+    mocks.coherenceMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mocks.scenesEq.mockResolvedValue({ data: [], error: null });
+    mocks.from.mockImplementation((table: string) => {
+      if (table === 'course_coherence_reports') {
+        return { select: () => ({ eq: () => ({ maybeSingle: mocks.coherenceMaybeSingle }) }) };
+      }
+      if (table === 'scenes') return { select: () => ({ eq: mocks.scenesEq }) };
+      return { select: mocks.readSelect, update: mocks.update };
+    });
   });
 
   it('rejects the mutation before querying data when the caller is not an organization admin', async () => {
@@ -115,6 +125,50 @@ describe('PATCH /api/courses/[courseId]/publication', () => {
     expect((await PATCH(request({ orgId: ORG_ID, visible: true }), params())).status).toBe(500);
 
     expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  describe('coherence gate', () => {
+    const report = {
+      reports: [
+        { sceneId: 's1', title: 'A', verdict: 'incoherent', problems: [] },
+        { sceneId: 's2', title: 'B', verdict: 'coherent', problems: [] },
+      ],
+      checked_at: '2026-11-02T10:00:00.000Z',
+    };
+
+    it('refuses to publish while a scene judged incoherent is unchanged since the check', async () => {
+      mocks.coherenceMaybeSingle.mockResolvedValue({ data: report, error: null });
+      mocks.scenesEq.mockResolvedValue({
+        data: [
+          { id: 's1', updated_at: '2026-11-02T09:00:00.000Z' },
+          { id: 's2', updated_at: '2026-11-02T09:00:00.000Z' },
+        ],
+        error: null,
+      });
+
+      const response = await PATCH(request({ orgId: ORG_ID, visible: true }), params());
+
+      expect(response.status).toBe(409);
+      expect(mocks.publishToLibrary).not.toHaveBeenCalled();
+      expect(mocks.update).not.toHaveBeenCalled();
+    });
+
+    it('publishes once the incoherent scene has been edited after the check', async () => {
+      mocks.coherenceMaybeSingle.mockResolvedValue({ data: report, error: null });
+      mocks.scenesEq.mockResolvedValue({
+        data: [
+          { id: 's1', updated_at: '2026-11-02T11:00:00.000Z' },
+          { id: 's2', updated_at: '2026-11-02T09:00:00.000Z' },
+        ],
+        error: null,
+      });
+
+      expect((await PATCH(request({ orgId: ORG_ID, visible: true }), params())).status).toBe(200);
+    });
+
+    it('does not ask for a check that was never run', async () => {
+      expect((await PATCH(request({ orgId: ORG_ID, visible: true }), params())).status).toBe(200);
+    });
   });
 
   it('does not touch the library when the course is withdrawn from the catalog', async () => {

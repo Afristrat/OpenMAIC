@@ -12,6 +12,13 @@ export type CoherenceProblem = { quote: string; reason: string };
 
 export type SceneCoherence = { verdict: CoherenceVerdict; problems: CoherenceProblem[] };
 
+export type SceneCoherenceReport = {
+  sceneId: string;
+  title: string;
+  verdict: CoherenceVerdict | 'unverified' | 'unreadable';
+  problems: CoherenceProblem[];
+};
+
 export type CoherenceLanguage = 'fr' | 'en' | 'ar';
 
 const MAX_PROBLEMS = 5;

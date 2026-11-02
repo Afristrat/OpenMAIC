@@ -1,4 +1,6 @@
 import { requireSuperAdminOrOrgAdmin } from '@/lib/api/auth';
+import type { SceneCoherenceReport } from '@/lib/export/coherence';
+import { blockingScenes } from '@/lib/export/coherence-gate';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { publishStagesToLibrary } from '@/lib/org/publish-to-library';
 import { supabaseShareRepository } from '@/lib/org/supabase-share-repository';
@@ -41,6 +43,41 @@ export async function PATCH(
   }
   if (course.status !== 'ready') {
     return apiError(API_ERROR_CODES.INVALID_REQUEST, 409, 'Only ready courses can be published');
+  }
+
+  // Une scène que le dernier contrôle de cohérence a jugée incohérente, et que l'auteur n'a pas retouchée
+  // depuis, empêche la publication : ce que la voix dit n'est pas ce que l'apprenant voit.
+  if (body.visible && course.stage_id) {
+    const { data: coherence } = await supabase
+      .from('course_coherence_reports')
+      .select('reports, checked_at')
+      .eq('course_id', courseId)
+      .maybeSingle();
+    if (coherence) {
+      const { data: scenes } = await supabase
+        .from('scenes')
+        .select('id, updated_at')
+        .eq('stage_id', course.stage_id);
+      const updated = new Map<string, string | null>();
+      for (const scene of scenes ?? []) {
+        updated.set(
+          String(scene.id),
+          typeof scene.updated_at === 'string' ? scene.updated_at : null,
+        );
+      }
+      const blocking = blockingScenes(
+        coherence.reports as SceneCoherenceReport[],
+        updated,
+        coherence.checked_at as string,
+      );
+      if (blocking.length > 0) {
+        return apiError(
+          API_ERROR_CODES.INVALID_REQUEST,
+          409,
+          `Publication blocked: ${blocking.length} scene(s) judged incoherent between narration and image`,
+        );
+      }
+    }
   }
 
   // Publier au catalogue place aussi la formation dans la bibliothèque de l'organisation. Le partage

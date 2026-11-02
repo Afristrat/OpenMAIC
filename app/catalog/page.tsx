@@ -7,6 +7,7 @@ import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { OrphanedCourses } from '@/components/courses/orphaned-courses';
+import { CoherenceCheck } from '@/components/courses/coherence-check';
 
 interface CatalogCourse {
   id: string;
@@ -25,6 +26,7 @@ export default function CatalogPage() {
   const [unavailable, setUnavailable] = useState(false);
   const [publishingCourseId, setPublishingCourseId] = useState<string | null>(null);
   const [publicationError, setPublicationError] = useState(false);
+  const [publicationBlocked, setPublicationBlocked] = useState(false);
 
   useEffect(() => {
     if (organizationsLoading) return;
@@ -68,6 +70,7 @@ export default function CatalogPage() {
   const publishCourse = async (course: CatalogCourse) => {
     if (!currentOrg) return;
     setPublicationError(false);
+    setPublicationBlocked(false);
     setPublishingCourseId(course.id);
     try {
       const response = await fetch(`/api/courses/${encodeURIComponent(course.id)}/publication`, {
@@ -75,6 +78,13 @@ export default function CatalogPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orgId: currentOrg.id, visible: true }),
       });
+      if (response.status === 409) {
+        const payload = (await response.json()) as { error?: string };
+        if (payload.error?.startsWith('Publication blocked')) {
+          setPublicationBlocked(true);
+          return;
+        }
+      }
       if (!response.ok) throw new Error('Publication request failed');
       setUnpublished((previous) => previous.filter((item) => item.id !== course.id));
       setCourses((previous) => [course, ...previous]);
@@ -159,6 +169,11 @@ export default function CatalogPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             {t('catalog.publishReadyDescription')}
           </p>
+          {publicationBlocked && (
+            <p className="mt-3 text-sm text-destructive" role="alert">
+              {t('catalog.publicationBlocked')}
+            </p>
+          )}
           {publicationError && (
             <p className="mt-3 text-sm text-destructive" role="alert">
               {t('catalog.publicationFailed')}
@@ -179,6 +194,7 @@ export default function CatalogPage() {
                     ? t('catalog.publishing')
                     : t('catalog.publish')}
                 </button>
+                <CoherenceCheck courseId={course.id} />
               </article>
             ))}
           </div>
