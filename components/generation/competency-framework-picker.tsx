@@ -4,7 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { z } from 'zod';
 import { useI18n } from '@/lib/hooks/use-i18n';
-import type { CompetencyFrameworkInput } from '@/lib/referentiel/plan-framework';
+import {
+  MAX_FRAMEWORK_SKILLS,
+  type CompetencyFrameworkInput,
+} from '@/lib/referentiel/plan-framework';
 import { cn } from '@/lib/utils';
 
 const titles = z.object({ fr: z.string(), ar: z.string().nullable(), en: z.string().nullable() });
@@ -79,7 +82,8 @@ export function CompetencyFrameworkPicker({
       if (selectAllEssential) {
         onChange({
           occupationUri: parsed.occupation.uri,
-          skillUris: parsed.essential.map((skill) => skill.uri),
+          // Le serveur borne le cadre : un métier riche ne doit pas bloquer la création dès la sélection par défaut.
+          skillUris: parsed.essential.slice(0, MAX_FRAMEWORK_SKILLS).map((skill) => skill.uri),
         });
       }
     } catch {
@@ -129,7 +133,7 @@ export function CompetencyFrameworkPicker({
     const next = chosen.has(uri)
       ? value.skillUris.filter((item) => item !== uri)
       : [...value.skillUris, uri];
-    if (next.length === 0) return;
+    if (next.length === 0 || next.length > MAX_FRAMEWORK_SKILLS) return;
     onChange({ occupationUri: value.occupationUri, skillUris: next });
   };
 
