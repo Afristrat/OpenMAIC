@@ -95,7 +95,7 @@ export function useExportMp4() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             stageId: stage.id,
-            format: 'mp4',
+            format: 'video',
             notifyByEmail: options.notifyByEmail === true,
           }),
         });
@@ -128,7 +128,7 @@ export function useExportMp4() {
             if (status.status !== 'done' || !status.downloadUrl) {
               throw new Error(status.error || t('export.exportFailed'));
             }
-            await downloadExport(status.downloadUrl, `${stage.name || 'qalem-classroom'}.zip`);
+            await downloadExport(status.downloadUrl, `${stage.name || 'qalem-classroom'}.mp4`);
             toast.success(t('export.videoReady'), { id: toastId });
             return;
           }
