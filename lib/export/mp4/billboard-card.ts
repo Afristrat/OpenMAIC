@@ -79,6 +79,16 @@ export function billboardPalette(colors: {
   return { background, accent, ink: luminance(background) > 0.45 ? '#0f172a' : '#ffffff' };
 }
 
+/** Largeur d'une ligne centrée, marges comprises, et chasse moyenne d'Arial gras en fraction du corps. */
+const LINE_WIDTH = 1700;
+const BOLD_GLYPH_RATIO = 0.62;
+
+/** Corps du texte réduit pour que la ligne tienne dans la largeur de l'image, sans dépasser `maxSize`. */
+export function fitFontSize(text: string, maxSize: number): number {
+  const fitting = Math.floor(LINE_WIDTH / (Math.max(text.length, 1) * BOLD_GLYPH_RATIO));
+  return Math.min(maxSize, fitting);
+}
+
 export function buildBillboardSvg(params: {
   kind: BillboardKind;
   plan: BillboardPlan;
@@ -107,7 +117,7 @@ export function buildBillboardSvg(params: {
   const subtitleLine = wrapText(subtitle, 60, 1)[0] ?? '';
   const mark = logo
     ? `<image href="${logo}" x="660" y="170" width="600" height="300" preserveAspectRatio="xMidYMid meet"/>`
-    : `<text x="960" y="360" text-anchor="middle" fill="${palette.ink}" font-family="Arial, sans-serif" font-size="120" font-weight="800">${escapeXml(identity)}</text>`;
+    : `<text x="960" y="360" text-anchor="middle" fill="${palette.ink}" font-family="Arial, sans-serif" font-size="${fitFontSize(identity, 120)}" font-weight="800">${escapeXml(identity)}</text>`;
   const credit =
     plan.showOrganization && plan.showQalem
       ? `<text x="960" y="990" text-anchor="middle" fill="${palette.ink}" fill-opacity="0.7" font-family="Arial, sans-serif" font-size="30" font-weight="600">${escapeXml(texts.credit)}</text>`

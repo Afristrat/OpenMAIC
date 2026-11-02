@@ -6,6 +6,7 @@ import {
   billboardLanguage,
   billboardPalette,
   buildBillboardSvg,
+  fitFontSize,
   planBillboards,
   DEFAULT_BILLBOARD_PALETTE,
 } from '@/lib/export/mp4/billboard-card';
@@ -83,6 +84,18 @@ describe('buildBillboardSvg', () => {
     expect(svg).not.toContain('Atlas');
     expect(svg).not.toContain('<image');
     expect(svg).not.toContain('Réalisé avec Qalem');
+  });
+
+  test('a long organization name is shrunk to fit the card width, a short one keeps its size', () => {
+    const longName = 'Recette LTI S034 : Données fictives';
+    const sizeOf = (organizationName: string): number => {
+      const svg = buildBillboardSvg({ ...base, organizationName, kind: 'entry' });
+      const match = svg.match(/y="360"[^>]*font-size="(\d+)"/);
+      return Number(match?.[1]);
+    };
+    expect(sizeOf('Atlas')).toBe(120);
+    expect(sizeOf(longName)).toBeLessThan(120);
+    expect(fitFontSize(longName, 120) * longName.length * 0.62).toBeLessThanOrEqual(1700);
   });
 
   test('speaks the language of the organization, right to left for Arabic', () => {
