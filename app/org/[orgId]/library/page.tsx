@@ -35,6 +35,7 @@ import {
   User,
 } from 'lucide-react';
 import { canPublishToLibrary } from '@/lib/org/can-publish-to-library';
+import { useIsSuperAdmin } from '@/lib/hooks/use-super-admin';
 import type { OrgMemberRole } from '@/lib/supabase/types';
 
 interface SharedClassroom {
@@ -71,6 +72,7 @@ export default function LibraryPage() {
   const router = useRouter();
   const { t } = useI18n();
   const { user } = useAuth();
+  const { isSuperAdmin, isLoading: isSuperAdminLoading } = useIsSuperAdmin();
 
   const [classrooms, setClassrooms] = useState<SharedClassroom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -114,9 +116,15 @@ export default function LibraryPage() {
         .select('role')
         .eq('org_id', orgId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       if (membership) {
         setUserRole(membership.role as OrgMemberRole);
+      } else if (!isSuperAdmin) {
+        // La base laisse lire les partages « publics » à tout compte connecté : la bibliothèque
+        // d'une organisation, elle, n'est jamais listée à quelqu'un qui n'en est pas membre.
+        setClassrooms([]);
+        setIsLoading(false);
+        return;
       }
     }
 
@@ -178,11 +186,12 @@ export default function LibraryPage() {
 
     setClassrooms(enriched);
     setIsLoading(false);
-  }, [orgId, user]);
+  }, [orgId, user, isSuperAdmin]);
 
   useEffect(() => {
-    fetchLibrary();
-  }, [fetchLibrary]);
+    // Le rôle de super administrateur décide de l'accès d'un non-membre : on l'attend.
+    if (!isSuperAdminLoading) fetchLibrary();
+  }, [fetchLibrary, isSuperAdminLoading]);
 
   const filtered = useMemo(() => {
     return classrooms.filter((c) => {
