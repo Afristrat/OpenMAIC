@@ -77,7 +77,10 @@ export async function requireCompetencyFramework(params: {
   courseId?: string;
   framework?: CompetencyFrameworkInput;
 }): Promise<ResolvedCompetencyFramework | null> {
-  if (params.framework) return resolveCompetencyFramework(params.framework);
+  // Un cadre sans aucune compétence vaut absence de cadre : même refus, même message à l'écran.
+  if (params.framework && params.framework.skillUris.length > 0) {
+    return resolveCompetencyFramework(params.framework);
+  }
   if (params.courseId) {
     const { count, error } = await createServiceSupabaseClient()
       .from('course_competencies')

@@ -114,6 +114,12 @@ describe('requireCompetencyFramework', () => {
     });
   });
 
+  it('treats a framework without any skill as a missing framework (422 required, not a 400)', async () => {
+    await expect(
+      requireCompetencyFramework({ framework: { ...REQUEST, skillUris: [] } }),
+    ).rejects.toMatchObject({ code: 'COMPETENCY_FRAMEWORK_REQUIRED' });
+  });
+
   it('lets an existing course that already carries target skills continue without a new choice', async () => {
     state.linkCount = 3;
     await expect(requireCompetencyFramework({ courseId: 'course-1' })).resolves.toBeNull();

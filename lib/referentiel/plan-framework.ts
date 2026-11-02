@@ -11,7 +11,7 @@ export const MAX_FRAMEWORK_SKILLS = 60;
 
 export const competencyFrameworkSchema = z.strictObject({
   occupationUri: z.string().trim().min(1).max(500),
-  skillUris: z.array(z.string().trim().min(1).max(500)).min(1).max(MAX_FRAMEWORK_SKILLS),
+  skillUris: z.array(z.string().trim().min(1).max(500)).max(MAX_FRAMEWORK_SKILLS),
 });
 
 export type CompetencyFrameworkInput = z.infer<typeof competencyFrameworkSchema>;

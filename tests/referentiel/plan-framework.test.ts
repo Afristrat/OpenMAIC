@@ -10,13 +10,13 @@ import {
 const occupation = { essential_uris: ['s:a', 's:b'], optional_uris: ['s:c'] };
 
 describe('competencyFrameworkSchema', () => {
-  it('requires a target occupation and at least one skill', () => {
+  it('requires a target occupation, an empty skill list being refused later as a missing framework', () => {
     expect(
       competencyFrameworkSchema.safeParse({ occupationUri: 'o:1', skillUris: ['s:a'] }).success,
     ).toBe(true);
     expect(
       competencyFrameworkSchema.safeParse({ occupationUri: 'o:1', skillUris: [] }).success,
-    ).toBe(false);
+    ).toBe(true);
     expect(competencyFrameworkSchema.safeParse({ skillUris: ['s:a'] }).success).toBe(false);
     expect(
       competencyFrameworkSchema.safeParse({ occupationUri: 'o:1', skillUris: ['s:a'], extra: 1 })
