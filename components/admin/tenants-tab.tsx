@@ -20,6 +20,47 @@ type Tenant = {
   creditBalanceMicrounits: number;
 };
 
+function TenantSeatLimit({
+  tenant,
+  minimum,
+  disabled,
+  onSave,
+}: {
+  tenant: Tenant;
+  minimum: number;
+  disabled: boolean;
+  onSave: (seatLimit: number) => Promise<void>;
+}) {
+  const { t } = useI18n();
+  const [value, setValue] = useState(String(tenant.seat_limit));
+  const next = Number(value);
+  const valid = Number.isInteger(next) && next >= minimum;
+
+  return (
+    <form
+      className="flex items-end gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (valid && next !== tenant.seat_limit) void onSave(next);
+      }}
+    >
+      <label className="space-y-1 text-sm">
+        <span>{t('admin.tenants.seatLimit')}</span>
+        <input
+          type="number"
+          min={minimum}
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          className="w-28 rounded-md border bg-background px-3 py-2"
+        />
+      </label>
+      <Button type="submit" disabled={disabled || !valid || next === tenant.seat_limit}>
+        {t('admin.tenants.saveSeats')}
+      </Button>
+    </form>
+  );
+}
+
 function TenantCredits({
   tenant,
   disabled,
@@ -336,21 +377,13 @@ export function TenantsTab(): React.ReactElement {
                   </span>
                 </div>
                 <div className="flex flex-wrap items-end gap-3">
-                  <label className="space-y-1 text-sm">
-                    <span>{t('admin.tenants.seatLimit')}</span>
-                    <input
-                      type="number"
-                      min={occupied || 1}
-                      defaultValue={tenant.seat_limit}
-                      className="w-28 rounded-md border bg-background px-3 py-2"
-                      onBlur={(event) => {
-                        const next = Number(event.target.value);
-                        if (next !== tenant.seat_limit) {
-                          void updateTenant(tenant.id, { seatLimit: next });
-                        }
-                      }}
-                    />
-                  </label>
+                  <TenantSeatLimit
+                    key={tenant.seat_limit}
+                    tenant={tenant}
+                    minimum={occupied || 1}
+                    disabled={saving}
+                    onSave={(seatLimit) => updateTenant(tenant.id, { seatLimit })}
+                  />
                   <Button
                     type="button"
                     variant="outline"
