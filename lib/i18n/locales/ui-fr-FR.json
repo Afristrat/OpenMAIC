@@ -567,6 +567,8 @@
   "edit.tts.noCasting": "Cette formation n’a pas de voix attribuées aux intervenants : impossible de générer les voix manquantes.",
   "edit.tts.invalidCasting": "Les voix attribuées aux intervenants de cette formation sont invalides.",
   "edit.tts.notFound": "Formation ou scène introuvable : actualisez la page puis réessayez.",
+  "edit.tts.forbidden": "Seuls les éditeurs de cette formation peuvent générer les voix manquantes. Connectez-vous avec un compte autorisé.",
+  "edit.tts.missingForLearner": "{{count}} voix off ne sont pas encore disponibles dans cette formation. Prévenez son auteur : lui seul peut les générer.",
   "edit.tts.partialNotice": "Pistes vocales non générées : {{missing}} sur {{total}}.",
   "edit.tts.partialHint": "Vous pouvez les régénérer avec le bouton « Générer les voix manquantes ».",
   "edit.tts.noCastingNotice": "Cours créé avant le casting vocal : {{missing}} pistes vocales sur {{total}} manquent et ne peuvent pas être générées automatiquement. Choisissez d’abord la voix du formateur.",

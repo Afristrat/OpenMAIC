@@ -567,6 +567,8 @@
   "edit.tts.noCasting": "This course has no voices assigned to its speakers: the missing voices cannot be generated.",
   "edit.tts.invalidCasting": "The voices assigned to this course's speakers are invalid.",
   "edit.tts.notFound": "Course or scene not found: refresh the page and try again.",
+  "edit.tts.forbidden": "Only editors of this course can generate the missing voices. Sign in with an authorized account.",
+  "edit.tts.missingForLearner": "{{count}} voice-overs are not available yet in this course. Let its author know: only they can generate them.",
   "edit.tts.partialNotice": "Voice tracks not generated: {{missing}} of {{total}}.",
   "edit.tts.partialHint": "You can regenerate them with the “Generate missing voices” button.",
   "edit.tts.noCastingNotice": "Course created before voice casting: {{missing}} of {{total}} voice tracks are missing and cannot be generated automatically. Choose the trainer’s voice first.",

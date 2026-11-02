@@ -18,6 +18,8 @@ export interface MissingVoicesResult {
 interface MissingVoicesPayload {
   success?: boolean;
   error?: string;
+  /** Code stable d'une réponse d'erreur de l'API (ex. FORBIDDEN). */
+  code?: string;
   jobId?: string;
   status?: 'running' | 'succeeded' | 'failed';
   requested?: number;
@@ -43,6 +45,8 @@ export function voiceCompletionErrorKey(code: string): string {
       return 'edit.tts.invalidCasting';
     case 'NOT_FOUND':
       return 'edit.tts.notFound';
+    case 'FORBIDDEN':
+      return 'edit.tts.forbidden';
     default:
       return 'edit.tts.completionFailed';
   }
@@ -82,7 +86,9 @@ export async function completeMissingVoices(
     });
     const startPayload = await readPayload(started);
     if (!started.ok || !startPayload.success || !startPayload.jobId) {
-      throw new Error(startPayload.error || FAILURE_MESSAGE);
+      throw new Error(
+        startPayload.code === 'FORBIDDEN' ? 'FORBIDDEN' : startPayload.error || FAILURE_MESSAGE,
+      );
     }
     let payload: MissingVoicesPayload = {};
     for (let failures = 0; ; ) {

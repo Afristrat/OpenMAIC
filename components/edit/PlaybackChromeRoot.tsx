@@ -813,8 +813,19 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
         try {
           if (currentScene) {
             const missingCount = missingSpeechAudioActions(currentScene).length;
+            // Un apprenant ne peut pas écrire dans la formation : lui proposer la régénération
+            // se solderait par un refus. On le prévient, la lecture continue avec ce qui existe.
+            const learnerWithoutVoices = missingCount > 0 && !canEnterProMode;
+            if (learnerWithoutVoices) {
+              toast.info(t('edit.tts.missingForLearner', { count: missingCount }), {
+                id: 'missing-voices-learner',
+                duration: 10_000,
+              });
+            }
             try {
-              const actions = await preflightMissingSpeechAudio(currentScene);
+              const actions = learnerWithoutVoices
+                ? null
+                : await preflightMissingSpeechAudio(currentScene);
               if (actions) {
                 // The scene update rebuilds the engine; only that new engine may start.
                 autoStartRef.current = true;
@@ -854,7 +865,7 @@ export const PlaybackChromeRoot = forwardRef<PlaybackChromeRootHandle, PlaybackC
           playPreflightRef.current = false;
         }
       }
-    }, [playbackCompleted, currentScene, t, completeMissingVoices]);
+    }, [playbackCompleted, currentScene, t, completeMissingVoices, canEnterProMode]);
 
     // get scene information
     const isPendingScene = currentSceneId === PENDING_SCENE_ID;
