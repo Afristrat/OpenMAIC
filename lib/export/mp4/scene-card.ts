@@ -87,6 +87,75 @@ export function wrapText(value: string, maxCharacters: number, maxLines: number)
   return lines;
 }
 
+type CardLine = { text: string; kind: 'question' | 'option' | 'text' | 'more' };
+
+const MAX_BODY_LINES = 10;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function plainText(value: unknown): string {
+  return typeof value === 'string'
+    ? value
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    : '';
+}
+
+/**
+ * Mise en page d'une scène de quiz : questions numérotées, choix lettrés en retrait. Les réponses
+ * n'y figurent pas, la carte pose la question que la voix off développe. Renvoie null pour toute
+ * autre scène, qui garde le texte lu à plat.
+ */
+function quizCardLines(content: unknown): CardLine[] | null {
+  if (!isRecord(content) || content.type !== 'quiz' || !Array.isArray(content.questions))
+    return null;
+  const lines: CardLine[] = [];
+  const questions = content.questions.filter(isRecord);
+  for (const [index, question] of questions.entries()) {
+    const block: CardLine[] = wrapText(`${index + 1}. ${plainText(question.question)}`, 70, 2).map(
+      (text) => ({ text, kind: 'question' as const }),
+    );
+    const options = Array.isArray(question.options) ? question.options.filter(isRecord) : [];
+    for (const option of options.slice(0, 4)) {
+      const label = plainText(option.label);
+      if (!label) continue;
+      const letter = plainText(option.value);
+      block.push(
+        ...wrapText(letter ? `${letter}. ${label}` : label, 66, 1).map((text) => ({
+          text,
+          kind: 'option' as const,
+        })),
+      );
+    }
+    const remaining = questions.length - index;
+    // Une question coupée en deux n'apprend rien : seules les questions entières tiennent sur la carte.
+    if (
+      lines.length + block.length + (remaining > 1 ? 1 : 0) > MAX_BODY_LINES &&
+      lines.length > 0
+    ) {
+      lines.push({ text: `+ ${remaining} question${remaining > 1 ? 's' : ''}`, kind: 'more' });
+      break;
+    }
+    lines.push(...block);
+  }
+  return lines.length ? lines.slice(0, MAX_BODY_LINES) : null;
+}
+
+function bodyTspan(line: CardLine, index: number): string {
+  const x = line.kind === 'option' ? 160 : 116;
+  const dy = index === 0 ? 0 : line.kind === 'question' ? 58 : 42;
+  const style =
+    line.kind === 'question'
+      ? ' fill="#ffffff" font-weight="700"'
+      : line.kind === 'more'
+        ? ' fill="#a5b4fc" font-weight="700"'
+        : '';
+  return `<tspan x="${x}" dy="${dy}"${style}>${escapeXml(line.text)}</tspan>`;
+}
+
 export function buildSceneCardSvg(params: {
   classroomName: string;
   sceneTitle: string;
@@ -96,13 +165,16 @@ export function buildSceneCardSvg(params: {
   content: unknown;
 }): string {
   const titleLines = wrapText(params.sceneTitle || params.classroomName, 42, 2);
-  const bodyLines = wrapText(sceneReadableText(params.content), 76, 10);
+  const bodyLines: CardLine[] =
+    quizCardLines(params.content) ??
+    wrapText(sceneReadableText(params.content), 76, MAX_BODY_LINES).map((text) => ({
+      text,
+      kind: 'text' as const,
+    }));
   const title = titleLines
     .map((line, index) => `<tspan x="112" dy="${index === 0 ? 0 : 66}">${escapeXml(line)}</tspan>`)
     .join('');
-  const body = bodyLines
-    .map((line, index) => `<tspan x="116" dy="${index === 0 ? 0 : 42}">${escapeXml(line)}</tspan>`)
-    .join('');
+  const body = bodyLines.map(bodyTspan).join('');
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
   <defs>

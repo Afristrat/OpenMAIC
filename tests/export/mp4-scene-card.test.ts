@@ -31,6 +31,63 @@ describe('MP4 scene cards', () => {
     expect(svg).toContain('2 / 10');
   });
 
+  describe('quiz layout', () => {
+    const card = (questions: unknown[]): string =>
+      buildSceneCardSvg({
+        classroomName: 'Cours',
+        sceneTitle: 'Quiz',
+        sceneType: 'quiz',
+        sceneNumber: 1,
+        sceneCount: 1,
+        content: { type: 'quiz', questions },
+      });
+    const question = (id: string, text: string) => ({
+      id,
+      type: 'single',
+      question: text,
+      options: [
+        { value: 'A', label: 'Premier choix' },
+        { value: 'B', label: 'Second choix' },
+      ],
+      answer: ['B'],
+      analysis: 'Parce que le second choix est le bon',
+    });
+
+    it('numbers the question, letters the options and never prints the answer', () => {
+      const svg = card([question('q1', 'Quel choix ?')]);
+      expect(svg).toContain('1. Quel choix ?');
+      expect(svg).toContain('x="160"');
+      expect(svg).toContain('A. Premier choix');
+      expect(svg).toContain('B. Second choix');
+      expect(svg).not.toContain('Parce que');
+    });
+
+    it('keeps whole questions only and announces how many were left out', () => {
+      const svg = card([
+        question('q1', 'Première ?'),
+        question('q2', 'Deuxième ?'),
+        question('q3', 'Troisième ?'),
+        question('q4', 'Quatrième ?'),
+      ]);
+      expect(svg).toContain('1. Première ?');
+      expect(svg).toMatch(/\+ \d+ questions?/);
+      expect(svg).not.toContain('4. Quatrième ?');
+    });
+
+    it('leaves non-quiz scenes as flat text', () => {
+      const svg = buildSceneCardSvg({
+        classroomName: 'Cours',
+        sceneTitle: 'Slide',
+        sceneType: 'slide',
+        sceneNumber: 1,
+        sceneCount: 1,
+        content: { text: 'Texte simple' },
+      });
+      expect(svg).toContain('Texte simple');
+      expect(svg).not.toContain('x="160"');
+    });
+  });
+
   it('excludes technical colour tokens while preserving semantic slide text', () => {
     const text = sceneReadableText({
       canvas: {
