@@ -10,7 +10,8 @@
  */
 
 import { NextRequest } from 'next/server';
-import { requireAuth } from '@/lib/api/auth';
+import { requireAuth, requireSuperAdminOrOrgEditor } from '@/lib/api/auth';
+import { readClassroomOwnership } from '@/lib/server/classroom-storage';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
 import { isFeatureEnabled } from '@/lib/flags';
 import { isHyperframesConfigured } from '@/lib/video/hyperframes-client';
@@ -79,6 +80,20 @@ export async function POST(request: NextRequest) {
     ) {
       return apiError('INVALID_REQUEST', 400, 'Audience, ton ou objectif vidéo invalide');
     }
+
+    // Lire la formation ne suffit pas : un job vidéo est payant, il est réservé à ceux qui peuvent
+    // la modifier (admin, gestionnaire, auteur propriétaire, délégation active, super admin).
+    const ownership = await readClassroomOwnership(stageId);
+    if (!ownership) {
+      return apiError('INVALID_REQUEST', 404, 'Cours introuvable');
+    }
+    const editor = await requireSuperAdminOrOrgEditor(
+      request,
+      ownership.orgId,
+      ownership.ownerId,
+      stageId,
+    );
+    if (editor.response) return editor.response;
 
     const supabase = await createServerSupabaseClient();
 

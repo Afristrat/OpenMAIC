@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   requireAuth: vi.fn(),
+  requireEditor: vi.fn(),
+  readOwnership: vi.fn(),
   isFeatureEnabled: vi.fn(),
   isHyperframesConfigured: vi.fn(),
   enqueueVideoCapsule: vi.fn(),
@@ -11,7 +13,13 @@ const mocks = vi.hoisted(() => ({
   insertSingle: vi.fn(),
 }));
 
-vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.requireAuth }));
+vi.mock('@/lib/api/auth', () => ({
+  requireAuth: mocks.requireAuth,
+  requireSuperAdminOrOrgEditor: mocks.requireEditor,
+}));
+vi.mock('@/lib/server/classroom-storage', () => ({
+  readClassroomOwnership: mocks.readOwnership,
+}));
 vi.mock('@/lib/flags', () => ({ isFeatureEnabled: mocks.isFeatureEnabled }));
 vi.mock('@/lib/video/hyperframes-client', () => ({
   isHyperframesConfigured: mocks.isHyperframesConfigured,
@@ -75,6 +83,8 @@ describe('POST /api/video-capsules', () => {
     process.env.MISHKAT_BRAND_ID = 'qalem-test-brand';
     mocks.requireAuth.mockResolvedValue({ user: { id: 'user_1', email: 'a@b.com' } });
     mocks.isFeatureEnabled.mockResolvedValue(true);
+    mocks.readOwnership.mockResolvedValue({ ownerId: 'owner_1', orgId: 'org_1' });
+    mocks.requireEditor.mockResolvedValue({ user: { id: 'user_1', email: 'a@b.com' } });
     mocks.isHyperframesConfigured.mockReturnValue(true);
     mocks.stageSingle.mockResolvedValue({
       data: { id: 'stage_1', name: 'Cours Test', language: 'fr-FR' },
@@ -121,6 +131,29 @@ describe('POST /api/video-capsules', () => {
     expect(res.status).toBe(202);
     expect(body).toMatchObject({ success: true, id: 'capsule_1', status: 'queued' });
     expect(mocks.enqueueVideoCapsule).toHaveBeenCalledWith({ capsuleId: 'capsule_1' });
+  });
+
+  it('refuses a reader who may not edit the classroom, before any job is created', async () => {
+    mocks.requireEditor.mockResolvedValue({
+      response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
+    });
+    const res = await post(validBody);
+    expect(res.status).toBe(403);
+    expect(mocks.requireEditor).toHaveBeenCalledWith(
+      expect.anything(),
+      'org_1',
+      'owner_1',
+      'stage_1',
+    );
+    expect(mocks.insertSingle).not.toHaveBeenCalled();
+    expect(mocks.enqueueVideoCapsule).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 for an unknown classroom without checking any right', async () => {
+    mocks.readOwnership.mockResolvedValue(null);
+    const res = await post(validBody);
+    expect(res.status).toBe(404);
+    expect(mocks.requireEditor).not.toHaveBeenCalled();
   });
 
   it('returns 404 when the stage is not found (or not owned by the user)', async () => {
