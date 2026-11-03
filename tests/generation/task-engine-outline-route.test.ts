@@ -12,6 +12,9 @@ vi.mock('@/lib/ai/llm', () => ({
 
 vi.mock('@/lib/api/auth', () => ({
   requireAuth: vi.fn().mockResolvedValue({ user: { id: 'user-1', email: 'user@example.com' } }),
+  requireSuperAdminOrOrgAuthor: vi
+    .fn()
+    .mockResolvedValue({ user: { id: 'user-1', email: 'user@example.com' } }),
 }));
 
 vi.mock('@/lib/server/resolve-model', () => ({
@@ -43,6 +46,7 @@ function parseSseEvents(text: string) {
 function mockRequest(requirements: Record<string, unknown>) {
   return {
     json: async () => ({
+      orgId: 'org-1',
       requirements,
       pdfText: '',
       pdfImages: [],

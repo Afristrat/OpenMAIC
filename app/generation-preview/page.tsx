@@ -500,6 +500,7 @@ function GenerationPreviewContent() {
                 pdfImages: currentSession.pdfImages,
                 imageMapping,
                 researchContext: currentSession.researchContext,
+                orgId: getCurrentOrganizationId(),
               }),
             ),
             signal,

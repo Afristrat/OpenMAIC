@@ -13,7 +13,7 @@
  *   { type: 'error', error: string }
  */
 
-import { requireAuth } from '@/lib/api/auth';
+import { requireAuth, requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { NextRequest } from 'next/server';
 import { streamLLM } from '@/lib/ai/llm';
 import { buildPrompt, PROMPT_IDS } from '@/lib/prompts';
@@ -297,6 +297,13 @@ export async function POST(req: NextRequest) {
   let resolvedModelString: string | undefined;
   try {
     const body = await req.json();
+
+    // Un flux de génération consomme le modèle du serveur : réservé à ceux qui créent des
+    // formations dans cette organisation (admin, gestionnaire, auteur, super admin).
+    const orgId = typeof body.orgId === 'string' ? body.orgId.trim() : '';
+    if (!orgId) return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
+    const author = await requireSuperAdminOrOrgAuthor(req, orgId);
+    if (author.response) return author.response;
 
     // Get API configuration from request headers/body
     const {

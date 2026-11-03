@@ -6,7 +6,10 @@ const mocks = vi.hoisted(() => ({
   resolveModelFromRequest: vi.fn(),
 }));
 
-vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.requireAuth }));
+vi.mock('@/lib/api/auth', () => ({
+  requireAuth: mocks.requireAuth,
+  requireSuperAdminOrOrgAuthor: vi.fn(),
+}));
 vi.mock('@/lib/server/resolve-model', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   resolveModelFromRequest: mocks.resolveModelFromRequest,
