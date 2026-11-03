@@ -43,6 +43,8 @@ import { LanguageSwitcher } from '@/components/language-switcher';
 import { createLogger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
 import { TransferClassroomDialog } from '@/components/admin/transfer-classroom-dialog';
+import { ShareClassroomDialog } from '@/components/org/share-classroom-dialog';
+import { SharedWithMeSection } from '@/components/org/shared-with-me-section';
 import { useIsSuperAdmin } from '@/lib/hooks/use-super-admin';
 import { InputGroup, InputGroupInput, InputGroupButton } from '@/components/ui/input-group';
 import { Textarea as UITextarea } from '@/components/ui/textarea';
@@ -640,6 +642,11 @@ function HomePage() {
   const [publishing, setPublishing] = useState(false);
   const { isSuperAdmin } = useIsSuperAdmin();
   const [transferStageId, setTransferStageId] = useState<string | null>(null);
+  // Partage d'UNE formation avec UNE personne : admin, gestionnaire, auteur (l'API vérifie la propriété).
+  const canShareSelection =
+    isSuperAdmin ||
+    (currentOrg != null && ['admin', 'manager', 'author'].includes(currentOrg.userRole));
+  const [shareStageId, setShareStageId] = useState<string | null>(null);
 
   const toggleLibrarySelection = (id: string) => {
     setSelectedForLibrary((previous) => {
@@ -2131,19 +2138,21 @@ function HomePage() {
                 )}
               </AnimatePresence>
 
-              {canPublishSelection && classrooms.length > 0 && !publishMode && (
-                <button
-                  type="button"
-                  onClick={() => setPublishMode(true)}
-                  data-testid="library-publish-start"
-                  className="group/publish grid grid-cols-[auto_0fr] hover:grid-cols-[auto_1fr] focus-visible:grid-cols-[auto_1fr] items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] text-muted-foreground/35 hover:text-muted-foreground/70 hover:bg-muted/50 transition-all duration-200 cursor-pointer"
-                >
-                  <Share2 className="size-3" />
-                  <span className="overflow-hidden opacity-0 group-hover/publish:opacity-100 group-focus-visible/publish:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                    {t('org.publish.start')}
-                  </span>
-                </button>
-              )}
+              {(canPublishSelection || canShareSelection) &&
+                classrooms.length > 0 &&
+                !publishMode && (
+                  <button
+                    type="button"
+                    onClick={() => setPublishMode(true)}
+                    data-testid="library-publish-start"
+                    className="group/publish grid grid-cols-[auto_0fr] hover:grid-cols-[auto_1fr] focus-visible:grid-cols-[auto_1fr] items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] text-muted-foreground/35 hover:text-muted-foreground/70 hover:bg-muted/50 transition-all duration-200 cursor-pointer"
+                  >
+                    <Share2 className="size-3" />
+                    <span className="overflow-hidden opacity-0 group-hover/publish:opacity-100 group-focus-visible/publish:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                      {t(canPublishSelection ? 'org.publish.start' : 'share.person.start')}
+                    </span>
+                  </button>
+                )}
 
               {importEnabled && (
                 <button
@@ -2224,18 +2233,37 @@ function HomePage() {
                         {t('admin.transfer.start')}
                       </Button>
                     )}
-                    <Button
-                      size="sm"
-                      onClick={publishSelectedToLibrary}
-                      disabled={publishing || selectedForLibrary.size === 0}
-                      data-testid="library-publish-confirm"
-                    >
-                      {publishing
-                        ? t('org.publish.publishing')
-                        : t('org.publish.confirm', { count: selectedForLibrary.size })}
-                    </Button>
+                    {canShareSelection && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShareStageId([...selectedForLibrary][0] ?? null)}
+                        disabled={publishing || selectedForLibrary.size !== 1}
+                        data-testid="classroom-share-start"
+                      >
+                        {t('share.person.start')}
+                      </Button>
+                    )}
+                    {canPublishSelection && (
+                      <Button
+                        size="sm"
+                        onClick={publishSelectedToLibrary}
+                        disabled={publishing || selectedForLibrary.size === 0}
+                        data-testid="library-publish-confirm"
+                      >
+                        {publishing
+                          ? t('org.publish.publishing')
+                          : t('org.publish.confirm', { count: selectedForLibrary.size })}
+                      </Button>
+                    )}
                   </div>
                 )}
+                <ShareClassroomDialog
+                  stageId={shareStageId}
+                  stageName={classrooms.find((c) => c.id === shareStageId)?.name ?? ''}
+                  onClose={() => setShareStageId(null)}
+                />
+
                 <TransferClassroomDialog
                   stageId={transferStageId}
                   stageName={classrooms.find((c) => c.id === transferStageId)?.name ?? ''}
@@ -2288,6 +2316,8 @@ function HomePage() {
           </AnimatePresence>
         </motion.div>
       )}
+
+      <SharedWithMeSection />
 
       {/* Footer — flows with content, at the very end */}
       <div className="mt-auto pt-12 pb-4 text-center text-xs text-muted-foreground/40">Qalem</div>

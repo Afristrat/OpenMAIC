@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   requireEditor: vi.fn(),
   requireMember: vi.fn(),
   hasShareAccess: vi.fn(),
+  hasCallerGrant: vi.fn(),
   readEditAccess: vi.fn(),
   download: vi.fn(),
   createGenerationJob: vi.fn(),
@@ -51,6 +52,7 @@ vi.mock('@/lib/api/auth', () => ({
 }));
 vi.mock('@/lib/server/classroom-share-access', () => ({
   hasClassroomShareAccess: mocks.hasShareAccess,
+  hasCallerStageGrant: mocks.hasCallerGrant,
 }));
 vi.mock('@/lib/server/classroom-edit-delegations', () => ({
   readClassroomEditDelegationState: mocks.readEditAccess,
@@ -91,6 +93,7 @@ describe('classroom tenant boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.hasShareAccess.mockResolvedValue(false);
+    mocks.hasCallerGrant.mockResolvedValue(false);
     mocks.readEditAccess.mockResolvedValue({
       role: 'apprenant',
       canRequest: false,
@@ -356,6 +359,52 @@ describe('classroom tenant boundary', () => {
     expect(mocks.readClassroom).not.toHaveBeenCalled();
   });
 
+  it('lets a person who received this very classroom read it, without interaction or sources', async () => {
+    mocks.requireMember.mockResolvedValue({ response: forbidden() });
+    mocks.requireEditor.mockResolvedValue({ response: forbidden() });
+    mocks.requireAuthor.mockResolvedValue({ response: forbidden() });
+    mocks.hasCallerGrant.mockResolvedValue(true);
+    mocks.readClassroom.mockResolvedValue({
+      id: 'granted_classroom',
+      stage: {
+        id: 'granted_classroom',
+        name: 'Granted classroom',
+        researchSources: [{ title: 'Private', url: 'https://s.example', excerpt: 'x' }],
+      },
+      scenes: [],
+      createdAt: '2026-07-22T00:00:00.000Z',
+      ownerId: 'session-owner',
+      orgId: ORG_ID,
+    });
+
+    const response = await getClassroom(
+      new NextRequest('https://qalem.ma/api/classroom?id=granted_classroom'),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mocks.hasCallerGrant).toHaveBeenCalledWith('granted_classroom');
+    expect(body.canInteract).toBe(false);
+    expect(body.canEdit).toBe(false);
+    expect(body).not.toHaveProperty('interactionOrganizationId');
+    expect(body.classroom).not.toHaveProperty('ownerId');
+    expect(body.classroom).not.toHaveProperty('orgId');
+    expect(body.classroom.stage).not.toHaveProperty('researchSources');
+  });
+
+  it('still refuses a classroom that was not given to the caller', async () => {
+    mocks.requireMember.mockResolvedValue({ response: forbidden() });
+    mocks.hasCallerGrant.mockResolvedValue(false);
+
+    const response = await getClassroom(
+      new NextRequest('https://qalem.ma/api/classroom?id=other_classroom'),
+    );
+
+    expect(response.status).toBe(403);
+    expect(mocks.hasCallerGrant).toHaveBeenCalledWith('other_classroom');
+    expect(mocks.readClassroom).not.toHaveBeenCalled();
+  });
+
   it('allows anonymous reads only after explicit publication and hides ownership state', async () => {
     mocks.isClassroomPublic.mockResolvedValue(true);
     mocks.requireMember.mockResolvedValue({ response: forbidden() });
@@ -536,6 +585,7 @@ describe('classroom media tenant boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.hasShareAccess.mockResolvedValue(false);
+    mocks.hasCallerGrant.mockResolvedValue(false);
     mocks.readClassroomOwnership.mockResolvedValue({ ownerId: 'session-owner', orgId: ORG_ID });
     mocks.isClassroomPublic.mockResolvedValue(false);
     mocks.requireMember.mockResolvedValue({ response: forbidden() });

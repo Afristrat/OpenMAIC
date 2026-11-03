@@ -4,7 +4,9 @@ const mocks = vi.hoisted(() => ({
   filters: vi.fn(),
   from: vi.fn(),
   result: { data: null as unknown, error: null as unknown },
+  hasGrant: vi.fn(),
 }));
+vi.mock('@/lib/server/stage-grants', () => ({ hasStageGrant: mocks.hasGrant }));
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: async () => {
     const query = {
@@ -36,6 +38,7 @@ import { hasClassroomShareAccess } from '@/lib/server/classroom-share-access';
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.result = { data: { id: 'share' }, error: null };
+  mocks.hasGrant.mockResolvedValue(false);
   mocks.getUser.mockResolvedValue({ data: { user: { id: 'verified-user' } }, error: null });
 });
 it('requires a verified share, active recipient and the authenticated membership', async () => {
@@ -61,4 +64,17 @@ it('denies absent grants and throws on failed verification', async () => {
   expect(await hasClassroomShareAccess('stage')).toBe(false);
   mocks.result.error = { message: 'offline' };
   await expect(hasClassroomShareAccess('stage')).rejects.toThrow('verification unavailable');
+});
+it('falls back to an individual grant only without an organization context', async () => {
+  mocks.result.data = null;
+  mocks.hasGrant.mockResolvedValue(true);
+  expect(await hasClassroomShareAccess('stage')).toBe(true);
+  expect(mocks.hasGrant).toHaveBeenCalledWith('stage', 'verified-user');
+  mocks.hasGrant.mockClear();
+  expect(await hasClassroomShareAccess('stage', 'recipient')).toBe(false);
+  expect(mocks.hasGrant).not.toHaveBeenCalled();
+});
+it('denies when neither a share nor a grant exists', async () => {
+  mocks.result.data = null;
+  expect(await hasClassroomShareAccess('stage')).toBe(false);
 });

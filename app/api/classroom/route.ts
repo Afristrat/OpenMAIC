@@ -29,7 +29,7 @@ import { createLogger } from '@/lib/logger';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import type { Scene, Stage } from '@/lib/types/stage';
 import { presentationBrandingFromOrganization } from '@/lib/branding/presentation-branding';
-import { hasClassroomShareAccess } from '@/lib/server/classroom-share-access';
+import { hasCallerStageGrant, hasClassroomShareAccess } from '@/lib/server/classroom-share-access';
 import { readClassroomEditDelegationState } from '@/lib/server/classroom-edit-delegations';
 
 const log = createLogger('Classroom API');
@@ -235,7 +235,11 @@ export async function GET(request: NextRequest) {
     ) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 403, 'Classroom sharing denied');
     }
-    if (!isPublic && interactionAuth.response) return interactionAuth.response;
+    // A person who received this very classroom (stage_grants) reads it like a public viewer:
+    // no interaction, no organization data, and no other classroom.
+    const isGrantee =
+      !isPublic && Boolean(interactionAuth.response) && (await hasCallerStageGrant(id));
+    if (!isPublic && !isGrantee && interactionAuth.response) return interactionAuth.response;
     const canInteract = !interactionAuth.response;
 
     const classroom = await readClassroom(id);

@@ -310,6 +310,53 @@ export async function requireSuperAdminOrOrgEditor(
 }
 
 /**
+ * Permission to share ONE classroom with ONE person (stage_grants): admin and manager of the
+ * owning organization, the author who owns the classroom, and the configured super-admin.
+ * A time-limited editing delegation never confers the right to share.
+ */
+export async function requireSuperAdminOrOrgSharer(
+  req: NextRequest,
+  orgId: string,
+  ownerId: string,
+): Promise<AuthResult> {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth;
+  if (isSuperAdminEmail(auth.user.email)) return auth;
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: membership } = await supabase
+      .from('org_members')
+      .select('role, organizations!inner(status)')
+      .eq('org_id', orgId)
+      .eq('user_id', auth.user.id)
+      .single();
+    const canShare =
+      membership &&
+      hasActiveTenant(membership as MembershipWithTenant) &&
+      (['admin', 'manager'].includes(membership.role) ||
+        (membership.role === 'author' && auth.user.id === ownerId));
+    if (!canShare) {
+      return {
+        response: NextResponse.json(
+          { error: 'Classroom sharing access required', code: 'FORBIDDEN', status: 403 },
+          { status: 403 },
+        ),
+      };
+    }
+    return auth;
+  } catch (err) {
+    log.error('Classroom sharer check error:', err instanceof Error ? err.message : String(err));
+    return {
+      response: NextResponse.json(
+        { error: 'Failed to verify classroom sharing role', code: 'INTERNAL_ERROR', status: 500 },
+        { status: 500 },
+      ),
+    };
+  }
+}
+
+/**
  * Export permission for an existing classroom (SCORM, cmi5, MP4).
  * Every organization role above the learner may export: admin, manager, author and
  * formateur, without any delegation; a learner (apprenant) never may. The configured
