@@ -11,6 +11,10 @@ const mocks = vi.hoisted(() => ({
   grantStageByEmail: vi.fn(),
   listStageGrants: vi.fn(),
   revokeStageGrant: vi.fn(),
+  listStageInvitations: vi.fn(),
+  revokeStageInvitation: vi.fn(),
+  sendInvitationEmail: vi.fn(),
+  stageRow: { data: { name: 'Réunion efficace', language: 'fr-FR' } as unknown },
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -30,8 +34,21 @@ vi.mock('@/lib/server/stage-grants', async () => {
     grantStageByEmail: mocks.grantStageByEmail,
     listStageGrants: mocks.listStageGrants,
     revokeStageGrant: mocks.revokeStageGrant,
+    listStageInvitations: mocks.listStageInvitations,
+    revokeStageInvitation: mocks.revokeStageInvitation,
   };
 });
+vi.mock('@/lib/server/organization-invitation-email', () => ({
+  organizationInvitationUrl: (token: string) => `https://qalem.ma/auth?invite=${token}`,
+  sendStageShareInvitationEmail: mocks.sendInvitationEmail,
+}));
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceSupabaseClient: () => ({
+    from: () => ({
+      select: () => ({ eq: () => ({ maybeSingle: async () => mocks.stageRow }) }),
+    }),
+  }),
+}));
 
 import { DELETE, GET, POST } from '@/app/api/classroom/[classroomId]/grants/route';
 
@@ -52,6 +69,9 @@ beforeEach(() => {
   mocks.grantStageByEmail.mockResolvedValue({ status: 'granted', userId: USER_ID });
   mocks.listStageGrants.mockResolvedValue([]);
   mocks.revokeStageGrant.mockResolvedValue(undefined);
+  mocks.listStageInvitations.mockResolvedValue([]);
+  mocks.revokeStageInvitation.mockResolvedValue(undefined);
+  mocks.sendInvitationEmail.mockResolvedValue('email-1');
 });
 
 describe('classroom grants route', () => {
@@ -94,10 +114,58 @@ describe('classroom grants route', () => {
     expect(mocks.grantStageByEmail).not.toHaveBeenCalled();
   });
 
-  it('tells the sharer when the address has no account', async () => {
-    mocks.grantStageByEmail.mockResolvedValue({ status: 'no_account' });
+  it('invites an address without account by e-mail, for this classroom only', async () => {
+    mocks.grantStageByEmail.mockResolvedValue({
+      status: 'invited',
+      invitationId: 'inv-1',
+      token: 'tok-1',
+    });
     const response = await POST(request('POST', { email: 'a@b.co' }), params);
-    expect(response.status).toBe(404);
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ status: 'invited', emailSent: true });
+    expect(body).not.toHaveProperty('inviteUrl');
+    expect(mocks.sendInvitationEmail).toHaveBeenCalledWith({
+      invitationId: 'inv-1',
+      recipient: 'a@b.co',
+      courseName: 'Réunion efficace',
+      locale: 'fr-FR',
+      inviteUrl: 'https://qalem.ma/auth?invite=tok-1',
+    });
+  });
+
+  it('hands the personal link back to the sharer when the e-mail cannot be sent', async () => {
+    mocks.grantStageByEmail.mockResolvedValue({
+      status: 'invited',
+      invitationId: 'inv-1',
+      token: 'tok-1',
+    });
+    mocks.sendInvitationEmail.mockRejectedValue(new Error('RESEND_HTTP_500'));
+    const response = await POST(request('POST', { email: 'a@b.co' }), params);
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      status: 'invited',
+      emailSent: false,
+      inviteUrl: 'https://qalem.ma/auth?invite=tok-1',
+    });
+  });
+
+  it('lists pending invitations with the people who have access', async () => {
+    mocks.listStageInvitations.mockResolvedValue([
+      { id: 'inv-1', email: 'a@b.co', expiresAt: '2026-11-18T00:00:00Z' },
+    ]);
+    const response = await GET(request('GET'), params);
+    const body = await response.json();
+    expect(body.invitations).toHaveLength(1);
+    expect(body.grants).toEqual([]);
+  });
+
+  it('cancels a pending invitation and rejects a malformed identifier', async () => {
+    const invitationId = '11111111-2222-4333-8444-555555555555';
+    expect((await DELETE(request('DELETE', { invitationId }), params)).status).toBe(200);
+    expect(mocks.revokeStageInvitation).toHaveBeenCalledWith(CLASSROOM, invitationId);
+    expect((await DELETE(request('DELETE', { invitationId: 'x' }), params)).status).toBe(400);
   });
 
   it('revokes one person and rejects a malformed identifier', async () => {

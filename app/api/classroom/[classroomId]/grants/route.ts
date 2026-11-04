@@ -4,10 +4,17 @@ import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess, API_ERROR_CODES } from '@/lib/server/api-response';
 import { isValidClassroomId, readClassroomOwnership } from '@/lib/server/classroom-storage';
 import {
+  organizationInvitationUrl,
+  sendStageShareInvitationEmail,
+} from '@/lib/server/organization-invitation-email';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
+import {
   grantStageByEmail,
   listStageGrants,
+  listStageInvitations,
   normalizeShareEmail,
   revokeStageGrant,
+  revokeStageInvitation,
 } from '@/lib/server/stage-grants';
 
 const log = createLogger('ClassroomGrants');
@@ -39,7 +46,11 @@ export async function GET(
     const { classroomId } = await params;
     const context = await resolveSharer(request, classroomId);
     if (context.response) return context.response;
-    return apiSuccess({ grants: await listStageGrants(classroomId) });
+    const [grants, invitations] = await Promise.all([
+      listStageGrants(classroomId),
+      listStageInvitations(classroomId),
+    ]);
+    return apiSuccess({ grants, invitations });
   } catch (error) {
     log.error('Failed to list classroom grants', error);
     return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, 'Échec de lecture des partages');
@@ -64,13 +75,34 @@ export async function POST(
       email,
       grantedBy: context.userId,
     });
-    if (result.status === 'no_account') {
-      return apiError(
-        API_ERROR_CODES.INVALID_REQUEST,
-        404,
-        'Aucun compte Qalem pour cette adresse',
-        'NO_ACCOUNT',
-      );
+    if (result.status === 'invited') {
+      // Adresse sans compte : invitation PAR FORMATION, jamais d'adhésion à l'organisation.
+      let inviteUrl: string;
+      try {
+        inviteUrl = organizationInvitationUrl(result.token);
+      } catch {
+        return apiError(API_ERROR_CODES.INTERNAL_ERROR, 500, "Origine d'invitation non configurée");
+      }
+      let emailSent = true;
+      try {
+        const { data: stage } = await createServiceSupabaseClient()
+          .from('stages')
+          .select('name, language')
+          .eq('id', classroomId)
+          .maybeSingle();
+        await sendStageShareInvitationEmail({
+          invitationId: result.invitationId,
+          recipient: email,
+          courseName: String(stage?.name ?? ''),
+          locale: String(stage?.language ?? 'fr-FR'),
+          inviteUrl,
+        });
+      } catch (error) {
+        // Le lien à usage unique reste valable : on le rend à l'auteur du partage plutôt que de le perdre.
+        log.warn('Stage share invitation email not sent', error);
+        emailSent = false;
+      }
+      return apiSuccess({ status: 'invited', emailSent, ...(emailSent ? {} : { inviteUrl }) });
     }
     return apiSuccess({ status: result.status });
   } catch (error) {
@@ -87,7 +119,17 @@ export async function DELETE(
     const { classroomId } = await params;
     const context = await resolveSharer(request, classroomId);
     if (context.response) return context.response;
-    const body = (await request.json().catch(() => null)) as { userId?: unknown } | null;
+    const body = (await request.json().catch(() => null)) as {
+      userId?: unknown;
+      invitationId?: unknown;
+    } | null;
+    if (typeof body?.invitationId === 'string') {
+      if (!UUID_PATTERN.test(body.invitationId)) {
+        return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Invitation invalide');
+      }
+      await revokeStageInvitation(classroomId, body.invitationId);
+      return apiSuccess({ revoked: true });
+    }
     if (typeof body?.userId !== 'string' || !UUID_PATTERN.test(body.userId)) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 400, 'Personne invalide');
     }

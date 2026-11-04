@@ -650,15 +650,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "6cd80a984b41b250c9d986f4d7616fa0148a854a2713719a9b44682b33ac7d78"
+          "sha256": "38f5d4ce2049da3ed2fa43e6d543cce6e9c7612688cdc51d14438e8d476edc50"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "619cb3dd7a91fcebf50c10da52c6ef3e54240d9f5b30b3e88470bfad10ed372d"
+          "sha256": "f464bc3c9b986c88d74cb544e624e214cd0080352dd86cf813178a7df2ec26a9"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "bcdbcbfdb8b6dbdaa1ff9b7c5f9b60a79c1bede3eaa8c66ca5f9499731ecafea"
+          "sha256": "a6feb859878f74185f082d90f371586258b1ac7e6f779a8b0445e6b17cec9d56"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -708,15 +708,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "6cd80a984b41b250c9d986f4d7616fa0148a854a2713719a9b44682b33ac7d78"
+          "sha256": "38f5d4ce2049da3ed2fa43e6d543cce6e9c7612688cdc51d14438e8d476edc50"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "619cb3dd7a91fcebf50c10da52c6ef3e54240d9f5b30b3e88470bfad10ed372d"
+          "sha256": "f464bc3c9b986c88d74cb544e624e214cd0080352dd86cf813178a7df2ec26a9"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "bcdbcbfdb8b6dbdaa1ff9b7c5f9b60a79c1bede3eaa8c66ca5f9499731ecafea"
+          "sha256": "a6feb859878f74185f082d90f371586258b1ac7e6f779a8b0445e6b17cec9d56"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -766,15 +766,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "6cd80a984b41b250c9d986f4d7616fa0148a854a2713719a9b44682b33ac7d78"
+          "sha256": "38f5d4ce2049da3ed2fa43e6d543cce6e9c7612688cdc51d14438e8d476edc50"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "619cb3dd7a91fcebf50c10da52c6ef3e54240d9f5b30b3e88470bfad10ed372d"
+          "sha256": "f464bc3c9b986c88d74cb544e624e214cd0080352dd86cf813178a7df2ec26a9"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "bcdbcbfdb8b6dbdaa1ff9b7c5f9b60a79c1bede3eaa8c66ca5f9499731ecafea"
+          "sha256": "a6feb859878f74185f082d90f371586258b1ac7e6f779a8b0445e6b17cec9d56"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -824,15 +824,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "6cd80a984b41b250c9d986f4d7616fa0148a854a2713719a9b44682b33ac7d78"
+          "sha256": "38f5d4ce2049da3ed2fa43e6d543cce6e9c7612688cdc51d14438e8d476edc50"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "619cb3dd7a91fcebf50c10da52c6ef3e54240d9f5b30b3e88470bfad10ed372d"
+          "sha256": "f464bc3c9b986c88d74cb544e624e214cd0080352dd86cf813178a7df2ec26a9"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "bcdbcbfdb8b6dbdaa1ff9b7c5f9b60a79c1bede3eaa8c66ca5f9499731ecafea"
+          "sha256": "a6feb859878f74185f082d90f371586258b1ac7e6f779a8b0445e6b17cec9d56"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -882,15 +882,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "6cd80a984b41b250c9d986f4d7616fa0148a854a2713719a9b44682b33ac7d78"
+          "sha256": "38f5d4ce2049da3ed2fa43e6d543cce6e9c7612688cdc51d14438e8d476edc50"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "619cb3dd7a91fcebf50c10da52c6ef3e54240d9f5b30b3e88470bfad10ed372d"
+          "sha256": "f464bc3c9b986c88d74cb544e624e214cd0080352dd86cf813178a7df2ec26a9"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "bcdbcbfdb8b6dbdaa1ff9b7c5f9b60a79c1bede3eaa8c66ca5f9499731ecafea"
+          "sha256": "a6feb859878f74185f082d90f371586258b1ac7e6f779a8b0445e6b17cec9d56"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",

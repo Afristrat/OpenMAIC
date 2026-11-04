@@ -51,42 +51,42 @@ function invitationUiLocale(locale: string): Locale {
   return 'fr-FR';
 }
 
-/** Sends the organization token only to its nominated recipient. */
-export async function sendOrganizationInvitationEmail(input: {
-  invitationId: string;
+async function sendInvitationEmail(input: {
+  idempotencyKey: string;
   recipient: string;
-  organizationName: string;
-  locale: string;
+  locale: Locale;
+  subjectKey: string;
+  introKey: string;
+  actionKey: string;
+  params: Record<string, string>;
   inviteUrl: string;
 }): Promise<string | null> {
   const apiKey = requiredEnvironment('RESEND_API_KEY');
   const from = requiredEnvironment('SMTP_FROM');
-  const organizationName = escapeHtml(input.organizationName);
+  const escapedParams = Object.fromEntries(
+    Object.entries(input.params).map(([key, value]) => [key, escapeHtml(value)]),
+  );
   const inviteUrl = escapeHtml(input.inviteUrl);
-  const locale = invitationUiLocale(input.locale);
+  const { locale } = input;
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'Idempotency-Key': `qalem-organization-invitation/${input.invitationId}`,
+      'Idempotency-Key': input.idempotencyKey,
     },
     body: JSON.stringify({
       from,
       to: [input.recipient],
-      subject: translate(locale, 'org.invitationEmailSubject', {
-        organization: input.organizationName,
-      }),
+      subject: translate(locale, input.subjectKey, input.params),
       text: [
-        translate(locale, 'org.invitationEmailIntro', {
-          organization: input.organizationName,
-        }),
+        translate(locale, input.introKey, input.params),
         input.inviteUrl,
         translate(locale, 'org.invitationEmailFooter'),
       ].join('\n\n'),
       html: [
-        `<p>${translate(locale, 'org.invitationEmailIntro', { organization: organizationName })}</p>`,
-        `<p><a href="${inviteUrl}">${translate(locale, 'org.invitationEmailAction')}</a></p>`,
+        `<p>${translate(locale, input.introKey, escapedParams)}</p>`,
+        `<p><a href="${inviteUrl}">${translate(locale, input.actionKey)}</a></p>`,
         `<p>${translate(locale, 'org.invitationEmailFooter')}</p>`,
       ].join(''),
     }),
@@ -99,4 +99,44 @@ export async function sendOrganizationInvitationEmail(input: {
   }
   const body = (await response.json().catch(() => null)) as { id?: unknown } | null;
   return typeof body?.id === 'string' ? body.id : null;
+}
+
+/** Sends the organization token only to its nominated recipient. */
+export async function sendOrganizationInvitationEmail(input: {
+  invitationId: string;
+  recipient: string;
+  organizationName: string;
+  locale: string;
+  inviteUrl: string;
+}): Promise<string | null> {
+  return sendInvitationEmail({
+    idempotencyKey: `qalem-organization-invitation/${input.invitationId}`,
+    recipient: input.recipient,
+    locale: invitationUiLocale(input.locale),
+    subjectKey: 'org.invitationEmailSubject',
+    introKey: 'org.invitationEmailIntro',
+    actionKey: 'org.invitationEmailAction',
+    params: { organization: input.organizationName },
+    inviteUrl: input.inviteUrl,
+  });
+}
+
+/** Sends the one-classroom share token only to the nominated recipient (no organization membership). */
+export async function sendStageShareInvitationEmail(input: {
+  invitationId: string;
+  recipient: string;
+  courseName: string;
+  locale: string;
+  inviteUrl: string;
+}): Promise<string | null> {
+  return sendInvitationEmail({
+    idempotencyKey: `qalem-stage-share-invitation/${input.invitationId}`,
+    recipient: input.recipient,
+    locale: invitationUiLocale(input.locale),
+    subjectKey: 'share.invitationEmailSubject',
+    introKey: 'share.invitationEmailIntro',
+    actionKey: 'share.invitationEmailAction',
+    params: { course: input.courseName },
+    inviteUrl: input.inviteUrl,
+  });
 }

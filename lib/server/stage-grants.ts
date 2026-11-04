@@ -21,9 +21,15 @@ export interface SharedWithMeItem {
   sharedAt: string;
 }
 
+export interface StageInvitationRecord {
+  id: string;
+  email: string;
+  expiresAt: string;
+}
+
 export type GrantByEmailResult =
   | { status: 'granted' | 'already'; userId: string }
-  | { status: 'no_account' };
+  | { status: 'invited'; invitationId: string; token: string };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -54,7 +60,7 @@ export async function grantStageByEmail(input: {
     p_email: input.email,
   });
   if (lookupError) throw new Error(`Failed to resolve account: ${lookupError.message}`);
-  if (typeof userId !== 'string') return { status: 'no_account' };
+  if (typeof userId !== 'string') return inviteStageByEmail(input);
 
   const { data: existing, error: existingError } = await supabase
     .from('stage_grants')
@@ -132,4 +138,71 @@ export async function listSharedWithUser(userId: string): Promise<SharedWithMeIt
       sharedAt: String(row.created_at),
     };
   });
+}
+
+/**
+ * Adresse sans compte : une invitation PAR FORMATION (jamais d'adhésion à l'organisation).
+ * Une invitation encore valable pour la même adresse est réutilisée (renvoi du même lien).
+ */
+async function inviteStageByEmail(input: {
+  stageId: string;
+  email: string;
+  grantedBy: string;
+}): Promise<GrantByEmailResult> {
+  const supabase = createServiceSupabaseClient();
+  const { error: purgeError } = await supabase
+    .from('stage_grant_invitations')
+    .delete()
+    .eq('stage_id', input.stageId)
+    .eq('email', input.email)
+    .is('used_at', null)
+    .lte('expires_at', new Date().toISOString());
+  if (purgeError) throw new Error(`Failed to purge expired invitation: ${purgeError.message}`);
+
+  const { data: pending, error: pendingError } = await supabase
+    .from('stage_grant_invitations')
+    .select('id, token')
+    .eq('stage_id', input.stageId)
+    .eq('email', input.email)
+    .is('used_at', null)
+    .maybeSingle();
+  if (pendingError) throw new Error(`Failed to read invitation: ${pendingError.message}`);
+  if (pending) {
+    return { status: 'invited', invitationId: String(pending.id), token: String(pending.token) };
+  }
+
+  const { data: created, error } = await supabase
+    .from('stage_grant_invitations')
+    .insert({ stage_id: input.stageId, email: input.email, created_by: input.grantedBy })
+    .select('id, token')
+    .single();
+  if (error || !created) throw new Error(`Failed to invite: ${error?.message ?? 'no row'}`);
+  return { status: 'invited', invitationId: String(created.id), token: String(created.token) };
+}
+
+export async function listStageInvitations(stageId: string): Promise<StageInvitationRecord[]> {
+  const { data, error } = await createServiceSupabaseClient()
+    .from('stage_grant_invitations')
+    .select('id, email, expires_at')
+    .eq('stage_id', stageId)
+    .is('used_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error) throw new Error(`Failed to list stage invitations: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    id: String(row.id),
+    email: String(row.email),
+    expiresAt: String(row.expires_at),
+  }));
+}
+
+export async function revokeStageInvitation(stageId: string, invitationId: string): Promise<void> {
+  const { error } = await createServiceSupabaseClient()
+    .from('stage_grant_invitations')
+    .delete()
+    .eq('stage_id', stageId)
+    .eq('id', invitationId)
+    .is('used_at', null);
+  if (error) throw new Error(`Failed to revoke stage invitation: ${error.message}`);
 }

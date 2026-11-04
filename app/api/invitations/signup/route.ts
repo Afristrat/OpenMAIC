@@ -12,11 +12,20 @@ export async function POST(request: NextRequest): Promise<Response> {
     const { token, password } = validation.data;
     const email = validation.data.email.toLowerCase();
     const supabase = createServiceSupabaseClient();
-    const { data: invitation, error: invitationError } = await supabase
+    let { data: invitation, error: invitationError } = await supabase
       .from('org_invitations')
       .select('email, expires_at, used_at')
       .eq('token', token)
-      .single();
+      .maybeSingle();
+    if (!invitation && !invitationError) {
+      // Invitation PAR FORMATION : même inscription, mais le déclencheur crée un droit de lecture
+      // (stage_grants) au lieu d'une adhésion.
+      ({ data: invitation, error: invitationError } = await supabase
+        .from('stage_grant_invitations')
+        .select('email, expires_at, used_at')
+        .eq('token', token)
+        .maybeSingle());
+    }
 
     if (invitationError || !invitation) {
       return apiError(API_ERROR_CODES.INVALID_REQUEST, 404, 'Invitation not found');

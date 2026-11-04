@@ -19,6 +19,11 @@ interface GrantRow {
   displayName: string;
 }
 
+interface InvitationRow {
+  id: string;
+  email: string;
+}
+
 interface ShareClassroomDialogProps {
   stageId: string | null;
   stageName: string;
@@ -32,6 +37,7 @@ export function ShareClassroomDialog({ stageId, stageName, onClose }: ShareClass
   const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [grants, setGrants] = useState<GrantRow[]>([]);
+  const [invitations, setInvitations] = useState<InvitationRow[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const endpoint = stageId ? `/api/classroom/${encodeURIComponent(stageId)}/grants` : null;
@@ -41,8 +47,12 @@ export function ShareClassroomDialog({ stageId, stageName, onClose }: ShareClass
     try {
       const response = await fetch(endpoint);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = (await response.json()) as { grants?: GrantRow[] };
+      const payload = (await response.json()) as {
+        grants?: GrantRow[];
+        invitations?: InvitationRow[];
+      };
       setGrants(payload.grants ?? []);
+      setInvitations(payload.invitations ?? []);
     } catch {
       toast.error(t('share.person.loadFailed'));
     }
@@ -51,6 +61,7 @@ export function ShareClassroomDialog({ stageId, stageName, onClose }: ShareClass
   useEffect(() => {
     setEmail('');
     setGrants([]);
+    setInvitations([]);
     void loadGrants();
   }, [loadGrants]);
 
@@ -64,21 +75,33 @@ export function ShareClassroomDialog({ stageId, stageName, onClose }: ShareClass
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() }),
       });
-      if (response.status === 404) {
-        toast.error(t('share.person.noAccount'));
-        return;
-      }
       if (response.status === 403) {
         toast.error(t('share.person.forbidden'));
         return;
       }
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = (await response.json()) as { status?: string };
-      toast.success(
-        payload.status === 'already'
-          ? t('share.person.already')
-          : t('share.person.done', { email: email.trim() }),
-      );
+      const payload = (await response.json()) as {
+        status?: string;
+        emailSent?: boolean;
+        inviteUrl?: string;
+      };
+      if (payload.status === 'invited') {
+        // Adresse sans compte : l'invitation ne donne accès qu'à cette formation.
+        if (payload.emailSent === false && payload.inviteUrl) {
+          toast.warning(
+            t('share.person.invitedNoEmail', { email: email.trim(), url: payload.inviteUrl }),
+            { duration: 30000 },
+          );
+        } else {
+          toast.success(t('share.person.invited', { email: email.trim() }));
+        }
+      } else {
+        toast.success(
+          payload.status === 'already'
+            ? t('share.person.already')
+            : t('share.person.done', { email: email.trim() }),
+        );
+      }
       setEmail('');
       await loadGrants();
     } catch {
@@ -88,16 +111,18 @@ export function ShareClassroomDialog({ stageId, stageName, onClose }: ShareClass
     }
   };
 
-  const revoke = async (userId: string) => {
+  const revoke = async (target: { userId: string } | { invitationId: string }) => {
     if (!endpoint) return;
     try {
       const response = await fetch(endpoint, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify(target),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      toast.success(t('share.person.revoked'));
+      toast.success(
+        'invitationId' in target ? t('share.person.invitationRevoked') : t('share.person.revoked'),
+      );
       await loadGrants();
     } catch {
       toast.error(t('share.person.revokeFailed'));
@@ -148,7 +173,7 @@ export function ShareClassroomDialog({ stageId, stageName, onClose }: ShareClass
                     type="button"
                     size="sm"
                     variant="ghost"
-                    onClick={() => void revoke(grant.userId)}
+                    onClick={() => void revoke({ userId: grant.userId })}
                   >
                     {t('share.person.revoke')}
                   </Button>
@@ -157,6 +182,29 @@ export function ShareClassroomDialog({ stageId, stageName, onClose }: ShareClass
             </ul>
           )}
         </section>
+        {invitations.length > 0 && (
+          <section className="space-y-2 text-sm" aria-label={t('share.person.pendingTitle')}>
+            <h3 className="font-medium">{t('share.person.pendingTitle')}</h3>
+            <ul className="divide-y rounded-md border" data-testid="share-invitation-list">
+              {invitations.map((invitation) => (
+                <li
+                  key={invitation.id}
+                  className="flex items-center justify-between gap-3 px-3 py-2"
+                >
+                  <span className="min-w-0 truncate">{invitation.email}</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => void revoke({ invitationId: invitation.id })}
+                  >
+                    {t('share.person.revokeInvitation')}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} disabled={submitting}>
             {t('share.person.close')}

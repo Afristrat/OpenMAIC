@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
@@ -23,6 +23,11 @@ function post(body: Record<string, unknown>): NextRequest {
     body: JSON.stringify(body),
   }) as unknown as NextRequest;
 }
+
+// Cold module graphs are slow on a loaded machine; import once, outside the test timeouts.
+beforeAll(async () => {
+  await import('@/app/api/generate/scene-outlines-stream/route');
+}, 120_000);
 
 beforeEach(() => {
   vi.clearAllMocks();

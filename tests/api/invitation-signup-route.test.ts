@@ -3,13 +3,19 @@ import type { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   invitation: vi.fn(),
+  stageInvitation: vi.fn(),
   createUser: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/service', () => ({
   createServiceSupabaseClient: () => ({
-    from: () => ({
-      select: () => ({ eq: () => ({ single: mocks.invitation }) }),
+    from: (table: string) => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle:
+            table === 'stage_grant_invitations' ? mocks.stageInvitation : mocks.invitation,
+        }),
+      }),
     }),
     auth: { admin: { createUser: mocks.createUser } },
   }),
@@ -41,7 +47,43 @@ describe('POST /api/invitations/signup', () => {
       },
       error: null,
     });
+    mocks.stageInvitation.mockResolvedValue({ data: null, error: null });
     mocks.createUser.mockResolvedValue({ data: { user: { id: 'recipient-1' } }, error: null });
+  });
+
+  it('accepts a one-classroom invitation when no organization invitation matches', async () => {
+    mocks.invitation.mockResolvedValue({ data: null, error: null });
+    mocks.stageInvitation.mockResolvedValue({
+      data: {
+        email: 'recipient@qalem.ma',
+        expires_at: '2099-01-01T00:00:00.000Z',
+        used_at: null,
+      },
+      error: null,
+    });
+    const response = await signup();
+    expect(response.status).toBe(201);
+    expect(mocks.createUser).toHaveBeenCalledWith(
+      expect.objectContaining({ user_metadata: { qalem_invitation_token: 'named-invite' } }),
+    );
+  });
+
+  it('refuses a one-classroom invitation presented for another email', async () => {
+    mocks.invitation.mockResolvedValue({ data: null, error: null });
+    mocks.stageInvitation.mockResolvedValue({
+      data: { email: 'recipient@qalem.ma', expires_at: '2099-01-01T00:00:00.000Z', used_at: null },
+      error: null,
+    });
+    const response = await signup({ email: 'attacker@qalem.ma' });
+    expect(response.status).toBe(403);
+    expect(mocks.createUser).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 when neither kind of invitation exists', async () => {
+    mocks.invitation.mockResolvedValue({ data: null, error: null });
+    const response = await signup();
+    expect(response.status).toBe(404);
+    expect(mocks.createUser).not.toHaveBeenCalled();
   });
 
   it('creates a confirmed user carrying the token in initial insert metadata', async () => {

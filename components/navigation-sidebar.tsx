@@ -298,7 +298,7 @@ export function NavigationSidebar(): React.ReactElement {
         )}
 
         {/* Create org — shown only when authenticated and no org */}
-        {isAuthenticated && organizations.length === 0 && (
+        {isAuthenticated && isSuperAdmin && organizations.length === 0 && (
           <>
             <div className="my-3 mx-2 h-px bg-border/10" />
             {!collapsed && (
