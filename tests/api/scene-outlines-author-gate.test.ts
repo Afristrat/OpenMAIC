@@ -5,11 +5,20 @@ const mocks = vi.hoisted(() => ({
   requireAuth: vi.fn(),
   requireAuthor: vi.fn(),
   resolveModelFromRequest: vi.fn(),
+  rejectIfInsufficientCredits: vi.fn(),
+  activateUsageMeteringContext: vi.fn(),
 }));
 
 vi.mock('@/lib/api/auth', () => ({
   requireAuth: mocks.requireAuth,
   requireSuperAdminOrOrgAuthor: mocks.requireAuthor,
+}));
+vi.mock('@/lib/server/credit-gate-response', () => ({
+  rejectIfInsufficientCredits: mocks.rejectIfInsufficientCredits,
+}));
+vi.mock('@/lib/billing/usage-context', () => ({
+  activateUsageMeteringContext: mocks.activateUsageMeteringContext,
+  withStableIdempotencyKey: (headers: Headers) => headers,
 }));
 vi.mock('@/lib/server/resolve-model', () => ({
   resolveModelFromRequest: mocks.resolveModelFromRequest,
@@ -34,6 +43,7 @@ beforeEach(() => {
   mocks.requireAuth.mockResolvedValue({ user: { id: 'user-1', email: 'a@example.com' } });
   mocks.requireAuthor.mockResolvedValue({ user: { id: 'user-1', email: 'a@example.com' } });
   mocks.resolveModelFromRequest.mockRejectedValue(new Error('model not configured'));
+  mocks.rejectIfInsufficientCredits.mockResolvedValue(null);
 });
 
 describe('POST /api/generate/scene-outlines-stream authorization', () => {
@@ -60,5 +70,27 @@ describe('POST /api/generate/scene-outlines-stream authorization', () => {
     const { POST } = await import('@/app/api/generate/scene-outlines-stream/route');
     await POST(post({ orgId: 'org-1', requirements: { requirement: 'x' } }));
     expect(mocks.resolveModelFromRequest).toHaveBeenCalledOnce();
+  });
+
+  it('refuses with 402 before any model work when the organization has no credits', async () => {
+    mocks.rejectIfInsufficientCredits.mockResolvedValue(
+      NextResponse.json({ error: 'INSUFFICIENT_CREDITS' }, { status: 402 }),
+    );
+    const { POST } = await import('@/app/api/generate/scene-outlines-stream/route');
+    const response = await POST(post({ orgId: 'org-1', requirements: { requirement: 'x' } }));
+    expect(response.status).toBe(402);
+    expect(mocks.rejectIfInsufficientCredits).toHaveBeenCalledWith('org-1');
+    expect(mocks.activateUsageMeteringContext).not.toHaveBeenCalled();
+    expect(mocks.resolveModelFromRequest).not.toHaveBeenCalled();
+  });
+
+  it('bills the organization in the name of the author', async () => {
+    const { POST } = await import('@/app/api/generate/scene-outlines-stream/route');
+    await POST(post({ orgId: 'org-1', requirements: { requirement: 'x' } }));
+    expect(mocks.activateUsageMeteringContext).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      'org-1',
+    );
   });
 });

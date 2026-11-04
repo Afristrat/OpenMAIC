@@ -41,6 +41,11 @@ import {
   INSUFFICIENT_CREDITS_CODE,
 } from '@/lib/billing/insufficient-credits';
 import { creditsErrorResponse } from '@/lib/server/credit-error-response';
+import { rejectIfInsufficientCredits } from '@/lib/server/credit-gate-response';
+import {
+  activateUsageMeteringContext,
+  withStableIdempotencyKey,
+} from '@/lib/billing/usage-context';
 import { createLogger } from '@/lib/logger';
 import { resolveModelFromRequest } from '@/lib/server/resolve-model';
 import { resolveVocationalActive } from '@/lib/config/feature-flags';
@@ -304,6 +309,13 @@ export async function POST(req: NextRequest) {
     if (!orgId) return apiError('MISSING_REQUIRED_FIELD', 400, 'Organization is required');
     const author = await requireSuperAdminOrOrgAuthor(req, orgId);
     if (author.response) return author.response;
+
+    // Le plan consomme le modèle de la plateforme : il est facturé à l'organisation, au nom de
+    // l'auteur. Un solde déjà insuffisant est refusé avant tout appel au modèle ; sinon la
+    // réservation par appel (lib/ai/llm.ts) tranche et règle le coût réel.
+    const insufficient = await rejectIfInsufficientCredits(orgId);
+    if (insufficient) return insufficient;
+    activateUsageMeteringContext(withStableIdempotencyKey(req.headers), author.user.id, orgId);
 
     // Get API configuration from request headers/body
     const {

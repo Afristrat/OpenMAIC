@@ -2908,7 +2908,7 @@
   "billing.credits.insufficient": "Insufficient credit balance. Available balance: {{balance}}, minimum needed to start a generation: {{required}}. Top up the organization’s credits or contact its administrator.",
   "billing.credits.low": "Low credit balance (available balance: {{balance}}). Warn the organization administrator before a generation is refused.",
   "billing.credits.recheck": "Check again",
-  "billing.credits.consumptionBlocked": "The organization’s credit balance is exhausted: this action is suspended. Contact the organization administrator to top up the credits.",
+  "billing.credits.consumptionBlocked": "The organization’s credit balance is exhausted, or your personal monthly limit is reached: this action is suspended. Contact the organization administrator.",
   "org.credits.empty": "No credit entry.",
   "org.credits.date": "Date",
   "org.credits.type": "Type",
@@ -3113,5 +3113,18 @@
   "captures.install.step.back.body": "Reload it: the status changes to “Extension detected”. Then click “Pair the extension”.",
   "captures.install.compat": "Works with Chrome and Chromium browsers, version {{minChrome}} or later. The extension is not yet published on the Chrome Web Store: installation goes through developer mode, and Chrome may remind you of it when it opens. Its interface is available in French, English, German, Spanish, Portuguese, Russian, Chinese and Arabic.",
   "captures.install.checksum": "SHA-256 fingerprint of the file, to verify it:",
-  "captures.install.reinstall": "Reinstall or update the extension"
+  "captures.install.reinstall": "Reinstall or update the extension",
+  "org.limits.title": "Credit limits per member",
+  "org.limits.help": "Share the common balance: set a monthly credit limit for each member (calendar month). Without a limit, a member spends freely up to the organization’s balance. A limit of 0 blocks all consumption.",
+  "org.limits.member": "Member",
+  "org.limits.spent": "Used this month",
+  "org.limits.cap": "Monthly limit",
+  "org.limits.unlimited": "No limit",
+  "org.limits.save": "Save limits",
+  "org.limits.saved": "Limits saved.",
+  "org.limits.saveFailed": "The limits could not be saved.",
+  "org.limits.loadFailed": "The limits could not be loaded.",
+  "org.limits.splitTotal": "Credits to share per month",
+  "org.limits.split": "Split equally",
+  "org.limits.invalid": "Enter a positive number of credits or leave the field empty."
 }

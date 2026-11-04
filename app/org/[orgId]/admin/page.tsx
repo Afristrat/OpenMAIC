@@ -42,6 +42,7 @@ import {
 } from '@/lib/agents/persona-catalog';
 import { AgentRosterSettings } from '@/components/org/agent-roster-settings';
 import { TenantCreditLedger } from '@/components/org/tenant-credit-ledger';
+import { MemberCreditLimits } from '@/components/org/member-credit-limits';
 import { OrganizationXapiSettings } from '@/components/org/xapi-settings';
 import {
   presentationBrandingFromOrganization,
@@ -1045,6 +1046,7 @@ export default function OrgAdminPage() {
 
       {isAdmin && <OrganizationXapiSettings orgId={orgId} />}
       {(isAdmin || org.userRole === 'manager') && <TenantCreditLedger orgId={orgId} />}
+      {(isAdmin || org.userRole === 'manager') && <MemberCreditLimits orgId={orgId} />}
 
       {/* Members Section */}
       <section className="mb-10 rounded-lg border bg-card p-6">
