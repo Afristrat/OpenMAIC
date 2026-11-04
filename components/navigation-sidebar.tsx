@@ -56,7 +56,7 @@ export function NavigationSidebar(): React.ReactElement {
   const { t, locale, setLocale } = useI18n();
   const { theme, setTheme } = useTheme();
   const { user, isGuest, signOut } = useAuth();
-  const { currentOrg, organizations } = useOrganizations();
+  const { currentOrg, organizations, canAuthor } = useOrganizations();
   const { isSuperAdmin } = useIsSuperAdmin();
   const { isSyncing, lastSyncAt, isAuthenticated: isSyncAuthenticated, syncNow } = useSync();
   const pathname = usePathname();
@@ -99,6 +99,8 @@ export function NavigationSidebar(): React.ReactElement {
 
   const orgId = currentOrg?.id;
   const isAuthenticated = !!user && !isGuest;
+  // Création et outils d'auteur : réservés à admin, gestionnaire, auteur (et super admin).
+  const showAuthorTools = !isAuthenticated || canAuthor || isSuperAdmin;
 
   // --- Navigation items ---
   const mainItems: NavItem[] = [
@@ -120,37 +122,37 @@ export function NavigationSidebar(): React.ReactElement {
       href: '/app/captures',
       labelKey: 'nav.captures',
       icon: <Camera className="size-5" />,
-      show: isAuthenticated,
+      show: isAuthenticated && showAuthorTools,
     },
     {
       href: '/exports',
       labelKey: 'exports.title',
       icon: <Download className="size-5" />,
-      show: isAuthenticated,
+      show: isAuthenticated && showAuthorTools,
     },
     {
       href: '/marketplace/agents',
       labelKey: 'nav.marketplace',
       icon: <Store className="size-5" />,
-      show: true,
+      show: showAuthorTools,
     },
     {
       href: '/skills',
       labelKey: 'nav.skills',
       icon: <BookOpen className="size-5" />,
-      show: true,
+      show: showAuthorTools,
     },
     {
       href: '/catalog',
       labelKey: 'nav.catalog',
       icon: <Library className="size-5" />,
-      show: isAuthenticated,
+      show: isAuthenticated && showAuthorTools,
     },
     {
       href: '/plugins',
       labelKey: 'nav.plugins',
       icon: <Puzzle className="size-5" />,
-      show: true,
+      show: showAuthorTools,
     },
   ];
 
@@ -160,7 +162,7 @@ export function NavigationSidebar(): React.ReactElement {
           href: `/org/${orgId}/admin`,
           labelKey: 'nav.organization',
           icon: <Building2 className="size-5" />,
-          show: isAuthenticated,
+          show: isAuthenticated && showAuthorTools,
         },
         {
           href: `/org/${orgId}/library`,
@@ -172,19 +174,19 @@ export function NavigationSidebar(): React.ReactElement {
           href: `/org/${orgId}/referentiel`,
           labelKey: 'nav.referentiel',
           icon: <BookMarked className="size-5" />,
-          show: isAuthenticated,
+          show: isAuthenticated && showAuthorTools,
         },
         {
           href: `/org/${orgId}/curriculum`,
           labelKey: 'nav.curriculum',
           icon: <Map className="size-5" />,
-          show: isAuthenticated,
+          show: isAuthenticated && showAuthorTools,
         },
         {
           href: `/org/${orgId}/reports`,
           labelKey: 'nav.reports',
           icon: <BarChart3 className="size-5" />,
-          show: isAuthenticated,
+          show: isAuthenticated && showAuthorTools,
         },
       ]
     : [];

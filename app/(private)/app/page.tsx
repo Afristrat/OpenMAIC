@@ -253,7 +253,16 @@ function HomePage() {
 
   // Auth + due review count
   const { user } = useAuth();
-  const { currentOrg, canAuthor, organizations, setCurrentOrg } = useOrganizations();
+  const {
+    currentOrg,
+    canAuthor,
+    isLoading: organizationsLoading,
+    organizations,
+    setCurrentOrg,
+  } = useOrganizations();
+  // Le panneau de génération ne s'affiche qu'aux rôles qui créent (admin, gestionnaire, auteur) ;
+  // pendant le chargement des organisations on le garde pour éviter un clignotement.
+  const showGenerationPanel = canAuthor || organizationsLoading;
   const {
     status: creditStatus,
     refreshing: creditRefreshing,
@@ -1603,338 +1612,347 @@ function HomePage() {
           {t('home.slogan')}
         </motion.p>
 
-        {/* ── Unified input area ── */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.35 }}
-          className="w-full"
-        >
-          <div className="w-full rounded-2xl border border-border/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl shadow-black/[0.03] dark:shadow-black/20 transition-shadow focus-within:shadow-2xl focus-within:shadow-violet-500/[0.06]">
-            {/* ── Greeting + Profile + Agents ── */}
-            <div className="relative z-20 flex items-start justify-between">
-              <GreetingBar user={user} />
-              <div className="pr-3 pt-3.5 shrink-0">
-                <AgentBar
-                  organizationSettings={currentOrg?.settings}
-                  orgId={currentOrg?.id}
-                  topic={form.requirement}
-                  territory={form.learningContext.territory}
-                />
+        {showGenerationPanel && (
+          <>
+            {/* ── Unified input area ── */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.35 }}
+              className="w-full"
+            >
+              <div className="w-full rounded-2xl border border-border/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl shadow-black/[0.03] dark:shadow-black/20 transition-shadow focus-within:shadow-2xl focus-within:shadow-violet-500/[0.06]">
+                {/* ── Greeting + Profile + Agents ── */}
+                <div className="relative z-20 flex items-start justify-between">
+                  <GreetingBar user={user} />
+                  <div className="pr-3 pt-3.5 shrink-0">
+                    <AgentBar
+                      organizationSettings={currentOrg?.settings}
+                      orgId={currentOrg?.id}
+                      topic={form.requirement}
+                      territory={form.learningContext.territory}
+                    />
+                  </div>
+                </div>
+
+                {activeSkillId && (
+                  <div
+                    data-testid="active-skill-indicator"
+                    className="mx-4 mb-2 flex flex-wrap items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-200"
+                  >
+                    <BookOpen className="size-3.5" />
+                    <span>{t('skills.activeLabel')}</span>
+                    <strong>
+                      {activeSkill?.id === activeSkillId ? activeSkill.name : activeSkillId}
+                    </strong>
+                    <Link
+                      className="ms-auto font-medium underline underline-offset-2"
+                      href="/skills"
+                    >
+                      {t('skills.changeActive')}
+                    </Link>
+                    <button
+                      type="button"
+                      aria-label={t('skills.removeActive')}
+                      className="rounded-full p-1 hover:bg-violet-100 dark:hover:bg-violet-900"
+                      onClick={() => {
+                        setActiveSkillId(undefined);
+                        setActiveSkill(undefined);
+                        router.replace('/app');
+                      }}
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Textarea */}
+                <div className="relative">
+                  <textarea
+                    ref={textareaRef}
+                    placeholder={t('upload.requirementPlaceholder')}
+                    className="w-full resize-none border-0 bg-transparent px-4 pt-1 pb-10 text-[13px] leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none min-h-[140px] max-h-[300px]"
+                    value={form.requirement}
+                    onChange={(e) => updateForm('requirement', e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    rows={4}
+                  />
+                  {form.requirement.trim() && canAuthor && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={handleImproveRequirement}
+                          disabled={isImprovingRequirement}
+                          className="absolute bottom-2 right-3 inline-flex h-7 items-center gap-1.5 rounded-full border border-violet-300/60 bg-violet-50 px-2.5 text-[11px] font-medium text-violet-700 transition hover:bg-violet-100 disabled:opacity-50 dark:border-violet-700/60 dark:bg-violet-950/40 dark:text-violet-300"
+                        >
+                          {form.requirement.trim().length < REQUIREMENT_EXPANSION_THRESHOLD ? (
+                            <WandSparkles className="size-3.5" />
+                          ) : (
+                            <Sparkles className="size-3.5" />
+                          )}
+                          {form.requirement.trim().length < REQUIREMENT_EXPANSION_THRESHOLD
+                            ? t('generation.expandRequest')
+                            : t('generation.improveRequest')}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        {t('generation.requirementAssistantHint')}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+
+                {/* Toolbar row */}
+                <div className="flex flex-wrap items-end gap-2 px-3 pb-3 xl:flex-nowrap">
+                  <div className="min-w-0 basis-full xl:flex-1 xl:basis-auto">
+                    <GenerationToolbar
+                      webSearch={form.webSearch}
+                      onWebSearchChange={(v) => updateForm('webSearch', v)}
+                      onSettingsOpen={(section) => {
+                        setSettingsSection(section);
+                        setSettingsOpen(true);
+                      }}
+                      orgId={currentOrg?.id}
+                      ownerId={user?.id}
+                      sourceClearRequestToken={sourceClearRequestToken}
+                      onSourceManifestChange={handleSourceManifestChange}
+                      onSourceIngestionBlockChange={setSourceIngestionBlocked}
+                      onSourceError={setError}
+                    />
+                  </div>
+
+                  {/* Template selector — picks a requirement preset; the template's
+                  own language field is ignored here since generation language
+                  is now driven globally by the LanguageSwitcher locale. */}
+                  <TemplateSelector
+                    onSelect={(template) => {
+                      const requirement = template.requirements.requirement;
+                      if (typeof requirement === 'string') updateForm('requirement', requirement);
+                      const learningApproach = template.requirements.learningApproach;
+                      if (
+                        learningApproach === 'pedagogy' ||
+                        learningApproach === 'hybrid' ||
+                        learningApproach === 'andragogy'
+                      ) {
+                        updateForm('learningApproach', learningApproach);
+                      }
+                      const templateContext = template.requirements.learningContext;
+                      if (
+                        templateContext &&
+                        typeof templateContext === 'object' &&
+                        typeof (templateContext as Record<string, unknown>).territory ===
+                          'string' &&
+                        typeof (templateContext as Record<string, unknown>).currencyCode ===
+                          'string'
+                      ) {
+                        updateForm(
+                          'learningContext',
+                          normalizeLearningContext(templateContext as unknown as LearningContext),
+                        );
+                      }
+                    }}
+                  />
+
+                  {/* Interactive mode toggle */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                        onClick={() => updateForm('interactiveMode', !form.interactiveMode)}
+                        className={cn(
+                          'relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all cursor-pointer select-none whitespace-nowrap border shrink-0 h-8',
+                          form.interactiveMode
+                            ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.35)] dark:shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                            : 'border-cyan-300/60 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20',
+                        )}
+                      >
+                        {form.interactiveMode && (
+                          <span
+                            className="absolute inset-[-4px] rounded-full border border-cyan-400/40 dark:border-cyan-400/25"
+                            style={{
+                              animation: 'interactive-mode-breathe 2s ease-in-out infinite',
+                            }}
+                          />
+                        )}
+                        <Atom className="size-3.5 relative z-10 animate-[spin_3s_linear_infinite]" />
+                        <span className="relative z-10">{t('toolbar.interactiveModeLabel')}</span>
+                      </motion.button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      {t('toolbar.interactiveModeHint')}
+                    </TooltipContent>
+                  </Tooltip>
+
+                  {/* Voice input */}
+                  <SpeechButton
+                    size="md"
+                    continuous
+                    onTranscription={(text) => {
+                      setForm((prev) => {
+                        const next = prev.requirement + (prev.requirement ? ' ' : '') + text;
+                        updateRequirementCache(next);
+                        return { ...prev, requirement: next };
+                      });
+                    }}
+                  />
+
+                  {/* Send button */}
+                  <button
+                    onClick={handleGenerateAction}
+                    disabled={generateDisabled && !creditBlocked}
+                    aria-disabled={creditBlocked || undefined}
+                    aria-describedby={
+                      [
+                        missingAuthoringSelections && 'generation-selection-requirement',
+                        creditBlocked && 'credit-status-notice',
+                      ]
+                        .filter(Boolean)
+                        .join(' ') || undefined
+                    }
+                    className={cn(
+                      'shrink-0 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all px-3',
+                      !generateDisabled
+                        ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm cursor-pointer'
+                        : 'bg-muted text-muted-foreground/40 cursor-not-allowed',
+                    )}
+                  >
+                    <span className="text-xs font-medium">
+                      {requiresAuthentication
+                        ? t('toolbar.loginToGenerate')
+                        : isPlanning
+                          ? t('generation.generatingOutlines')
+                          : t('toolbar.enterClassroom')}
+                    </span>
+                    <ArrowUp className="size-3.5" />
+                  </button>
+                </div>
               </div>
+            </motion.div>
+
+            <div className="mt-3 w-full px-1" data-testid="competency-framework">
+              <CompetencyFrameworkPicker
+                value={framework}
+                onChange={(next) => {
+                  setFramework(next);
+                  if (next) setFrameworkMissing(false);
+                }}
+                invalid={frameworkMissing && !framework}
+              />
             </div>
 
-            {activeSkillId && (
-              <div
-                data-testid="active-skill-indicator"
-                className="mx-4 mb-2 flex flex-wrap items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-200"
-              >
-                <BookOpen className="size-3.5" />
-                <span>{t('skills.activeLabel')}</span>
-                <strong>
-                  {activeSkill?.id === activeSkillId ? activeSkill.name : activeSkillId}
-                </strong>
-                <Link className="ms-auto font-medium underline underline-offset-2" href="/skills">
-                  {t('skills.changeActive')}
-                </Link>
-                <button
-                  type="button"
-                  aria-label={t('skills.removeActive')}
-                  className="rounded-full p-1 hover:bg-violet-100 dark:hover:bg-violet-900"
-                  onClick={() => {
-                    setActiveSkillId(undefined);
-                    setActiveSkill(undefined);
-                    router.replace('/app');
-                  }}
-                >
-                  <X className="size-3.5" />
-                </button>
-              </div>
-            )}
-
-            {/* Textarea */}
-            <div className="relative">
-              <textarea
-                ref={textareaRef}
-                placeholder={t('upload.requirementPlaceholder')}
-                className="w-full resize-none border-0 bg-transparent px-4 pt-1 pb-10 text-[13px] leading-relaxed placeholder:text-muted-foreground/40 focus:outline-none min-h-[140px] max-h-[300px]"
-                value={form.requirement}
-                onChange={(e) => updateForm('requirement', e.target.value)}
-                onKeyDown={handleKeyDown}
-                rows={4}
+            <div
+              className="mt-2 flex w-full flex-wrap items-center gap-2 px-1"
+              data-testid="animation-authoring-controls"
+            >
+              <LearningContextPicker
+                orgId={currentOrg?.id}
+                locale={locale}
+                value={form.learningContext}
+                onChange={(learningContext) => updateForm('learningContext', learningContext)}
+                territoryLabel={t('generation.territory')}
+                currencyLabel={t('generation.currency')}
+                searchPlaceholder={t('generation.territorySearch')}
+                addCountryLabel={t('generation.territoryAdd')}
               />
-              {form.requirement.trim() && canAuthor && (
+              <span className="text-xs font-medium text-muted-foreground">
+                {t('animation.learningApproach')}
+              </span>
+              {(['pedagogy', 'hybrid', 'andragogy'] as LearningApproach[]).map((approach) => (
+                <button
+                  key={approach}
+                  data-testid={`learning-approach-${approach}`}
+                  type="button"
+                  onClick={() => updateForm('learningApproach', approach)}
+                  className={cn(
+                    'rounded-full border px-2.5 py-1 text-xs transition-colors',
+                    form.learningApproach === approach
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-background text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {t(`org.learningApproaches.${approach}`)}
+                </button>
+              ))}
+              <span className="ml-1 text-xs font-medium text-muted-foreground">
+                {t('animation.interactionLevel')}
+              </span>
+              {(['guided', 'balanced', 'immersive'] as InteractionLevel[]).map((level) => (
+                <button
+                  key={level}
+                  data-testid={`interaction-level-${level}`}
+                  type="button"
+                  onClick={() => updateForm('interactionLevel', level)}
+                  className={cn(
+                    'rounded-full border px-2.5 py-1 text-xs transition-colors',
+                    form.interactionLevel === level
+                      ? 'border-cyan-500 bg-cyan-500 text-white'
+                      : 'border-border bg-background text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {t(`org.interactionLevels.${level}`)}
+                </button>
+              ))}
+              {missingAuthoringSelections && (
+                <p
+                  id="generation-selection-requirement"
+                  data-testid="generation-selection-requirement"
+                  className="basis-full text-xs font-medium text-amber-700 dark:text-amber-300"
+                >
+                  {t('animation.selectionRequired')}
+                </p>
+              )}
+            </div>
+
+            {showVocationalTestUi && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mt-2 flex w-full justify-start px-1"
+              >
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
                       type="button"
-                      onClick={handleImproveRequirement}
-                      disabled={isImprovingRequirement}
-                      className="absolute bottom-2 right-3 inline-flex h-7 items-center gap-1.5 rounded-full border border-violet-300/60 bg-violet-50 px-2.5 text-[11px] font-medium text-violet-700 transition hover:bg-violet-100 disabled:opacity-50 dark:border-violet-700/60 dark:bg-violet-950/40 dark:text-violet-300"
-                    >
-                      {form.requirement.trim().length < REQUIREMENT_EXPANSION_THRESHOLD ? (
-                        <WandSparkles className="size-3.5" />
-                      ) : (
-                        <Sparkles className="size-3.5" />
+                      role="switch"
+                      aria-checked={form.vocationalTestMode}
+                      onClick={() => updateForm('vocationalTestMode', !form.vocationalTestMode)}
+                      className={cn(
+                        'inline-flex h-7 items-center gap-2 rounded-full border px-2.5 text-[11px] font-medium transition-colors',
+                        form.vocationalTestMode
+                          ? 'border-cyan-400/70 bg-cyan-50 text-cyan-700 shadow-[0_0_10px_rgba(6,182,212,0.16)] dark:bg-cyan-950/40 dark:text-cyan-300'
+                          : 'border-border/70 bg-background/70 text-muted-foreground hover:border-cyan-300/60 hover:text-cyan-700 dark:hover:text-cyan-300',
                       )}
-                      {form.requirement.trim().length < REQUIREMENT_EXPANSION_THRESHOLD
-                        ? t('generation.expandRequest')
-                        : t('generation.improveRequest')}
+                    >
+                      <span className="rounded-full bg-cyan-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-normal text-cyan-700 dark:bg-cyan-900/45 dark:text-cyan-300">
+                        测试功能
+                      </span>
+                      <Sparkles className="size-3.5" />
+                      <span>职教任务</span>
+                      <span
+                        className={cn(
+                          'relative h-3.5 w-6 rounded-full transition-colors',
+                          form.vocationalTestMode ? 'bg-cyan-500' : 'bg-muted-foreground/25',
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'absolute top-0.5 size-2.5 rounded-full bg-white transition-transform',
+                            form.vocationalTestMode ? 'translate-x-3' : 'translate-x-0.5',
+                          )}
+                        />
+                      </span>
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="top">
-                    {t('generation.requirementAssistantHint')}
+                  <TooltipContent side="bottom" className="text-xs">
+                    从当前输入框提交职教实操训练测试
                   </TooltipContent>
                 </Tooltip>
-              )}
-            </div>
-
-            {/* Toolbar row */}
-            <div className="flex flex-wrap items-end gap-2 px-3 pb-3 xl:flex-nowrap">
-              <div className="min-w-0 basis-full xl:flex-1 xl:basis-auto">
-                <GenerationToolbar
-                  webSearch={form.webSearch}
-                  onWebSearchChange={(v) => updateForm('webSearch', v)}
-                  onSettingsOpen={(section) => {
-                    setSettingsSection(section);
-                    setSettingsOpen(true);
-                  }}
-                  orgId={currentOrg?.id}
-                  ownerId={user?.id}
-                  sourceClearRequestToken={sourceClearRequestToken}
-                  onSourceManifestChange={handleSourceManifestChange}
-                  onSourceIngestionBlockChange={setSourceIngestionBlocked}
-                  onSourceError={setError}
-                />
-              </div>
-
-              {/* Template selector — picks a requirement preset; the template's
-                  own language field is ignored here since generation language
-                  is now driven globally by the LanguageSwitcher locale. */}
-              <TemplateSelector
-                onSelect={(template) => {
-                  const requirement = template.requirements.requirement;
-                  if (typeof requirement === 'string') updateForm('requirement', requirement);
-                  const learningApproach = template.requirements.learningApproach;
-                  if (
-                    learningApproach === 'pedagogy' ||
-                    learningApproach === 'hybrid' ||
-                    learningApproach === 'andragogy'
-                  ) {
-                    updateForm('learningApproach', learningApproach);
-                  }
-                  const templateContext = template.requirements.learningContext;
-                  if (
-                    templateContext &&
-                    typeof templateContext === 'object' &&
-                    typeof (templateContext as Record<string, unknown>).territory === 'string' &&
-                    typeof (templateContext as Record<string, unknown>).currencyCode === 'string'
-                  ) {
-                    updateForm(
-                      'learningContext',
-                      normalizeLearningContext(templateContext as unknown as LearningContext),
-                    );
-                  }
-                }}
-              />
-
-              {/* Interactive mode toggle */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                    onClick={() => updateForm('interactiveMode', !form.interactiveMode)}
-                    className={cn(
-                      'relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all cursor-pointer select-none whitespace-nowrap border shrink-0 h-8',
-                      form.interactiveMode
-                        ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 border-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.35)] dark:shadow-[0_0_12px_rgba(6,182,212,0.25)]'
-                        : 'border-cyan-300/60 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20',
-                    )}
-                  >
-                    {form.interactiveMode && (
-                      <span
-                        className="absolute inset-[-4px] rounded-full border border-cyan-400/40 dark:border-cyan-400/25"
-                        style={{
-                          animation: 'interactive-mode-breathe 2s ease-in-out infinite',
-                        }}
-                      />
-                    )}
-                    <Atom className="size-3.5 relative z-10 animate-[spin_3s_linear_infinite]" />
-                    <span className="relative z-10">{t('toolbar.interactiveModeLabel')}</span>
-                  </motion.button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  {t('toolbar.interactiveModeHint')}
-                </TooltipContent>
-              </Tooltip>
-
-              {/* Voice input */}
-              <SpeechButton
-                size="md"
-                continuous
-                onTranscription={(text) => {
-                  setForm((prev) => {
-                    const next = prev.requirement + (prev.requirement ? ' ' : '') + text;
-                    updateRequirementCache(next);
-                    return { ...prev, requirement: next };
-                  });
-                }}
-              />
-
-              {/* Send button */}
-              <button
-                onClick={handleGenerateAction}
-                disabled={generateDisabled && !creditBlocked}
-                aria-disabled={creditBlocked || undefined}
-                aria-describedby={
-                  [
-                    missingAuthoringSelections && 'generation-selection-requirement',
-                    creditBlocked && 'credit-status-notice',
-                  ]
-                    .filter(Boolean)
-                    .join(' ') || undefined
-                }
-                className={cn(
-                  'shrink-0 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all px-3',
-                  !generateDisabled
-                    ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm cursor-pointer'
-                    : 'bg-muted text-muted-foreground/40 cursor-not-allowed',
-                )}
-              >
-                <span className="text-xs font-medium">
-                  {requiresAuthentication
-                    ? t('toolbar.loginToGenerate')
-                    : isPlanning
-                      ? t('generation.generatingOutlines')
-                      : t('toolbar.enterClassroom')}
-                </span>
-                <ArrowUp className="size-3.5" />
-              </button>
-            </div>
-          </div>
-        </motion.div>
-
-        <div className="mt-3 w-full px-1" data-testid="competency-framework">
-          <CompetencyFrameworkPicker
-            value={framework}
-            onChange={(next) => {
-              setFramework(next);
-              if (next) setFrameworkMissing(false);
-            }}
-            invalid={frameworkMissing && !framework}
-          />
-        </div>
-
-        <div
-          className="mt-2 flex w-full flex-wrap items-center gap-2 px-1"
-          data-testid="animation-authoring-controls"
-        >
-          <LearningContextPicker
-            orgId={currentOrg?.id}
-            locale={locale}
-            value={form.learningContext}
-            onChange={(learningContext) => updateForm('learningContext', learningContext)}
-            territoryLabel={t('generation.territory')}
-            currencyLabel={t('generation.currency')}
-            searchPlaceholder={t('generation.territorySearch')}
-            addCountryLabel={t('generation.territoryAdd')}
-          />
-          <span className="text-xs font-medium text-muted-foreground">
-            {t('animation.learningApproach')}
-          </span>
-          {(['pedagogy', 'hybrid', 'andragogy'] as LearningApproach[]).map((approach) => (
-            <button
-              key={approach}
-              data-testid={`learning-approach-${approach}`}
-              type="button"
-              onClick={() => updateForm('learningApproach', approach)}
-              className={cn(
-                'rounded-full border px-2.5 py-1 text-xs transition-colors',
-                form.learningApproach === approach
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-background text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {t(`org.learningApproaches.${approach}`)}
-            </button>
-          ))}
-          <span className="ml-1 text-xs font-medium text-muted-foreground">
-            {t('animation.interactionLevel')}
-          </span>
-          {(['guided', 'balanced', 'immersive'] as InteractionLevel[]).map((level) => (
-            <button
-              key={level}
-              data-testid={`interaction-level-${level}`}
-              type="button"
-              onClick={() => updateForm('interactionLevel', level)}
-              className={cn(
-                'rounded-full border px-2.5 py-1 text-xs transition-colors',
-                form.interactionLevel === level
-                  ? 'border-cyan-500 bg-cyan-500 text-white'
-                  : 'border-border bg-background text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {t(`org.interactionLevels.${level}`)}
-            </button>
-          ))}
-          {missingAuthoringSelections && (
-            <p
-              id="generation-selection-requirement"
-              data-testid="generation-selection-requirement"
-              className="basis-full text-xs font-medium text-amber-700 dark:text-amber-300"
-            >
-              {t('animation.selectionRequired')}
-            </p>
-          )}
-        </div>
-
-        {showVocationalTestUi && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-2 flex w-full justify-start px-1"
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={form.vocationalTestMode}
-                  onClick={() => updateForm('vocationalTestMode', !form.vocationalTestMode)}
-                  className={cn(
-                    'inline-flex h-7 items-center gap-2 rounded-full border px-2.5 text-[11px] font-medium transition-colors',
-                    form.vocationalTestMode
-                      ? 'border-cyan-400/70 bg-cyan-50 text-cyan-700 shadow-[0_0_10px_rgba(6,182,212,0.16)] dark:bg-cyan-950/40 dark:text-cyan-300'
-                      : 'border-border/70 bg-background/70 text-muted-foreground hover:border-cyan-300/60 hover:text-cyan-700 dark:hover:text-cyan-300',
-                  )}
-                >
-                  <span className="rounded-full bg-cyan-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-normal text-cyan-700 dark:bg-cyan-900/45 dark:text-cyan-300">
-                    测试功能
-                  </span>
-                  <Sparkles className="size-3.5" />
-                  <span>职教任务</span>
-                  <span
-                    className={cn(
-                      'relative h-3.5 w-6 rounded-full transition-colors',
-                      form.vocationalTestMode ? 'bg-cyan-500' : 'bg-muted-foreground/25',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'absolute top-0.5 size-2.5 rounded-full bg-white transition-transform',
-                        form.vocationalTestMode ? 'translate-x-3' : 'translate-x-0.5',
-                      )}
-                    />
-                  </span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                从当前输入框提交职教实操训练测试
-              </TooltipContent>
-            </Tooltip>
-          </motion.div>
+              </motion.div>
+            )}
+          </>
         )}
 
         {/* ── Error ── */}
