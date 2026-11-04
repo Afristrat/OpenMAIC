@@ -255,6 +255,48 @@ export async function requireSuperAdminOrOrgAuthor(
 }
 
 /**
+ * Authoring permission when no organization is named (stateless authoring helpers such as
+ * document text extraction): the super admin, or an admin, manager or author of an active tenant.
+ */
+export async function requireSuperAdminOrAnyOrgAuthor(req: NextRequest): Promise<AuthorAuthResult> {
+  const auth = await requireAuth(req);
+  if (auth.response) return auth;
+
+  if (isSuperAdminEmail(auth.user.email)) {
+    return { ...auth, authoredByRole: 'super-admin' };
+  }
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: memberships, error } = await supabase
+      .from('org_members')
+      .select('role, organizations!inner(status)')
+      .eq('user_id', auth.user.id)
+      .in('role', ['admin', 'manager', 'author']);
+    if (error) throw error;
+
+    const canAuthor = ((memberships ?? []) as MembershipWithTenant[]).some(hasActiveTenant);
+    if (!canAuthor) {
+      return {
+        response: NextResponse.json(
+          { error: 'Author access required', code: 'FORBIDDEN', status: 403 },
+          { status: 403 },
+        ),
+      };
+    }
+    return { ...auth, authoredByRole: 'author' };
+  } catch (err) {
+    log.error('Any-org author check error:', err instanceof Error ? err.message : String(err));
+    return {
+      response: NextResponse.json(
+        { error: 'Failed to verify organization role', code: 'INTERNAL_ERROR', status: 500 },
+        { status: 500 },
+      ),
+    };
+  }
+}
+
+/**
  * Mutation permission for an existing classroom.
  * Tenant admins may edit every classroom in their organization; an author may
  * edit only classrooms they own; the configured super-admin may edit all.

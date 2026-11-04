@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { requireAuth } from '@/lib/api/auth';
+import { requireSuperAdminOrAnyOrgAuthor } from '@/lib/api/auth';
 import JSZip from 'jszip';
 import { apiError, apiSuccess, publicErrorMessage } from '@/lib/server/api-response';
 import { decodeOfficeXml } from '@/lib/document/decode-office-xml';
@@ -25,7 +25,7 @@ async function extractOfficeText(buffer: Buffer, extension: string): Promise<str
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth(req);
+  const auth = await requireSuperAdminOrAnyOrgAuthor(req);
   if (auth.response) return auth.response;
 
   const contentType = req.headers.get('content-type') ?? '';
