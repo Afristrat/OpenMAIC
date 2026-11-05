@@ -985,6 +985,7 @@
   "generation.competencies.optionnelle": "optionnelle",
   "generation.competencies.scene": "Compétences travaillées par cette séquence",
   "generation.competencies.sceneFor": "Compétences travaillées par la séquence {{index}}",
+  "generation.competencies.blocked": "{{count}} compétence(s) essentielle(s) sans séquence : rattachez-les pour valider le programme",
   "generation.speechFailed": "La génération vocale a échoué",
   "generation.retryScene": "Réessayer",
   "generation.retryingScene": "Régénérant...",

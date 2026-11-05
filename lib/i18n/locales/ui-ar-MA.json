@@ -985,6 +985,7 @@
   "generation.competencies.optionnelle": "اختيارية",
   "generation.competencies.scene": "الكفايات التي يعمل عليها هذا التسلسل",
   "generation.competencies.sceneFor": "الكفايات التي يعمل عليها التسلسل {{index}}",
+  "generation.competencies.blocked": "{{count}} كفايات أساسية بلا تسلسل: اربطها لاعتماد البرنامج",
   "generation.speechFailed": "فشل توليد الكلام",
   "generation.retryScene": "إعادة المحاولة",
   "generation.retryingScene": "جارٍ إعادة التوليد...",

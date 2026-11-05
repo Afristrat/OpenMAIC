@@ -543,9 +543,14 @@ export function OutlinesEditor({
         )}
 
         <div className="flex flex-col-reverse gap-2 md:flex-row md:items-center md:gap-2">
-          {hasSyllabusWorkspace && !isPlanComplete && (
+          {hasSyllabusWorkspace && validationIssues.length > 0 && (
             <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="status">
               {t('generation.syllabusIncomplete', { count: validationIssues.length })}
+            </p>
+          )}
+          {competencyGaps.length > 0 && (
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-300" role="status">
+              {t('generation.competencies.blocked', { count: competencyGaps.length })}
             </p>
           )}
           <Button

@@ -25,7 +25,11 @@ import { normalizePdfImages } from '@/lib/server/pdf-source';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
 import { assertCourseGenerationAccess } from '@/lib/server/course-generation-access';
 import { loadCaptureDirective } from '@/lib/server/capture-directive';
-import { codeFramework, sanitizeSceneCompetencies } from '@/lib/referentiel/plan-coverage';
+import {
+  codeFramework,
+  sanitizeSceneCompetencies,
+  uncoveredEssentials,
+} from '@/lib/referentiel/plan-coverage';
 import { frameworkDirective } from '@/lib/referentiel/plan-framework';
 import { resolveCompetencyFramework } from '@/lib/server/plan-framework';
 import { optimizationReportSchema } from '@/lib/generation/optimization-report';
@@ -189,9 +193,33 @@ export async function generateClassroomPlan(
   if (!result.success || !result.data) {
     throw new Error(result.error || 'Failed to generate classroom plan');
   }
+  // Contrôle a priori : une compétence essentielle que le plan ne travaille nulle part est corrigée ici,
+  // en une seule reprise, avant que la personne ne voie le plan.
+  if (framework && result.data) {
+    const gaps = uncoveredEssentials(
+      sanitizeSceneCompetencies(result.data.outlines, framework),
+      framework,
+    );
+    if (gaps.length > 0) {
+      await notifyStep('correcting_plan');
+      const retried = await generatePlan({
+        ...requirements,
+        requirement: `${requirements.requirement}
+
+AUTHORITATIVE CORRECTION: the previous plan worked none of these essential skills in any scene: ${gaps
+          .map((gap) => `${gap.code} (${gap.title})`)
+          .join(
+            '; ',
+          )}. Redesign the plan so that each of them is genuinely worked by at least one scene (slide, quiz, interactive or project), and list its code in that scene's \`competencies\`.`,
+      });
+      if (retried.success && retried.data) result = retried;
+    }
+  }
   await assertCourseGenerationAccess(input, ownerId);
   await notifyStep('finalizing');
-  const executable = enforceExecutableObligations(result.data, input.requirement);
+  const generated = result.data;
+  if (!generated) throw new Error('Failed to generate classroom plan');
+  const executable = enforceExecutableObligations(generated, input.requirement);
   // Seules les compétences du cadre choisi comptent : les codes inventés par le modèle sont écartés.
   const plan = framework
     ? {
