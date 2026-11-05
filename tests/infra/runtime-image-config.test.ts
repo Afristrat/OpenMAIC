@@ -87,6 +87,8 @@ describe('Qalem build-time secret exposure', () => {
     'LTI_PUBLIC_KEY',
     'LRS_CONFIG_ENCRYPTION_KEY',
     'QALEM_AUDIOSEAL_TOKEN',
+    'YOUTUBE_OAUTH_CLIENT_ID',
+    'YOUTUBE_OAUTH_CLIENT_SECRET',
   ])('does not require %s at build time', (name) => {
     expect(compose).toContain(`${name}: \${${name}:-}`);
     expect(compose).not.toContain(`\${${name}:?`);

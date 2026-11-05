@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await createServiceSupabaseClient()
     .from('export_jobs')
-    .select('id, stage_id, format, status, created_at, stages(name)')
+    .select('id, stage_id, format, status, scene_count, created_at, stages(name)')
     .eq('owner_id', auth.user.id)
     .order('created_at', { ascending: false })
     .limit(50);
@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
       courseName: courseName?.trim() || null,
       format: row.format as string,
       status: row.status as string,
+      sceneCount: typeof row.scene_count === 'number' ? row.scene_count : 0,
       createdAt: row.created_at as string,
     };
   });

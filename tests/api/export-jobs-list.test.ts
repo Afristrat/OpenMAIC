@@ -56,6 +56,7 @@ describe('GET /api/export-jobs', () => {
           stage_id: 'stage-1',
           format: 'mp4',
           status: 'done',
+          scene_count: 7,
           created_at: '2026-10-28T10:00:00Z',
           storage_path: 'secret/path.mp4',
           stages: { name: 'Vente B2B' },
@@ -84,6 +85,7 @@ describe('GET /api/export-jobs', () => {
         courseName: 'Vente B2B',
         format: 'mp4',
         status: 'done',
+        sceneCount: 7,
         createdAt: '2026-10-28T10:00:00Z',
       },
       {
@@ -92,6 +94,7 @@ describe('GET /api/export-jobs', () => {
         courseName: null,
         format: 'scorm12',
         status: 'queued',
+        sceneCount: 0,
         createdAt: '2026-10-27T10:00:00Z',
       },
     ]);

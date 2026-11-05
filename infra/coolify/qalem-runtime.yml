@@ -55,6 +55,10 @@ x-qalem-environment: &qalem-environment
   VIDEO_COMFYUI_MODELS: ${VIDEO_COMFYUI_MODELS}
   VLLM_BASE_URL: ${VLLM_BASE_URL}
   VLLM_MODELS: ${VLLM_MODELS}
+  # Client OAuth YouTube créé à son nom par l'exploitant : le worker rafraîchit le jeton de chaque
+  # personne avant l'envoi d'une vidéo. Variables runtime uniquement.
+  YOUTUBE_OAUTH_CLIENT_ID: ${YOUTUBE_OAUTH_CLIENT_ID:-}
+  YOUTUBE_OAUTH_CLIENT_SECRET: ${YOUTUBE_OAUTH_CLIENT_SECRET:-}
 
 services:
   # The public web runner is deployed as the rolling Dockerfile application

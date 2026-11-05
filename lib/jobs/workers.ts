@@ -36,6 +36,7 @@ import {
   buildClassroomVideo,
 } from '@/lib/export/mp4/build-classroom-video';
 import { notifyExportReady } from '@/lib/server/export-ready-email';
+import { runYoutubeUpload } from '@/lib/server/youtube-upload';
 import { runManagedVideoJob } from '@/lib/server/managed-video-job';
 import { runClassroomGenerationJob } from '@/lib/server/classroom-job-runner';
 import { runClassroomPlanJob } from '@/lib/server/classroom-plan-job-runner';
@@ -682,6 +683,23 @@ export function startAllWorkers(): void {
     workerOptions(),
   );
 
+  // ---- YouTube upload worker : un export fini, envoyé sur la chaîne de son propriétaire ----
+  const youtubeUploadWorker = new Worker(
+    'youtube-upload',
+    async (job: Job) =>
+      heavyTasks.run(async () => {
+        const { uploadId } = job.data as { uploadId: string };
+        try {
+          await runYoutubeUpload(uploadId);
+          incrementCounter('qalem_jobs_processed_total', { queue: 'youtube-upload' });
+        } catch (err) {
+          incrementCounter('qalem_jobs_failed_total', { queue: 'youtube-upload' });
+          throw err;
+        }
+      }),
+    workerOptions(),
+  );
+
   // ---- Transmission source worker (S2-010) ----
   // The source is immutable once the row is done. Future watermark workers
   // publish separate derivatives and never rewrite this path.
@@ -922,6 +940,7 @@ export function startAllWorkers(): void {
     videoCapsuleWorker,
     videoGenerationWorker,
     exportJobWorker,
+    youtubeUploadWorker,
     transmissionWorker,
     transmissionAudioWatermarkWorker,
     transmissionVisualWatermarkWorker,

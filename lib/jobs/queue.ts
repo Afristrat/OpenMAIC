@@ -67,6 +67,7 @@ export type JobType =
   | 'video-capsule'
   | 'video-generation'
   | 'export-job'
+  | 'youtube-upload'
   | 'webhook-delivery'
   | 'anchor-delivery'
   | 'course-resume-delivery'
@@ -130,6 +131,7 @@ export interface JobQueues {
   videoCapsule: Queue;
   videoGeneration: Queue;
   exportJob: Queue;
+  youtubeUpload: Queue;
   transmission: Queue;
   transmissionAudioWatermark: Queue;
   transmissionVisualWatermark: Queue;
@@ -153,6 +155,7 @@ export function getJobQueues(): JobQueues {
     videoCapsule: new Queue('video-capsule', { connection }),
     videoGeneration: new Queue('video-generation', { connection }),
     exportJob: new Queue('export-job', { connection }),
+    youtubeUpload: new Queue('youtube-upload', { connection }),
     transmission: new Queue('transmission', { connection }),
     transmissionAudioWatermark: new Queue('transmission-audio-watermark', { connection }),
     transmissionVisualWatermark: new Queue('transmission-visual-watermark', { connection }),
@@ -201,6 +204,14 @@ export async function enqueueVideoGeneration(data: {
 
 export async function enqueueExportJob(data: { exportJobId: string }): Promise<string> {
   const job = await getJobQueues().exportJob.add('generate', data, durableJobOptions);
+  return job.id!;
+}
+
+export async function enqueueYoutubeUpload(data: { uploadId: string }): Promise<string> {
+  const queue = getJobQueues().youtubeUpload;
+  const jobId = `youtube-upload-${data.uploadId}`;
+  await removeFinishedJob(queue, jobId);
+  const job = await queue.add('upload', data, { ...durableJobOptions, jobId });
   return job.id!;
 }
 

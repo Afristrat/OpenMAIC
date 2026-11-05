@@ -1,9 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { AlertCircle, Calendar, Download, FileVideo } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useYoutube } from '@/lib/hooks/use-youtube';
+import { YoutubeConnectionCard } from '@/components/exports/youtube-connection-card';
+import { YoutubePublish } from '@/components/exports/youtube-publish';
 import { cn } from '@/lib/utils';
 
 type ExportStatus = 'queued' | 'generating' | 'done' | 'error';
@@ -13,6 +16,7 @@ interface ExportItem {
   courseName: string | null;
   format: string;
   status: ExportStatus;
+  sceneCount: number;
   createdAt: string;
 }
 
@@ -33,6 +37,7 @@ export default function ExportsPage(): React.ReactElement {
   const [items, setItems] = useState<ExportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const youtube = useYoutube(!authLoading);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -71,6 +76,10 @@ export default function ExportsPage(): React.ReactElement {
         <h1 className="mb-8 text-2xl font-bold text-gray-900 dark:text-gray-100">
           {t('exports.title')}
         </h1>
+
+        <Suspense fallback={null}>
+          <YoutubeConnectionCard state={youtube.state} onDisconnect={youtube.disconnect} />
+        </Suspense>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
@@ -128,6 +137,17 @@ export default function ExportsPage(): React.ReactElement {
                     <Download className="size-4" aria-hidden />
                     {t('exports.download')}
                   </a>
+                )}
+                {item.status === 'done' && (item.format === 'video' || item.format === 'mp4') && (
+                  <YoutubePublish
+                    exportJobId={item.id}
+                    courseName={item.courseName}
+                    format={item.format}
+                    chapterCount={item.sceneCount}
+                    uploads={youtube.state.uploads.filter((u) => u.exportJobId === item.id)}
+                    channelConnected={youtube.state.channel !== null}
+                    onPublished={youtube.refresh}
+                  />
                 )}
               </li>
             ))}

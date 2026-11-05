@@ -1,16 +1,6 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { openSecret, sealSecret } from '@/lib/server/secret-box';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
-
-const ALGORITHM = 'aes-256-gcm';
-
-function encryptionKey(): Buffer {
-  const encoded = process.env.LRS_CONFIG_ENCRYPTION_KEY?.trim();
-  if (!encoded) throw new Error('LRS_CONFIG_ENCRYPTION_KEY is missing');
-  const key = Buffer.from(encoded, 'base64');
-  if (key.length !== 32) throw new Error('LRS_CONFIG_ENCRYPTION_KEY must encode 32 bytes');
-  return key;
-}
 
 export function validateLrsEndpoint(value: string): string {
   const endpoint = new URL(value);
@@ -43,23 +33,17 @@ export async function saveOrganizationLrsConfig(input: {
   // Refus à l'enregistrement ; l'envoi (safeFetch) revalide et épingle la connexion à chaque livraison.
   const ssrfError = await validateUrlForSSRF(endpoint);
   if (ssrfError) throw new LrsEndpointBlockedError(ssrfError);
-  const iv = randomBytes(12);
-  const cipher = createCipheriv(ALGORITHM, encryptionKey(), iv);
-  const ciphertext = Buffer.concat([cipher.update(input.auth, 'utf8'), cipher.final()]);
+  const sealed = sealSecret(input.auth);
   const service = createServiceSupabaseClient();
   const { error } = await service.from('organization_lrs_configs').upsert({
     org_id: input.orgId,
     endpoint,
-    auth_ciphertext: `\\x${ciphertext.toString('hex')}`,
-    auth_iv: `\\x${iv.toString('hex')}`,
-    auth_tag: `\\x${cipher.getAuthTag().toString('hex')}`,
+    auth_ciphertext: sealed.ciphertext,
+    auth_iv: sealed.iv,
+    auth_tag: sealed.tag,
     enabled: input.enabled,
   });
   if (error) throw new Error(`LRS configuration save failed: ${error.message}`);
-}
-
-function fromBytea(value: string): Buffer {
-  return Buffer.from(value.startsWith('\\x') ? value.slice(2) : value, 'hex');
 }
 
 export async function readOrganizationLrsConfig(orgId: string): Promise<{
@@ -75,11 +59,10 @@ export async function readOrganizationLrsConfig(orgId: string): Promise<{
     .maybeSingle();
   if (error) throw new Error(`LRS configuration lookup failed: ${error.message}`);
   if (!data) return null;
-  const decipher = createDecipheriv(ALGORITHM, encryptionKey(), fromBytea(data.auth_iv));
-  decipher.setAuthTag(fromBytea(data.auth_tag));
-  const auth = Buffer.concat([
-    decipher.update(fromBytea(data.auth_ciphertext)),
-    decipher.final(),
-  ]).toString('utf8');
+  const auth = openSecret({
+    ciphertext: data.auth_ciphertext,
+    iv: data.auth_iv,
+    tag: data.auth_tag,
+  });
   return { endpoint: data.endpoint, auth, enabled: data.enabled };
 }
