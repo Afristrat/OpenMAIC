@@ -25,6 +25,7 @@ import { normalizePdfImages } from '@/lib/server/pdf-source';
 import { resolveFormationSources } from '@/lib/server/formation-source-library';
 import { assertCourseGenerationAccess } from '@/lib/server/course-generation-access';
 import { loadCaptureDirective } from '@/lib/server/capture-directive';
+import { codeFramework, sanitizeSceneCompetencies } from '@/lib/referentiel/plan-coverage';
 import { frameworkDirective } from '@/lib/referentiel/plan-framework';
 import { resolveCompetencyFramework } from '@/lib/server/plan-framework';
 import { optimizationReportSchema } from '@/lib/generation/optimization-report';
@@ -103,8 +104,10 @@ export async function generateClassroomPlan(
   const captureDirective = await loadCaptureDirective(input);
   if (captureDirective) requirements.requirement += `\n\n${captureDirective}`;
   // Le plan part du référentiel : le métier ESCO visé et ses compétences orientent objectifs et scènes.
-  if (input.competencyFramework) {
-    const framework = await resolveCompetencyFramework(input.competencyFramework);
+  const framework = input.competencyFramework
+    ? codeFramework(await resolveCompetencyFramework(input.competencyFramework))
+    : undefined;
+  if (framework) {
     requirements.requirement += `\n\n${frameworkDirective(framework)}`;
   }
   const resolved = await resolveModel(
@@ -188,7 +191,15 @@ export async function generateClassroomPlan(
   }
   await assertCourseGenerationAccess(input, ownerId);
   await notifyStep('finalizing');
-  const plan = enforceExecutableObligations(result.data, input.requirement);
+  const executable = enforceExecutableObligations(result.data, input.requirement);
+  // Seules les compétences du cadre choisi comptent : les codes inventés par le modèle sont écartés.
+  const plan = framework
+    ? {
+        ...executable,
+        competencyFramework: framework,
+        outlines: sanitizeSceneCompetencies(executable.outlines, framework),
+      }
+    : executable;
   const report = optimizationReportSchema.safeParse(optimization);
   return report.success ? { ...plan, optimization: report.data } : plan;
 }

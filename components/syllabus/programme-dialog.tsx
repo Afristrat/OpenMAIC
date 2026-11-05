@@ -204,6 +204,7 @@ export function ProgrammeButton({ className }: { className?: string }) {
           <OutlinesEditor
             courseTitle={draft.courseTitle}
             syllabus={draft.syllabus}
+            competencyFramework={draft.competencyFramework}
             outlines={draft.outlines}
             onCourseTitleChange={(courseTitle: string) =>
               setDraft((current) => (current ? { ...current, courseTitle } : current))

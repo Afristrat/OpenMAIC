@@ -370,6 +370,7 @@ Rules:
 | description       | string                   | ✅       | 1-2 sentences describing teaching purpose                                                        |
 | keyPoints         | string[]                 | ✅       | 3-5 core points                                                                                  |
 | teachingObjective | string                   | ❌       | Corresponding learning objective                                                                 |
+| competencies      | string[]                 | ❌       | Codes (`C1`, `C2`…) of the target skills this scene works; required when the requirement lists target skills with codes |
 | estimatedDuration | number                   | ❌       | Estimated duration (seconds)                                                                     |
 | order             | number                   | ✅       | Sort order, starting from 1                                                                      |
 {{#if mediaEnabled}}

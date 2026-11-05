@@ -9,6 +9,7 @@ import { optimizationReportSchema } from '@/lib/generation/optimization-report';
 import { isIso4217CurrencyCode } from '@/lib/formation-engine/learning-context';
 import { designDirectiveSchema } from '@/lib/branding/design-directive';
 import { safeHttpUrl } from '@/lib/utils/safe-url';
+import { planCompetencyFrameworkSchema } from '@/lib/referentiel/plan-coverage';
 import { competencyFrameworkSchema } from '@/lib/referentiel/plan-framework';
 
 // ---------------------------------------------------------------------------
@@ -528,12 +529,14 @@ export const approvedSceneOutlineSchema = z
     order: z.number().int().positive(),
     languageNote: z.string().trim().min(1).max(1000).optional(),
     suggestedImageIds: z.array(z.string().min(1).max(120)).max(30).optional(),
+    competencies: z.array(z.string().min(1).max(8)).max(60).optional(),
   })
   .passthrough();
 
 export const approvedClassroomPlanSchema = z.object({
   optimization: optimizationReportSchema.optional(),
   designDirective: designDirectiveSchema.optional(),
+  competencyFramework: planCompetencyFrameworkSchema.optional(),
   courseTitle: z.string().trim().min(1).max(300),
   languageDirective: z.string().trim().min(1).max(2000),
   syllabus: z.object({

@@ -1409,6 +1409,7 @@ function HomePage() {
               optimization={draftPlan.optimization}
               courseTitle={draftPlan.courseTitle}
               syllabus={draftPlan.syllabus}
+              competencyFramework={draftPlan.competencyFramework}
               designDirective={draftPlan.designDirective ?? DEFAULT_DESIGN_DIRECTIVE}
               designSystemEnabled={designSystemEnabled}
               brandCharter={brandCharter}

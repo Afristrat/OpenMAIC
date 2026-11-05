@@ -62,8 +62,9 @@ describe('frameworkDirective', () => {
     });
     expect(text).toContain('ISCO-08 2513');
     expect(text).toContain('développeur web');
-    expect(text).toContain('- Concevoir une interface');
+    expect(text).toContain('- C1: Concevoir une interface');
     expect(text).toContain('Optional skills');
-    expect(text).toContain('- Tester en continu');
+    expect(text).toContain('- C2: Tester en continu');
+    expect(text).toContain('`competencies`');
   });
 });

@@ -306,6 +306,82 @@ describe('classroom tenant boundary', () => {
     expect(mocks.enqueueGeneration).not.toHaveBeenCalled();
   });
 
+  it('refuses a validated plan in which an essential skill is worked by no sequence', async () => {
+    mocks.requireFramework.mockResolvedValueOnce({
+      occupation: {
+        uri: 'http://data.europa.eu/esco/occupation/x',
+        titleFr: 'Conseiller',
+        isco08: '2423',
+        referentialVersion: 'v1',
+      },
+      skills: [
+        { uri: 'u-a', title: 'Écouter', nature: 'essentielle' },
+        { uri: 'u-b', title: 'Conseiller', nature: 'essentielle' },
+      ],
+    });
+
+    const response = await generateClassroom(
+      new NextRequest('https://qalem.ma/api/generate-classroom', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: ORG_ID,
+          requirement: 'Former une cohorte au conseil client',
+          learningApproach: 'andragogy',
+          interactionLevel: 'balanced',
+          learningContext: { territory: 'Maroc', currencyCode: 'mad' },
+          competencyFramework: {
+            occupationUri: 'http://data.europa.eu/esco/occupation/x',
+            skillUris: ['u-a', 'u-b'],
+          },
+          approvedPlan: {
+            courseTitle: 'Conseil client',
+            languageDirective: 'Français',
+            competencyFramework: {
+              occupation: {
+                uri: 'http://data.europa.eu/esco/occupation/x',
+                titleFr: 'Conseiller',
+                isco08: '2423',
+                referentialVersion: 'v1',
+              },
+              skills: [
+                { code: 'C1', uri: 'u-a', title: 'Écouter', nature: 'essentielle' },
+                { code: 'C2', uri: 'u-b', title: 'Conseiller', nature: 'essentielle' },
+              ],
+            },
+            syllabus: {
+              audience: 'a',
+              prerequisites: 'p',
+              overallObjective: 'o',
+              learningObjectives: ['l'],
+              totalDurationMinutes: 30,
+              deliveryMode: 'd',
+              assessmentStrategy: 'a',
+              expectedDeliverable: 'e',
+            },
+            outlines: [
+              {
+                id: 's1',
+                type: 'slide',
+                title: 'Écoute active',
+                description: 'd',
+                keyPoints: [],
+                order: 1,
+                competencies: ['C1'],
+              },
+            ],
+          },
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body).toMatchObject({ details: 'COMPETENCY_COVERAGE_INCOMPLETE' });
+    expect(JSON.stringify(body)).toContain('Conseiller');
+    expect(mocks.createGenerationJob).not.toHaveBeenCalled();
+  });
+
   it('persists per-agent voice choices in the durable generation job', async () => {
     mocks.createGenerationJob.mockResolvedValue({
       status: 'queued',

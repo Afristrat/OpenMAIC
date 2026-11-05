@@ -41,6 +41,7 @@ export function changeOutlineType(outline: SceneOutline, newType: SceneType): Sc
     ...(outline.teachingObjective !== undefined && {
       teachingObjective: outline.teachingObjective,
     }),
+    ...(outline.competencies !== undefined && { competencies: outline.competencies }),
     ...(outline.estimatedDuration !== undefined && {
       estimatedDuration: outline.estimatedDuration,
     }),

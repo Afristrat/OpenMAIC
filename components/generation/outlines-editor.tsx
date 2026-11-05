@@ -44,6 +44,8 @@ import {
   type SyllabusDurationGap,
   redistributeSceneDurations,
 } from '@/lib/generation/syllabus-validation';
+import { uncoveredEssentials, type PlanCompetencyFramework } from '@/lib/referentiel/plan-coverage';
+import { CompetencyCoveragePanel, SceneCompetencies } from './competency-coverage';
 import { OptimizationAdvice } from './optimization-advice';
 import { DesignDirectiveFields } from './design-directive-fields';
 import type { BrandCharter } from '@/lib/branding/brand-charter';
@@ -56,6 +58,8 @@ interface OutlinesEditorProps {
   optimization?: import('@/lib/generation/optimization-report').OptimizationReport;
   courseTitle?: string;
   syllabus?: ClassroomSyllabus;
+  /** Métier ESCO visé et ses compétences codées : chaque séquence dit lesquelles elle travaille. */
+  competencyFramework?: PlanCompetencyFramework;
   designDirective?: DesignDirective;
   outlines: SceneOutline[];
   onCourseTitleChange?: (courseTitle: string) => void;
@@ -162,6 +166,7 @@ export function OutlinesEditor({
   optimization,
   courseTitle,
   syllabus,
+  competencyFramework,
   designDirective,
   outlines,
   onCourseTitleChange,
@@ -207,7 +212,10 @@ export function OutlinesEditor({
     hasSyllabusWorkspace && syllabus ? getSyllabusValidationIssues(syllabus, outlines) : [];
   const durationGap =
     hasSyllabusWorkspace && syllabus ? getSyllabusDurationGap(syllabus, outlines) : null;
-  const isPlanComplete = validationIssues.length === 0;
+  const competencyGaps = competencyFramework
+    ? uncoveredEssentials(outlines, competencyFramework)
+    : [];
+  const isPlanComplete = validationIssues.length === 0 && competencyGaps.length === 0;
   const syllabusNeedsGeneration = validationIssues.some((issue) => !('sceneIndex' in issue));
 
   // Auto-scroll to the latest streamed scene so streaming feels alive.
@@ -302,70 +310,76 @@ export function OutlinesEditor({
     outlines.length === 0 ? (
       <EmptyState isStreaming={isStreaming} disabled={editingDisabled} onAdd={addOutline} />
     ) : (
-      <ol className="flex flex-col py-1">
-        {!isStreaming && (
-          <InsertDivider
-            onClick={() => insertOutlineAt(0)}
-            disabled={editingDisabled}
-            position="edge"
-          />
+      <>
+        {competencyFramework && (
+          <CompetencyCoveragePanel framework={competencyFramework} outlines={outlines} />
         )}
-        <AnimatePresence initial={false}>
-          {outlines.map((outline, index) => {
-            const isLast = outline.id === lastOutlineId;
-            const isStreamingTip = isStreaming && isLast;
+        <ol className="flex flex-col py-1">
+          {!isStreaming && (
+            <InsertDivider
+              onClick={() => insertOutlineAt(0)}
+              disabled={editingDisabled}
+              position="edge"
+            />
+          )}
+          <AnimatePresence initial={false}>
+            {outlines.map((outline, index) => {
+              const isLast = outline.id === lastOutlineId;
+              const isStreamingTip = isStreaming && isLast;
 
-            return (
-              <Fragment key={outline.id}>
-                <SceneRow
-                  index={index}
-                  outline={outline}
-                  onUpdate={(updates) => updateOutline(index, updates)}
-                  onReplace={(next) => replaceOutline(index, next)}
-                  onRemove={() => removeOutline(index)}
-                  onMoveUp={() => moveOutline(index, 'up')}
-                  onMoveDown={() => moveOutline(index, 'down')}
-                  canMoveUp={index > 0}
-                  canMoveDown={index < outlines.length - 1}
-                  sceneTypeLabel={sceneTypeLabel}
-                  disabled={editingDisabled}
-                  isStreamingTip={isStreamingTip}
-                  isDragging={draggingId === outline.id}
-                  isDragTarget={dragOverId === outline.id && draggingId !== outline.id}
-                  onDragStart={() => setDraggingId(outline.id)}
-                  onDragEnd={() => {
-                    setDraggingId(null);
-                    setDragOverId(null);
-                  }}
-                  onDragEnter={() => {
-                    if (draggingId && draggingId !== outline.id) {
-                      setDragOverId(outline.id);
-                    }
-                  }}
-                  onDrop={(sourceId) => {
-                    const fromIndex = outlines.findIndex((item) => item.id === sourceId);
-                    if (fromIndex >= 0) reorderOutline(fromIndex, index);
-                    setDraggingId(null);
-                    setDragOverId(null);
-                  }}
-                  onAssist={
-                    onAssist ? () => onAssist({ kind: 'scene', sceneIndex: index }) : undefined
-                  }
-                  isAssisting={assistingTarget === `scene:${index}`}
-                />
-                {!isStreaming && (
-                  <InsertDivider
-                    onClick={() => insertOutlineAt(index + 1)}
+              return (
+                <Fragment key={outline.id}>
+                  <SceneRow
+                    index={index}
+                    outline={outline}
+                    onUpdate={(updates) => updateOutline(index, updates)}
+                    onReplace={(next) => replaceOutline(index, next)}
+                    onRemove={() => removeOutline(index)}
+                    onMoveUp={() => moveOutline(index, 'up')}
+                    onMoveDown={() => moveOutline(index, 'down')}
+                    canMoveUp={index > 0}
+                    canMoveDown={index < outlines.length - 1}
+                    sceneTypeLabel={sceneTypeLabel}
                     disabled={editingDisabled}
-                    position={isLast ? 'edge' : 'between'}
+                    isStreamingTip={isStreamingTip}
+                    isDragging={draggingId === outline.id}
+                    isDragTarget={dragOverId === outline.id && draggingId !== outline.id}
+                    onDragStart={() => setDraggingId(outline.id)}
+                    onDragEnd={() => {
+                      setDraggingId(null);
+                      setDragOverId(null);
+                    }}
+                    onDragEnter={() => {
+                      if (draggingId && draggingId !== outline.id) {
+                        setDragOverId(outline.id);
+                      }
+                    }}
+                    onDrop={(sourceId) => {
+                      const fromIndex = outlines.findIndex((item) => item.id === sourceId);
+                      if (fromIndex >= 0) reorderOutline(fromIndex, index);
+                      setDraggingId(null);
+                      setDragOverId(null);
+                    }}
+                    onAssist={
+                      onAssist ? () => onAssist({ kind: 'scene', sceneIndex: index }) : undefined
+                    }
+                    isAssisting={assistingTarget === `scene:${index}`}
+                    competencyFramework={competencyFramework}
                   />
-                )}
-              </Fragment>
-            );
-          })}
-        </AnimatePresence>
-        {isStreaming && <StreamingPlaceholder nextIndex={outlines.length + 1} />}
-      </ol>
+                  {!isStreaming && (
+                    <InsertDivider
+                      onClick={() => insertOutlineAt(index + 1)}
+                      disabled={editingDisabled}
+                      position={isLast ? 'edge' : 'between'}
+                    />
+                  )}
+                </Fragment>
+              );
+            })}
+          </AnimatePresence>
+          {isStreaming && <StreamingPlaceholder nextIndex={outlines.length + 1} />}
+        </ol>
+      </>
     );
 
   return (
@@ -925,6 +939,7 @@ interface SceneRowProps {
   onDrop: (sourceId: string) => void;
   onAssist?: () => void;
   isAssisting: boolean;
+  competencyFramework?: PlanCompetencyFramework;
 }
 
 function SceneRow({
@@ -948,6 +963,7 @@ function SceneRow({
   onDrop,
   onAssist,
   isAssisting,
+  competencyFramework,
 }: SceneRowProps) {
   const { t } = useI18n();
   const theme = TYPE_THEME[outline.type] ?? TYPE_THEME.slide;
@@ -1236,6 +1252,16 @@ function SceneRow({
               />
             </label>
           </div>
+
+          {competencyFramework && (
+            <SceneCompetencies
+              framework={competencyFramework}
+              selected={outline.competencies ?? []}
+              disabled={disabled}
+              index={index}
+              onChange={(codes) => onUpdate({ competencies: codes })}
+            />
+          )}
 
           {/* Key points */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">

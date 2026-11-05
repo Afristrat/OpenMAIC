@@ -103,6 +103,8 @@ export interface SceneOutline {
   description: string; // 1-2 sentences describing the purpose
   keyPoints: string[]; // 3-5 core key points
   teachingObjective?: string;
+  /** Codes (C1, C2…) des compétences du cadre ESCO que cette scène travaille. */
+  competencies?: string[];
   estimatedDuration?: number; // seconds
   order: number;
   languageNote?: string; // LLM-inferred language note for this scene
@@ -180,6 +182,8 @@ export interface ClassroomPlan {
   designDirective?: import('@openmaic/dsl').DesignDirective;
   courseTitle: string;
   languageDirective: string;
+  /** Métier ESCO visé et compétences codées, quand la formation part d'un référentiel. */
+  competencyFramework?: import('@/lib/referentiel/plan-coverage').PlanCompetencyFramework;
   syllabus: ClassroomSyllabus;
   outlines: SceneOutline[];
 }

@@ -112,6 +112,20 @@ export function ProgrammeDocument({ plan }: { plan: ClassroomPlan }) {
                   {outline.teachingObjective}
                 </p>
               )}
+              {plan.competencyFramework && (outline.competencies?.length ?? 0) > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground print:text-neutral-600">
+                    {t('generation.competencies.scene')}
+                  </p>
+                  <ul className="mt-1 list-disc space-y-0.5 ps-5 text-sm leading-6 text-foreground print:text-black">
+                    {plan.competencyFramework.skills
+                      .filter((skill) => outline.competencies?.includes(skill.code))
+                      .map((skill) => (
+                        <li key={skill.code}>{skill.title}</li>
+                      ))}
+                  </ul>
+                </div>
+              )}
               {outline.keyPoints.length > 0 && (
                 <div className="mt-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground print:text-neutral-600">

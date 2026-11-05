@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import { codeFramework } from './plan-coverage';
 
 export const MAX_FRAMEWORK_SKILLS = 60;
 
@@ -68,20 +69,22 @@ export function requireBaseIscoCode(iscoCode: string | null | undefined): string
 
 /** Consigne ajoutée au plan : ce que la formation doit faire acquérir, pour que le plan parte du référentiel. */
 export function frameworkDirective(framework: ResolvedCompetencyFramework): string {
-  const essential = framework.skills.filter((skill) => skill.nature === 'essentielle');
-  const optional = framework.skills.filter((skill) => skill.nature === 'optionnelle');
+  const coded = codeFramework(framework);
+  const essential = coded.skills.filter((skill) => skill.nature === 'essentielle');
+  const optional = coded.skills.filter((skill) => skill.nature === 'optionnelle');
   const lines = [
     `TARGET OCCUPATION (ESCO, ISCO-08 ${framework.occupation.isco08}): ${framework.occupation.titleFr}.`,
     'The plan must train the learner to master the target skills below. Each learning objective must serve at least one of them, and every essential skill must be worked by at least one scene.',
     ...(essential.length
-      ? ['Essential skills:', ...essential.map((skill) => `- ${skill.title}`)]
+      ? ['Essential skills:', ...essential.map((skill) => `- ${skill.code}: ${skill.title}`)]
       : []),
     ...(optional.length
       ? [
           'Optional skills (cover them when time allows):',
-          ...optional.map((skill) => `- ${skill.title}`),
+          ...optional.map((skill) => `- ${skill.code}: ${skill.title}`),
         ]
       : []),
+    'Every scene must carry a `competencies` array holding the codes (C1, C2…) of the target skills it really works, at least one per scene, and every essential code must appear in at least one scene. Use only the codes listed above.',
   ];
   return lines.join('\n');
 }

@@ -13,6 +13,7 @@ import { validateBody } from '@/lib/api/validate';
 import { generateClassroomSchema } from '@/lib/api/schemas';
 import { createLogger } from '@/lib/logger';
 import type { TTSProviderId } from '@/lib/audio/types';
+import { uncoveredRequiredEssentials } from '@/lib/referentiel/plan-coverage';
 import { FrameworkError } from '@/lib/referentiel/plan-framework';
 import { requireCompetencyFramework } from '@/lib/server/plan-framework';
 import { enqueueClassroomGeneration } from '@/lib/jobs/queue';
@@ -40,10 +41,26 @@ export async function POST(req: NextRequest) {
     if (auth.response) return auth.response;
     await assertCourseGenerationAccess(parsed, auth.user.id);
     // Métier ESCO et compétences visées : exigés à la création, vérifiés contre le référentiel.
-    await requireCompetencyFramework({
+    const requiredFramework = await requireCompetencyFramework({
       courseId: parsed.courseId,
       framework: parsed.competencyFramework,
     });
+    // Un plan validé n'est accepté que si chaque compétence essentielle est travaillée par une séquence.
+    if (requiredFramework && parsed.approvedPlan) {
+      const gaps = uncoveredRequiredEssentials(
+        parsed.approvedPlan.outlines,
+        parsed.approvedPlan.competencyFramework,
+        requiredFramework,
+      );
+      if (gaps.length > 0) {
+        return apiError(
+          'INVALID_REQUEST',
+          422,
+          `Aucune séquence ne travaille encore : ${gaps.map((gap) => gap.title).join(' ; ')}. Rattachez chaque compétence essentielle à une séquence du programme.`,
+          'COMPETENCY_COVERAGE_INCOMPLETE',
+        );
+      }
+    }
     const creditRejection = await rejectIfInsufficientCredits(parsed.orgId);
     if (creditRejection) return creditRejection;
 
