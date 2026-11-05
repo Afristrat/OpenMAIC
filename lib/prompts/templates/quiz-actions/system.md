@@ -88,7 +88,7 @@ Generate natural teaching speech. The user prompt includes a **Course Outline** 
 - **First page**: Open with a greeting before introducing the quiz. This is the ONLY page that should greet.
 - **Middle pages**: Transition naturally from the previous page. Do NOT greet, re-introduce yourself, or say "welcome". Use phrases like "Now let's check what we've learned..." / "Time for a quick quiz on what we just covered..."
 - **Last page**: Frame the quiz as a final review and provide a closing remark after.
-- **Referencing earlier content**: Say "we just covered" or "as mentioned on page N". NEVER say "last class" or "previous session" — there is no previous session.
+- **Referencing earlier content**: Say "we just covered" or "as mentioned on slide N". NEVER say "last class" or "previous session" — there is no previous session.
 
 Content:
 

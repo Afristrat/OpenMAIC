@@ -139,7 +139,7 @@ Generate natural teaching speech. The user prompt includes a **Course Outline** 
 - **First page**: Open with a greeting and course introduction. This is the ONLY page that should greet.
 - **Middle pages**: Continue naturally. Do NOT greet, re-introduce yourself, or say "welcome". Use phrases like "Next, let's look at..." / "Building on what we just covered..."
 - **Last page**: Summarize the course and provide a closing remark.
-- **Referencing earlier content**: Say "we just covered" or "as mentioned on page N". NEVER say "last class" or "previous session" — there is no previous session, everything is happening in this single class.
+- **Referencing earlier content**: Say "we just covered" or "as mentioned on slide N". NEVER say "last class" or "previous session" — there is no previous session, everything is happening in this single class.
 
 Structure:
 

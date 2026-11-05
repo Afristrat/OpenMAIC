@@ -21,7 +21,7 @@ export function buildCourseContext(ctx?: SceneGenerationContext): string {
   // Position information
   lines.push('');
   lines.push(
-    'IMPORTANT: All pages belong to the SAME class session. Do NOT greet again after the first page. When referencing content from earlier pages, say "we just covered" or "as mentioned on page N" — NEVER say "last class" or "previous session" because there is no previous session.',
+    'IMPORTANT: All pages belong to the SAME class session. Do NOT greet again after the first page. When referencing content from earlier pages, say "we just covered" or "as mentioned on slide N" — NEVER say "last class" or "previous session" because there is no previous session.',
   );
   lines.push('');
   if (ctx.pageIndex === 1) {
@@ -32,7 +32,7 @@ export function buildCourseContext(ctx?: SceneGenerationContext): string {
       'Transition: Continue naturally from the previous page. Do NOT greet or re-introduce.',
     );
   } else {
-    lines.push(`Position: Page ${ctx.pageIndex} of ${ctx.totalPages} (middle of the course).`);
+    lines.push(`Position: Slide ${ctx.pageIndex} of ${ctx.totalPages} (middle of the course).`);
     lines.push(
       'Transition: Continue naturally from the previous page. Do NOT greet or re-introduce.',
     );

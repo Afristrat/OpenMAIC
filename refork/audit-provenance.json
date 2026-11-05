@@ -256,7 +256,7 @@
       "outputs": [
         {
           "path": "lib/prompts/templates/interactive-actions/system.md",
-          "sha256": "096ad6d3df164504999302c03cc4d4026f33ad2529a5179ff0d7539eb3627351"
+          "sha256": "28fe1ad3fbe7c1f146052dfab42f8b88ec063ea029575345ebf1c1fa3c3ef459"
         }
       ]
     },
@@ -396,7 +396,7 @@
       "outputs": [
         {
           "path": "lib/prompts/templates/pbl-actions/system.md",
-          "sha256": "3074ec2ca2598a4774ff51443c9c3dfd8c0d66df5f818bbfe8b578acd6282fc6"
+          "sha256": "6ebbbae4d60dff1fa94a2b161f0b30ed10cb58a5e0feca16fcb6bc473dc62707"
         }
       ]
     },
@@ -432,7 +432,7 @@
       "outputs": [
         {
           "path": "lib/prompts/templates/quiz-actions/system.md",
-          "sha256": "47e6fd5feadfd7b386080c4650f8a6d06107c930b3c5f6eaa13d8ae10b7ae496"
+          "sha256": "fa36d79952496592152e4698beb0ef7dff55e03e7ec1db8edfc9f394f6f0bdd3"
         }
       ]
     },
@@ -540,7 +540,7 @@
       "outputs": [
         {
           "path": "lib/prompts/templates/slide-actions/system.md",
-          "sha256": "fd3c8d208d1b88bdcafb538119070feb8dab5d0dfc1cf98ad054cf8913c8240e"
+          "sha256": "ad4adf14e1a874d817fe52b8b4166159edff45b24efe12e54c4fd172088c2828"
         }
       ]
     },
@@ -650,15 +650,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "50cea968b1cbdd3b9d38cd94524b8a921f3d5cb85d50563a8dbeb284de56cdbd"
+          "sha256": "1ff0f605bcbdd49feb92382b76fa91490daa96b27f27a99a9765d0636c7b0740"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "214aeb51a1eb3ca69176bd287265811a39134cd2a97a7ca1485f9caefa9ffbc2"
+          "sha256": "57328888ce96d11b076889d1a0061025a490b341e86a3daa94e751f05dca6dd2"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "ef83e7d2efda87e5ae9d3a982033d6a98dfd304511bcabba144f46a1c554e5a4"
+          "sha256": "86fe7908f108b54e5c29e16a0621b0602cc0da61cba63275042558ea2e0d727f"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -708,15 +708,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "50cea968b1cbdd3b9d38cd94524b8a921f3d5cb85d50563a8dbeb284de56cdbd"
+          "sha256": "1ff0f605bcbdd49feb92382b76fa91490daa96b27f27a99a9765d0636c7b0740"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "214aeb51a1eb3ca69176bd287265811a39134cd2a97a7ca1485f9caefa9ffbc2"
+          "sha256": "57328888ce96d11b076889d1a0061025a490b341e86a3daa94e751f05dca6dd2"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "ef83e7d2efda87e5ae9d3a982033d6a98dfd304511bcabba144f46a1c554e5a4"
+          "sha256": "86fe7908f108b54e5c29e16a0621b0602cc0da61cba63275042558ea2e0d727f"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -766,15 +766,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "50cea968b1cbdd3b9d38cd94524b8a921f3d5cb85d50563a8dbeb284de56cdbd"
+          "sha256": "1ff0f605bcbdd49feb92382b76fa91490daa96b27f27a99a9765d0636c7b0740"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "214aeb51a1eb3ca69176bd287265811a39134cd2a97a7ca1485f9caefa9ffbc2"
+          "sha256": "57328888ce96d11b076889d1a0061025a490b341e86a3daa94e751f05dca6dd2"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "ef83e7d2efda87e5ae9d3a982033d6a98dfd304511bcabba144f46a1c554e5a4"
+          "sha256": "86fe7908f108b54e5c29e16a0621b0602cc0da61cba63275042558ea2e0d727f"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -824,15 +824,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "50cea968b1cbdd3b9d38cd94524b8a921f3d5cb85d50563a8dbeb284de56cdbd"
+          "sha256": "1ff0f605bcbdd49feb92382b76fa91490daa96b27f27a99a9765d0636c7b0740"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "214aeb51a1eb3ca69176bd287265811a39134cd2a97a7ca1485f9caefa9ffbc2"
+          "sha256": "57328888ce96d11b076889d1a0061025a490b341e86a3daa94e751f05dca6dd2"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "ef83e7d2efda87e5ae9d3a982033d6a98dfd304511bcabba144f46a1c554e5a4"
+          "sha256": "86fe7908f108b54e5c29e16a0621b0602cc0da61cba63275042558ea2e0d727f"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",
@@ -882,15 +882,15 @@
         },
         {
           "path": "lib/i18n/locales/ui-en-US.json",
-          "sha256": "50cea968b1cbdd3b9d38cd94524b8a921f3d5cb85d50563a8dbeb284de56cdbd"
+          "sha256": "1ff0f605bcbdd49feb92382b76fa91490daa96b27f27a99a9765d0636c7b0740"
         },
         {
           "path": "lib/i18n/locales/ui-fr-FR.json",
-          "sha256": "214aeb51a1eb3ca69176bd287265811a39134cd2a97a7ca1485f9caefa9ffbc2"
+          "sha256": "57328888ce96d11b076889d1a0061025a490b341e86a3daa94e751f05dca6dd2"
         },
         {
           "path": "lib/i18n/locales/ui-ar-MA.json",
-          "sha256": "ef83e7d2efda87e5ae9d3a982033d6a98dfd304511bcabba144f46a1c554e5a4"
+          "sha256": "86fe7908f108b54e5c29e16a0621b0602cc0da61cba63275042558ea2e0d727f"
         },
         {
           "path": "refork/i18n-cleanroom-contract.json",

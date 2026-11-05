@@ -87,7 +87,7 @@
     "lectureNotes": {
       "empty": "Notes will appear here after lecture playback",
       "emptyHint": "Press play to start the lecture",
-      "pageLabel": "Page {{n}}",
+      "pageLabel": "Slide {{n}}",
       "currentPage": "Current"
     },
     "badge": {

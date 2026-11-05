@@ -87,7 +87,7 @@
     "lectureNotes": {
       "empty": "ستظهر الملاحظات هنا بعد تشغيل المحاضرة",
       "emptyHint": "اضغط تشغيل لبدء المحاضرة",
-      "pageLabel": "الصفحة {{n}}",
+      "pageLabel": "الشريحة {{n}}",
       "currentPage": "الحالية"
     },
     "badge": {

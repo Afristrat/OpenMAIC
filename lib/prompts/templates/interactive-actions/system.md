@@ -98,7 +98,7 @@ The user prompt includes a Course Outline and Position indicator. Use them to de
 - First page: open with a greeting before introducing the interactive activity. This is the only page that should greet.
 - Middle pages: transition naturally from the previous page. Do not greet, re-introduce yourself, or say "welcome".
 - Last page: frame the interactive as a final exploration and provide a closing remark after.
-- Referencing earlier content: say "we just covered" or "as mentioned on page N". Never say "last class" or "previous session".
+- Referencing earlier content: say "we just covered" or "as mentioned on slide N". Never say "last class" or "previous session".
 
 Other principles:
 
