@@ -25,7 +25,7 @@ vi.mock('@/lib/billing/usage-metering', () => ({
 }));
 
 import { streamLLM } from '@/lib/ai/llm';
-import { activateUsageMeteringContext } from '@/lib/billing/usage-context';
+import { activateUsageMeteringContext, markPersonalKeyModel } from '@/lib/billing/usage-context';
 
 describe('streamed LLM usage metering (S6-025)', () => {
   beforeEach(() => {
@@ -150,5 +150,46 @@ describe('streamed LLM usage metering (S6-025)', () => {
     );
     const withExtras = mocks.reserveTenantUsage.mock.calls[0][0].maxQuantity as number;
     expect(withExtras).toBeGreaterThan(plain + 8192);
+  });
+});
+
+describe('modèle servi avec la clé personnelle de l’acteur', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.streamText.mockReturnValue({ stream: true });
+  });
+
+  it('ne réserve aucun crédit : la personne paie son fournisseur', async () => {
+    activateUsageMeteringContext(
+      new Headers({ 'Idempotency-Key': 'personal-key-001' }),
+      'actor',
+      'tenant',
+    );
+    const personalModel = { provider: 'openai', modelId: 'gpt-test' };
+    markPersonalKeyModel(personalModel);
+
+    await streamLLM({ model: personalModel, prompt: 'Bonjour' } as never, 'stream-test');
+
+    expect(mocks.reserveTenantUsage).not.toHaveBeenCalled();
+    expect(mocks.streamText).toHaveBeenCalledOnce();
+  });
+
+  it('continue de facturer un modèle de la plateforme dans le même contexte', async () => {
+    mocks.reserveTenantUsage.mockResolvedValue({
+      enforcementEnabled: true,
+      reservationId: 'reservation',
+    });
+    activateUsageMeteringContext(
+      new Headers({ 'Idempotency-Key': 'platform-key-001' }),
+      'actor',
+      'tenant',
+    );
+
+    await streamLLM(
+      { model: { provider: 'openai', modelId: 'gpt-test' }, prompt: 'Bonjour' } as never,
+      'stream-test',
+    );
+
+    expect(mocks.reserveTenantUsage).toHaveBeenCalledTimes(2);
   });
 });

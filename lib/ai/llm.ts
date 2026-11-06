@@ -17,7 +17,7 @@ import {
   pickThinkingEffort,
   pickThinkingLevel,
 } from '@/lib/ai/thinking-config';
-import { nextUsageOperationContext } from '@/lib/billing/usage-context';
+import { isPersonalKeyModel, nextUsageOperationContext } from '@/lib/billing/usage-context';
 import {
   finalizeTenantUsages,
   releaseTenantUsages,
@@ -212,6 +212,8 @@ async function prepareLLMUsage<T extends GenerateTextParams | StreamTextParams>(
   params: T,
   source: string,
 ): Promise<{ params: T; reservations: LLMUsageReservations | null }> {
+  // Modèle servi avec la clé personnelle de l'acteur : il paie son fournisseur, aucun crédit débité.
+  if (isPersonalKeyModel(params.model)) return { params, reservations: null };
   const inputContext = nextUsageOperationContext(source, 'llm_input_token');
   if (!inputContext) return { params, reservations: null };
   const outputContext = nextUsageOperationContext(source, 'llm_output_token');

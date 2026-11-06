@@ -6,7 +6,11 @@
  */
 
 import type { NextRequest } from 'next/server';
-import { getModel, parseModelString, type ModelWithInfo } from '@/lib/ai/providers';
+import { PROVIDERS, getModel, parseModelString, type ModelWithInfo } from '@/lib/ai/providers';
+import { getActiveActorUserId, markPersonalKeyModel } from '@/lib/billing/usage-context';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createLogger } from '@/lib/logger';
+import { isPersonalKeyProvider, readPersonalKey } from '@/lib/server/user-api-keys';
 import type { ThinkingConfig } from '@/lib/types/provider';
 import {
   isServerConfiguredProvider,
@@ -17,6 +21,38 @@ import {
 import { fetchForBaseUrl } from '@/lib/server/guarded-fetch';
 import { validateUrlForSSRF } from '@/lib/server/ssrf-guard';
 import { getStageRoute, type LlmStage } from '@/lib/server/model-routes';
+
+const log = createLogger('resolve-model');
+
+/** Personne connectée à la requête en cours, ou null (job, appel sans session). */
+async function sessionUserId(): Promise<string | null> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data } = await supabase.auth.getUser();
+    return data.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Clé personnelle de la personne qui agit (requête ou job), pour ce fournisseur. Illisible
+ * (base indisponible, clé de chiffrement changée) : on retombe sur la clé de la plateforme et on
+ * le journalise, plutôt que de bloquer la génération.
+ */
+async function readActorPersonalKey(providerId: string): Promise<string | null> {
+  if (!isPersonalKeyProvider(providerId)) return null;
+  try {
+    const actorUserId = getActiveActorUserId() ?? (await sessionUserId());
+    return actorUserId ? await readPersonalKey(actorUserId, 'llm', providerId) : null;
+  } catch (error) {
+    log.warn(
+      `Personal key unreadable for provider "${providerId}", platform key used:`,
+      error instanceof Error ? error.message : error,
+    );
+    return null;
+  }
+}
 
 export interface ResolvedModel extends ModelWithInfo {
   /** Original model string (e.g. "openai/gpt-4o-mini") */
@@ -93,8 +129,13 @@ export async function resolveModel(params: {
     }
   }
 
-  const apiKey = resolveApiKey(providerId, clientApiKey || '');
-  const baseUrl = resolveBaseUrl(providerId, clientBaseUrl);
+  // Clé personnelle de l'acteur : elle prime sur celle de la plateforme et sur toute clé envoyée
+  // par le navigateur, et ne vise que l'adresse officielle du fournisseur (aucune adresse saisie).
+  const personalKey = await readActorPersonalKey(providerId);
+  const apiKey = personalKey ?? resolveApiKey(providerId, clientApiKey || '');
+  const baseUrl = personalKey
+    ? PROVIDERS[providerId]?.defaultBaseUrl
+    : resolveBaseUrl(providerId, clientBaseUrl);
   const proxy = resolveProxy(providerId);
   const { model, modelInfo } = getModel({
     providerId,
@@ -102,11 +143,14 @@ export async function resolveModel(params: {
     apiKey,
     baseUrl,
     proxy,
-    providerType: clientProviderType as 'openai' | 'anthropic' | 'google' | undefined,
+    providerType: personalKey
+      ? undefined
+      : (clientProviderType as 'openai' | 'anthropic' | 'google' | undefined),
     // URL saisie par un utilisateur : connexion épinglée et redirections revalidées (anti DNS
     // rebinding). Les fournisseurs serveur (managed) gardent le fetch natif.
-    fetch: fetchForBaseUrl(clientBaseUrl),
+    fetch: personalKey ? undefined : fetchForBaseUrl(clientBaseUrl),
   });
+  if (personalKey) markPersonalKeyModel(model);
 
   // Thinking arbitration mirrors model routing — the route carries a full
   // ThinkingConfig (mode/effort/level/enabled/budgetTokens/…) which callLLM

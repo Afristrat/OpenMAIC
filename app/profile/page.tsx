@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { RichProfileSection } from '@/components/profile/rich-profile-section';
 import { TenantCreditLedger } from '@/components/org/tenant-credit-ledger';
 import { XapiConsentControl } from '@/components/xapi-consent-control';
+import { PersonalApiKeys } from '@/components/profile/personal-api-keys';
 import { LearningObservationOutbox } from '@/lib/telemetry/learning-observation-outbox';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 
@@ -298,6 +299,7 @@ export default function ProfilePage(): React.ReactElement {
         {currentOrg && <TenantCreditLedger orgId={currentOrg.id} />}
 
         {/* Actions */}
+        <PersonalApiKeys />
         <XapiConsentControl />
         <section aria-labelledby="account-export-title" className="space-y-3">
           <h2 id="account-export-title" className="text-lg font-medium">

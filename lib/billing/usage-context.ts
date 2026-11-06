@@ -15,6 +15,21 @@ export type UsageOperationContext = Omit<UsageRequestContext, 'sequence'> & {
 };
 
 const usageContext = new AsyncLocalStorage<UsageRequestContext>();
+
+/**
+ * Modèles construits avec la clé personnelle de l'acteur : la personne paie son fournisseur, la
+ * plateforme ne débite aucun crédit pour leurs appels. Le modèle est résolu avant l'ouverture du
+ * contexte d'usage dans la plupart des routes : la marque suit donc l'objet, pas la requête.
+ */
+const personalKeyModels = new WeakSet<object>();
+
+export function markPersonalKeyModel(model: unknown): void {
+  if (typeof model === 'object' && model !== null) personalKeyModels.add(model);
+}
+
+export function isPersonalKeyModel(model: unknown): boolean {
+  return typeof model === 'object' && model !== null && personalKeyModels.has(model);
+}
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,95}$/;
 
 /** Server-established tenant, shared by request and background-job consumers. */
