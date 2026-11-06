@@ -233,6 +233,16 @@ const doubaoSeed20Effort: ThinkingCapability = {
 const minimaxM3Thinking = toggleCapability('anthropic', false);
 
 const THINKING_CAPABILITIES: Record<string, ThinkingCapability> = {
+  [getModelMetadataKey('openai', 'gpt-6.1-sol')]: effortCapability(
+    'openai',
+    ['low', 'medium', 'high', 'xhigh'],
+    'medium',
+  ),
+  [getModelMetadataKey('openai', 'gpt-6.1-terra')]: effortCapability(
+    'openai',
+    ['low', 'medium', 'high', 'xhigh'],
+    'medium',
+  ),
   [getModelMetadataKey('openai', 'gpt-5.5')]: effortCapability(
     'openai',
     ['low', 'medium', 'high', 'xhigh'],
@@ -259,6 +269,9 @@ const THINKING_CAPABILITIES: Record<string, ThinkingCapability> = {
     'none',
   ),
 
+  [getModelMetadataKey('anthropic', 'claude-opus-5-5')]: anthropicOpus47Effort,
+  [getModelMetadataKey('anthropic', 'claude-sonnet-5-5')]: anthropicAdaptiveEffort,
+  [getModelMetadataKey('anthropic', 'claude-haiku-5-5')]: anthropicBudget,
   [getModelMetadataKey('anthropic', 'claude-opus-4-8')]: anthropicOpus47Effort,
   [getModelMetadataKey('anthropic', 'claude-opus-4-7')]: anthropicOpus47Effort,
   [getModelMetadataKey('anthropic', 'claude-opus-4-6')]: anthropicAdaptiveEffort,
@@ -266,6 +279,10 @@ const THINKING_CAPABILITIES: Record<string, ThinkingCapability> = {
   [getModelMetadataKey('anthropic', 'claude-sonnet-4-5')]: anthropicManualEffort,
   [getModelMetadataKey('anthropic', 'claude-haiku-4-5')]: anthropicBudget,
 
+  [getModelMetadataKey('google', 'gemini-3.8-flash')]: levelCapability(
+    ['minimal', 'low', 'medium', 'high'],
+    'medium',
+  ),
   [getModelMetadataKey('google', 'gemini-3.5-flash')]: levelCapability(
     ['minimal', 'low', 'medium', 'high'],
     'medium',
