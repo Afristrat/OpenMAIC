@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { CheckCircle2, KeyRound, Loader2 } from 'lucide-react';
 import { useI18n } from '@/lib/hooks/use-i18n';
 
-type Provider = { id: string; name: string };
-type SavedKey = { providerId: string; hint: string; updatedAt: string };
+type Model = { id: string; name: string };
+type Provider = { id: string; name: string; models: Model[] };
+type SavedKey = { providerId: string; modelId: string; hint: string; updatedAt: string };
 type Notice = { kind: 'ok' | 'error'; text: string };
 
 type KeysResponse = { success: boolean; providers?: Provider[]; keys?: SavedKey[] };
@@ -22,10 +23,10 @@ async function fetchKeys(): Promise<{ providers: Provider[]; keys: SavedKey[] } 
 }
 
 /**
- * Clés d'API personnelles : la personne utilise son propre compte chez un fournisseur de modèles.
- * La clé part chiffrée au serveur et n'est jamais relue : l'écran n'affiche que les quatre
- * derniers caractères. Avec une clé enregistrée, les appels à ce fournisseur ne consomment aucun
- * crédit de la plateforme.
+ * Clés d'API personnelles : la personne utilise son propre compte chez un fournisseur de modèles,
+ * avec le modèle qu'elle y choisit. La clé part chiffrée au serveur et n'est jamais relue : l'écran
+ * n'affiche que les quatre derniers caractères. Avec une clé enregistrée, les appels à ce
+ * fournisseur ne consomment aucun crédit de la plateforme.
  */
 export function PersonalApiKeys(): React.ReactElement {
   const { t } = useI18n();
@@ -34,6 +35,7 @@ export function PersonalApiKeys(): React.ReactElement {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [providerId, setProviderId] = useState('');
+  const [modelId, setModelId] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -45,7 +47,9 @@ export function PersonalApiKeys(): React.ReactElement {
       if (state) {
         setProviders(state.providers);
         setKeys(state.keys);
-        setProviderId((current) => current || state.providers[0]?.id || '');
+        const first = state.providers[0];
+        setProviderId((current) => current || first?.id || '');
+        setModelId((current) => current || first?.models[0]?.id || '');
       } else {
         setFailed(true);
       }
@@ -61,16 +65,24 @@ export function PersonalApiKeys(): React.ReactElement {
     if (state) setKeys(state.keys);
   }, []);
 
+  const modelsOf = (id: string): Model[] => providers.find((p) => p.id === id)?.models ?? [];
+  const nameOf = (id: string): string => providers.find((p) => p.id === id)?.name ?? id;
+
+  const chooseProvider = (id: string): void => {
+    setProviderId(id);
+    setModelId(modelsOf(id)[0]?.id ?? '');
+  };
+
   const save = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    if (busy || !providerId || !apiKey.trim()) return;
+    if (busy || !providerId || !modelId || !apiKey.trim()) return;
     setBusy(true);
     setNotice(null);
     try {
       const response = await fetch('/api/account/api-keys', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ providerId, apiKey }),
+        body: JSON.stringify({ providerId, modelId, apiKey }),
       });
       if (response.ok) {
         setApiKey('');
@@ -89,6 +101,29 @@ export function PersonalApiKeys(): React.ReactElement {
       }
     } catch {
       setNotice({ kind: 'error', text: t('apiKeys.saveError') });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const changeModel = async (id: string, newModelId: string): Promise<void> => {
+    if (busy) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      const response = await fetch('/api/account/api-keys', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ providerId: id, modelId: newModelId }),
+      });
+      setNotice(
+        response.ok
+          ? { kind: 'ok', text: t('apiKeys.modelChanged') }
+          : { kind: 'error', text: t('apiKeys.modelError') },
+      );
+      await refresh();
+    } catch {
+      setNotice({ kind: 'error', text: t('apiKeys.modelError') });
     } finally {
       setBusy(false);
     }
@@ -115,8 +150,6 @@ export function PersonalApiKeys(): React.ReactElement {
     }
   };
 
-  const nameOf = (id: string): string => providers.find((p) => p.id === id)?.name ?? id;
-
   return (
     <section aria-labelledby="api-keys-title" className="space-y-3">
       <h2 id="api-keys-title" className="flex items-center gap-2 text-lg font-medium">
@@ -136,13 +169,30 @@ export function PersonalApiKeys(): React.ReactElement {
           {keys.length > 0 && (
             <ul className="divide-y divide-border rounded-lg border border-border">
               {keys.map((key) => (
-                <li key={key.providerId} className="flex items-center gap-3 px-3 py-2 text-sm">
+                <li
+                  key={key.providerId}
+                  className="flex flex-wrap items-center gap-3 px-3 py-2 text-sm"
+                >
                   <span className="min-w-0 flex-1">
                     <span className="font-medium">{nameOf(key.providerId)}</span>
                     <span className="ms-2 text-muted-foreground" dir="ltr">
                       {t('apiKeys.endsWith', { hint: key.hint })}
                     </span>
                   </span>
+                  <select
+                    aria-label={t('apiKeys.modelOfKey', { provider: nameOf(key.providerId) })}
+                    value={key.modelId}
+                    disabled={busy}
+                    onChange={(event) => void changeModel(key.providerId, event.target.value)}
+                    className="h-8 rounded-md border border-border bg-background px-2"
+                    dir="ltr"
+                  >
+                    {modelsOf(key.providerId).map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.name}
+                      </option>
+                    ))}
+                  </select>
                   <button
                     type="button"
                     onClick={() => void remove(key.providerId)}
@@ -161,12 +211,27 @@ export function PersonalApiKeys(): React.ReactElement {
               <span>{t('apiKeys.provider')}</span>
               <select
                 value={providerId}
-                onChange={(event) => setProviderId(event.target.value)}
+                onChange={(event) => chooseProvider(event.target.value)}
                 className="h-9 rounded-md border border-border bg-background px-2"
               >
                 {providers.map((provider) => (
                   <option key={provider.id} value={provider.id}>
                     {provider.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span>{t('apiKeys.model')}</span>
+              <select
+                value={modelId}
+                onChange={(event) => setModelId(event.target.value)}
+                className="h-9 rounded-md border border-border bg-background px-2"
+                dir="ltr"
+              >
+                {modelsOf(providerId).map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.name}
                   </option>
                 ))}
               </select>

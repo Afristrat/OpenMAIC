@@ -52,12 +52,12 @@ describe('resolveModel : clé personnelle', () => {
 
   it('la clé de la personne remplace celle de la plateforme et vise l’adresse officielle', async () => {
     mocks.sessionUser.mockReturnValue({ id: 'user-1' });
-    mocks.readPersonalKey.mockResolvedValue('sk-personal-1234');
+    mocks.readPersonalKey.mockResolvedValue({ apiKey: 'sk-personal-1234', modelId: 'gpt-5.5' });
     const { resolveModel } = await import('@/lib/server/resolve-model');
     const { isPersonalKeyModel } = await import('@/lib/billing/usage-context');
 
     const resolved = await resolveModel({
-      modelString: 'openai:gpt-4o-mini',
+      modelString: 'openai:kimi-k2.6',
       apiKey: 'sk-from-browser',
       baseUrl: 'https://evil.example/v1',
     });
@@ -67,6 +67,10 @@ describe('resolveModel : clé personnelle', () => {
     expect(mocks.getModelCalls[0].apiKey).toBe('sk-personal-1234');
     expect(mocks.getModelCalls[0].baseUrl).toBe('https://api.openai.com/v1');
     expect(mocks.getModelCalls[0].fetch).toBeUndefined();
+    // Le modèle demandé est celui de la plateforme ; avec une clé personnelle, c'est celui de la personne.
+    expect(mocks.getModelCalls[0].modelId).toBe('gpt-5.5');
+    expect(resolved.modelId).toBe('gpt-5.5');
+    expect(resolved.modelString).toBe('openai:gpt-5.5');
     expect(isPersonalKeyModel(resolved.model)).toBe(true);
   });
 

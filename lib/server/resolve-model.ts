@@ -40,7 +40,9 @@ async function sessionUserId(): Promise<string | null> {
  * (base indisponible, clé de chiffrement changée) : on retombe sur la clé de la plateforme et on
  * le journalise, plutôt que de bloquer la génération.
  */
-async function readActorPersonalKey(providerId: string): Promise<string | null> {
+async function readActorPersonalKey(
+  providerId: string,
+): Promise<{ apiKey: string; modelId: string } | null> {
   if (!isPersonalKeyProvider(providerId)) return null;
   try {
     const actorUserId = getActiveActorUserId() ?? (await sessionUserId());
@@ -130,16 +132,19 @@ export async function resolveModel(params: {
   }
 
   // Clé personnelle de l'acteur : elle prime sur celle de la plateforme et sur toute clé envoyée
-  // par le navigateur, et ne vise que l'adresse officielle du fournisseur (aucune adresse saisie).
+  // par le navigateur, ne vise que l'adresse officielle du fournisseur (aucune adresse saisie) et
+  // s'emploie avec le modèle que la personne a choisi chez ce fournisseur : le modèle demandé est
+  // celui de la plateforme, qui peut ne pas exister sur le compte de la personne.
   const personalKey = await readActorPersonalKey(providerId);
-  const apiKey = personalKey ?? resolveApiKey(providerId, clientApiKey || '');
+  const apiKey = personalKey?.apiKey ?? resolveApiKey(providerId, clientApiKey || '');
   const baseUrl = personalKey
     ? PROVIDERS[providerId]?.defaultBaseUrl
     : resolveBaseUrl(providerId, clientBaseUrl);
   const proxy = resolveProxy(providerId);
+  const effectiveModelId = personalKey?.modelId ?? modelId;
   const { model, modelInfo } = getModel({
     providerId,
-    modelId,
+    modelId: effectiveModelId,
     apiKey,
     baseUrl,
     proxy,
@@ -166,9 +171,9 @@ export async function resolveModel(params: {
   return {
     model,
     modelInfo,
-    modelString,
+    modelString: personalKey ? `${providerId}:${effectiveModelId}` : modelString,
     providerId,
-    modelId,
+    modelId: effectiveModelId,
     apiKey,
     baseUrl,
     thinkingConfig,

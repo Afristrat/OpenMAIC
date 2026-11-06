@@ -3168,7 +3168,7 @@
   "captures.install.checksum": "Empreinte SHA-256 du fichier, pour le vérifier :",
   "captures.install.reinstall": "Réinstaller ou mettre à jour l’extension",
   "apiKeys.title": "Mes clés d’API",
-  "apiKeys.lead": "Utilisez votre propre compte chez un fournisseur de modèles. Quand une clé est enregistrée, les appels à ce fournisseur passent par elle et ne consomment aucun crédit de la plateforme : vous payez directement le fournisseur.",
+  "apiKeys.lead": "Utilisez votre propre compte chez un fournisseur de modèles, avec le modèle de votre choix. Quand une clé est enregistrée, les appels à ce fournisseur passent par elle et ne consomment aucun crédit de la plateforme : vous payez directement le fournisseur.",
   "apiKeys.loading": "Chargement de vos clés",
   "apiKeys.loadError": "Vos clés n’ont pas pu être lues. Rechargez la page.",
   "apiKeys.endsWith": "se termine par {{hint}}",
@@ -3184,5 +3184,9 @@
   "apiKeys.unavailable": "Le fournisseur ne répond pas. Réessayez dans un instant.",
   "apiKeys.invalid": "Cette clé n’a pas le bon format.",
   "apiKeys.saveError": "La clé n’a pas pu être enregistrée.",
-  "apiKeys.removeError": "La clé n’a pas pu être supprimée."
+  "apiKeys.removeError": "La clé n’a pas pu être supprimée.",
+  "apiKeys.model": "Modèle",
+  "apiKeys.modelOfKey": "Modèle utilisé avec la clé {{provider}}",
+  "apiKeys.modelChanged": "Modèle mis à jour.",
+  "apiKeys.modelError": "Le modèle n’a pas pu être changé."
 }
