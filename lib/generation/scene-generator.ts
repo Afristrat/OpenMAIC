@@ -1390,7 +1390,7 @@ async function generateSlideContent(
   const generatedData = parseJsonResponse<GeneratedSlideData>(response);
 
   if (!generatedData || !generatedData.elements || !Array.isArray(generatedData.elements)) {
-    log.error(`Failed to parse AI response for: ${outline.title}`);
+    log.error(`Failed to parse AI response for: ${outline.title} ${describeUnparsable(response)}`);
     return null;
   }
 
@@ -1772,6 +1772,13 @@ export function buildLearningResourceSlide(
   };
 }
 
+/** Compact description of an unparsable model response, to diagnose truncation or looping. */
+function describeUnparsable(response: string): string {
+  const head = response.slice(0, 120).replace(/\s+/g, ' ');
+  const tail = response.length > 240 ? response.slice(-120).replace(/\s+/g, ' ') : '';
+  return `(length=${response.length}, head="${head}"${tail ? `, tail="${tail}"` : ''})`;
+}
+
 /**
  * Generate quiz content
  */
@@ -1819,7 +1826,7 @@ async function generateQuizContent(
   const generatedQuestions = parseJsonResponse<QuizQuestion[]>(response);
 
   if (!generatedQuestions || !Array.isArray(generatedQuestions)) {
-    log.error(`Failed to parse AI response for: ${outline.title}`);
+    log.error(`Failed to parse AI response for: ${outline.title} ${describeUnparsable(response)}`);
     return null;
   }
 
