@@ -121,4 +121,14 @@ describe('scene source grounding', () => {
     expect(prompt).toContain('37,5 %');
     expect(prompt).toContain('never fill the gap');
   });
+
+  it('forbids passage identifiers in narration and on slides, which a voice would read aloud', () => {
+    const grounding = buildSceneSourceGrounding(outline(), [
+      source('guide', 'La marge contributive cible du magasin pilote est de 37,5 %.'),
+    ]);
+    const prompt = formatSourceGroundingForPrompt(grounding);
+
+    expect(prompt).toContain('Never write a passage identifier');
+    expect(prompt).not.toContain('Keep the passage identifiers available');
+  });
 });

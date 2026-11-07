@@ -249,7 +249,7 @@ export function formatSourceGroundingForPrompt(
     passages || 'No relevant source passage is available for this scene.',
     issues ? `Issues that MUST be stated plainly in the learner-facing content:\n${issues}` : '',
     'Use only these passages for claims attributed to the supplied documents.',
-    'Keep the passage identifiers available in the narration or visible content when citing a sourced claim.',
+    'Never write a passage identifier (the bracketed codes above) in the narration or on the slide: they are recorded separately and a voice would read them aloud. When citing a sourced claim, name the document by its title in plain words.',
     'If a requested claim is absent or contradicted, say so explicitly; never fill the gap from assumption or unrelated world knowledge.',
   ]
     .filter(Boolean)
