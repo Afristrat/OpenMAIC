@@ -198,7 +198,7 @@ export async function generateFullScenes(
     currentStage: 3,
     overallProgress: 66,
     stageProgress: 0,
-    statusMessage: `正在并行生成 ${totalScenes} 个场景...`,
+    statusMessage: `Generating ${totalScenes} scenes in parallel...`,
     scenesGenerated: 0,
     totalScenes,
   });
@@ -215,7 +215,7 @@ export async function generateFullScenes(
           currentStage: 3,
           overallProgress: 66 + Math.floor((completedCount / totalScenes) * 34),
           stageProgress: Math.floor((completedCount / totalScenes) * 100),
-          statusMessage: `已完成 ${completedCount}/${totalScenes} 个场景`,
+          statusMessage: `Completed ${completedCount}/${totalScenes} scenes`,
           scenesGenerated: completedCount,
           totalScenes,
         });
@@ -1209,7 +1209,7 @@ async function generateSlideContent(
   }
 
   // Build assigned images description for the prompt
-  let assignedImagesText = '无可用图片，禁止插入任何 image 元素';
+  let assignedImagesText = 'No images available: do not insert any image element';
   let visionImages: Array<{ id: string; src: string }> | undefined;
 
   if (assignedImages && assignedImages.length > 0) {
@@ -1273,7 +1273,10 @@ async function generateSlideContent(
 
     if (mediaParts.length > 0) {
       const mediaText = mediaParts.join('\n\n');
-      if (assignedImagesText.includes('禁止插入') || assignedImagesText.includes('No images')) {
+      if (
+        assignedImagesText.includes('do not insert any image element') ||
+        assignedImagesText.includes('No images')
+      ) {
         assignedImagesText = mediaText;
       } else {
         assignedImagesText += `\n\n${mediaText}`;
@@ -1302,7 +1305,7 @@ async function generateSlideContent(
       title: outline.title,
       description: outline.description,
       keyPoints: (outline.keyPoints || []).map((p, i) => `${i + 1}. ${p}`).join('\n'),
-      elements: '（根据要点自动生成）',
+      elements: '(generate from the key points)',
       assignedImages: assignedImagesText,
       canvas_width: canvasWidth,
       canvas_height: canvasHeight,
@@ -2586,7 +2589,7 @@ export async function generateSceneActions(
         )
       : [];
     const processed = processActions(
-      actions.length > 0 ? actions : generateDefaultQuizActions(outline),
+      actions.length > 0 ? actions : generateDefaultQuizActions(languageDirective),
       [],
       agents,
     );
@@ -2625,7 +2628,7 @@ export async function generateSceneActions(
         )
       : [];
     const processed = processActions(
-      actions.length > 0 ? actions : generateDefaultInteractiveActions(outline),
+      actions.length > 0 ? actions : generateDefaultInteractiveActions(languageDirective),
       [],
       agents,
     );
@@ -2661,7 +2664,7 @@ export async function generateSceneActions(
         )
       : [];
     const processed = processActions(
-      actions.length > 0 ? actions : generateDefaultPBLActions(outline),
+      actions.length > 0 ? actions : generateDefaultPBLActions(languageDirective),
       [],
       agents,
     );
@@ -2818,15 +2821,75 @@ async function ensureCanonicalAgentInterventions(
 /**
  * Generate default PBL Actions (fallback)
  */
-function generateDefaultPBLActions(_outline: SceneOutline): Action[] {
+function generateDefaultPBLActions(languageDirective?: string): Action[] {
   return [
     {
       id: `action_${nanoid(8)}`,
       type: 'speech',
-      title: 'PBL 项目介绍',
-      text: '现在让我们开始一个项目式学习活动。请选择你的角色，查看任务看板，开始协作完成项目。',
+      ...localizedFallbackSpeech('pbl', languageDirective),
     },
   ];
+}
+
+export type FallbackSpeechKind = 'quiz' | 'interactive' | 'pbl';
+
+const FALLBACK_SPEECH: Record<
+  'ar' | 'fr' | 'en',
+  Record<FallbackSpeechKind, { title: string; text: string }>
+> = {
+  fr: {
+    quiz: {
+      title: 'Introduction du quiz',
+      text: 'Faisons maintenant un petit quiz pour vérifier ce que vous avez retenu.',
+    },
+    interactive: {
+      title: "Introduction de l'activité interactive",
+      text: 'Explorons maintenant ce concept avec la visualisation interactive. Manipulez les éléments de la page et observez ce qui change.',
+    },
+    pbl: {
+      title: 'Introduction du projet',
+      text: 'Commençons maintenant une activité par projet. Choisissez votre rôle, consultez le tableau des tâches et collaborez pour mener le projet à bien.',
+    },
+  },
+  ar: {
+    quiz: {
+      title: 'تقديم الاختبار',
+      text: 'لنجرِ الآن اختباراً قصيراً للتحقق مما استوعبتموه.',
+    },
+    interactive: {
+      title: 'تقديم النشاط التفاعلي',
+      text: 'لنستكشف الآن هذا المفهوم عبر التصور التفاعلي. جرّبوا عناصر الصفحة ولاحظوا ما يتغير.',
+    },
+    pbl: {
+      title: 'تقديم المشروع',
+      text: 'لنبدأ الآن نشاطاً قائماً على المشروع. اختاروا دوركم، واطّلعوا على لوحة المهام، وتعاونوا لإنجاز المشروع.',
+    },
+  },
+  en: {
+    quiz: {
+      title: 'Quiz introduction',
+      text: 'Now let us take a short quiz to check what you have learned.',
+    },
+    interactive: {
+      title: 'Interactive activity introduction',
+      text: 'Now let us explore this concept with the interactive visualization. Try the elements on the page and watch what changes.',
+    },
+    pbl: {
+      title: 'Project introduction',
+      text: 'Now let us start a project-based activity. Choose your role, open the task board and work together to complete the project.',
+    },
+  },
+};
+
+/** Texte de secours d'une scène dont le modèle n'a produit aucune action, dans la langue du cours. */
+export function localizedFallbackSpeech(
+  kind: FallbackSpeechKind,
+  languageDirective?: string,
+): { title: string; text: string } {
+  const language = languageDirective?.toLowerCase() ?? '';
+  if (/arabic|arabe|العربية|ar-ma|ar-sa/u.test(language)) return FALLBACK_SPEECH.ar[kind];
+  if (/french|français|francais|fr-fr/u.test(language)) return FALLBACK_SPEECH.fr[kind];
+  return FALLBACK_SPEECH.en[kind];
 }
 
 /**
@@ -3082,13 +3145,12 @@ export function generateDefaultSlideActions(
 /**
  * Generate default quiz Actions (fallback)
  */
-function generateDefaultQuizActions(_outline: SceneOutline): Action[] {
+function generateDefaultQuizActions(languageDirective?: string): Action[] {
   return [
     {
       id: `action_${nanoid(8)}`,
       type: 'speech',
-      title: '测验引导',
-      text: '现在让我们来做一个小测验，检验一下学习成果。',
+      ...localizedFallbackSpeech('quiz', languageDirective),
     },
   ];
 }
@@ -3096,13 +3158,12 @@ function generateDefaultQuizActions(_outline: SceneOutline): Action[] {
 /**
  * Generate default interactive Actions (fallback)
  */
-function generateDefaultInteractiveActions(_outline: SceneOutline): Action[] {
+function generateDefaultInteractiveActions(languageDirective?: string): Action[] {
   return [
     {
       id: `action_${nanoid(8)}`,
       type: 'speech',
-      title: '交互引导',
-      text: '现在让我们通过交互式可视化来探索这个概念。请尝试操作页面中的元素，观察变化。',
+      ...localizedFallbackSpeech('interactive', languageDirective),
     },
   ];
 }
