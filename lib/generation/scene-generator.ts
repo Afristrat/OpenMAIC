@@ -1772,11 +1772,20 @@ export function buildLearningResourceSlide(
   };
 }
 
-/** Compact description of an unparsable model response, to diagnose truncation or looping. */
-function describeUnparsable(response: string): string {
-  const head = response.slice(0, 120).replace(/\s+/g, ' ');
-  const tail = response.length > 240 ? response.slice(-120).replace(/\s+/g, ' ') : '';
-  return `(length=${response.length}, head="${head}"${tail ? `, tail="${tail}"` : ''})`;
+/**
+ * Content-free description of an unparsable model response: enough to tell truncation (unbalanced
+ * brackets), looping (few distinct lines) and prose preamble (first character) without logging
+ * any text from the learner's source documents.
+ */
+export function describeUnparsable(response: string): string {
+  const trimmed = response.trim();
+  const opens = (trimmed.match(/[{[]/g) ?? []).length;
+  const closes = (trimmed.match(/[}\]]/g) ?? []).length;
+  const lines = trimmed.split(/\r?\n/).filter((line) => line.trim().length > 0);
+  const distinct = new Set(lines).size;
+  const first = trimmed.charAt(0);
+  const kind = first === '{' || first === '[' ? first : 'other';
+  return `(length=${response.length}, starts=${kind}, brackets=${opens}/${closes}, distinctLines=${distinct}/${lines.length})`;
 }
 
 /**
