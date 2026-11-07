@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeUnparsable, unwrapQuestionList } from '@/lib/generation/scene-generator';
+import { describeUnparsable, restoreMissingQuestionBraces } from '@/lib/generation/scene-generator';
 
 describe('describeUnparsable', () => {
   it('never reproduces any text of the response', () => {
@@ -24,19 +24,18 @@ describe('describeUnparsable', () => {
   });
 });
 
-describe('unwrapQuestionList', () => {
-  it('keeps a bare array', () => {
-    expect(unwrapQuestionList([{ id: 'q1' }])).toHaveLength(1);
+describe('restoreMissingQuestionBraces', () => {
+  it('restores the opening brace of a question written without it, so the list parses', () => {
+    const broken =
+      '[{"id": "q1", "points": 15},\n \n    "id": "q3", "type": "short_answer", "points": 10}]';
+    const fixed = JSON.parse(restoreMissingQuestionBraces(broken)) as Array<{ id: string }>;
+
+    expect(fixed.map((question) => question.id)).toEqual(['q1', 'q3']);
   });
 
-  it('accepts a single wrapper object around the list', () => {
-    expect(unwrapQuestionList({ questions: [{ id: 'q1' }, { id: 'q2' }] })).toHaveLength(2);
-  });
+  it('leaves a well-formed list untouched', () => {
+    const valid = '[{"id": "q1", "options": [{"value": "A"}]}, {"id": "q2"}]';
 
-  it('refuses an ambiguous or empty wrapper and scalars', () => {
-    expect(unwrapQuestionList({ a: [1], b: [2] })).toBeNull();
-    expect(unwrapQuestionList({ title: 'x' })).toBeNull();
-    expect(unwrapQuestionList('texte')).toBeNull();
-    expect(unwrapQuestionList(null)).toBeNull();
+    expect(restoreMissingQuestionBraces(valid)).toBe(valid);
   });
 });

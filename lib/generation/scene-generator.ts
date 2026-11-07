@@ -1789,14 +1789,12 @@ export function describeUnparsable(response: string): string {
 }
 
 /**
- * The prompt asks for a bare JSON array, but the model sometimes wraps it in an object such as
- * `{ "questions": [...] }`. Accept that single wrapper, nothing deeper.
+ * The model sometimes closes a question with `},` and then writes the next one without its opening
+ * brace (`"id": "q3", ...`). Question objects are the only place `"id"` follows a closing brace in
+ * a quiz answer, so restoring the brace there is unambiguous.
  */
-export function unwrapQuestionList(parsed: unknown): QuizQuestion[] | null {
-  if (Array.isArray(parsed)) return parsed as QuizQuestion[]; // shape checked downstream per question
-  if (typeof parsed !== 'object' || parsed === null) return null;
-  const lists = Object.values(parsed).filter(Array.isArray);
-  return lists.length === 1 ? (lists[0] as QuizQuestion[]) : null;
+export function restoreMissingQuestionBraces(response: string): string {
+  return response.replace(/\}(\s*),(\s*)(?="id"\s*:)/g, '}$1,$2{');
 }
 
 /**
@@ -1843,7 +1841,9 @@ async function generateQuizContent(
 
   log.debug(`Generating quiz content for: ${outline.title}`);
   const response = await aiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding));
-  const generatedQuestions = unwrapQuestionList(parseJsonResponse<unknown>(response));
+  const generatedQuestions = parseJsonResponse<QuizQuestion[]>(
+    restoreMissingQuestionBraces(response),
+  );
 
   if (!generatedQuestions || !Array.isArray(generatedQuestions)) {
     log.error(`Failed to parse AI response for: ${outline.title} ${describeUnparsable(response)}`);
