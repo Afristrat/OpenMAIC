@@ -1391,6 +1391,7 @@ async function generateSlideContent(
 
   if (!generatedData || !generatedData.elements || !Array.isArray(generatedData.elements)) {
     log.error(`Failed to parse AI response for: ${outline.title} ${describeUnparsable(response)}`);
+    onValidationFailure?.(UNPARSABLE_RESPONSE_DIRECTIVE);
     return null;
   }
 
@@ -1789,6 +1790,13 @@ export function describeUnparsable(response: string): string {
 }
 
 /**
+ * Consigne de reprise quand la réponse n'est pas du JSON lisible. Sans elle, la reprise rejoue le
+ * même prompt : le modèle, déterministe, rend la même réponse défectueuse à chaque tentative.
+ */
+export const UNPARSABLE_RESPONSE_DIRECTIVE =
+  'Your previous answer was not valid JSON. Return strictly valid JSON: every array item is a complete object wrapped in its own braces, every string is closed, no comment, no text outside the JSON.';
+
+/**
  * The model sometimes closes a question with `},` and then writes the next one without its opening
  * brace (`"id": "q3", ...`). Question objects are the only place `"id"` follows a closing brace in
  * a quiz answer, so restoring the brace there is unambiguous.
@@ -1847,6 +1855,7 @@ async function generateQuizContent(
 
   if (!generatedQuestions || !Array.isArray(generatedQuestions)) {
     log.error(`Failed to parse AI response for: ${outline.title} ${describeUnparsable(response)}`);
+    onValidationFailure?.(UNPARSABLE_RESPONSE_DIRECTIVE);
     return null;
   }
 
@@ -2757,10 +2766,11 @@ export function fallbackQuestionText(outline: SceneOutline, languageDirective?: 
   const language = languageDirective?.toLowerCase() ?? '';
   const keyPoints = (outline.keyPoints ?? []).map((point) => point.trim()).filter(Boolean);
   const rank = Math.abs(Math.trunc(Number(outline.order) || 0));
-  const candidate = keyPoints.length > 0 ? keyPoints[rank % keyPoints.length] : '';
-  // Longueur vérifiée avant tout traitement : un point clé trop long est inutilisable (repli sur le titre).
-  const keyPoint =
-    candidate.length <= MAX_FALLBACK_KEY_POINT_LENGTH ? stripTrailingPunctuation(candidate) : '';
+  // Point clé choisi selon le rang ; s'il est trop long (longueur vérifiée avant tout traitement),
+  // on essaie les suivants avant de se rabattre sur le titre.
+  const usable = keyPoints.filter((point) => point.length <= MAX_FALLBACK_KEY_POINT_LENGTH);
+  const candidate = usable.length > 0 ? usable[rank % usable.length] : '';
+  const keyPoint = stripTrailingPunctuation(candidate);
   const subject = keyPoint.length > 0 ? keyPoint : outline.title;
   if (/arabic|arabe|ar-ma|ar-sa/u.test(language)) {
     return keyPoint

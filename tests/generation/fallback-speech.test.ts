@@ -74,4 +74,15 @@ describe('fallbackQuestionText, entrées hostiles', () => {
     expect(Date.now() - started).toBeLessThan(200);
     expect(text).toContain('Titre de scène');
   });
+
+  it('essaie les autres points clés avant de se rabattre sur le titre', () => {
+    const tooLong = 'a'.repeat(400);
+    const outline = { ...base, order: 0, keyPoints: [tooLong, 'Point clé exploitable'] };
+    const text = fallbackQuestionText(
+      outline as unknown as Parameters<typeof fallbackQuestionText>[0],
+      'français',
+    );
+    expect(text).toContain('Point clé exploitable');
+    expect(text).not.toContain('Titre de scène');
+  });
 });

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { describeUnparsable, restoreMissingQuestionBraces } from '@/lib/generation/scene-generator';
+import {
+  UNPARSABLE_RESPONSE_DIRECTIVE,
+  describeUnparsable,
+  restoreMissingQuestionBraces,
+} from '@/lib/generation/scene-generator';
 
 describe('describeUnparsable', () => {
   it('never reproduces any text of the response', () => {
@@ -37,5 +41,12 @@ describe('restoreMissingQuestionBraces', () => {
     const valid = '[{"id": "q1", "options": [{"value": "A"}]}, {"id": "q2"}]';
 
     expect(restoreMissingQuestionBraces(valid)).toBe(valid);
+  });
+});
+
+describe('UNPARSABLE_RESPONSE_DIRECTIVE', () => {
+  it('demande du JSON strictement valide, avec chaque objet entouré de ses accolades', () => {
+    expect(UNPARSABLE_RESPONSE_DIRECTIVE).toContain('valid JSON');
+    expect(UNPARSABLE_RESPONSE_DIRECTIVE).toContain('own braces');
   });
 });

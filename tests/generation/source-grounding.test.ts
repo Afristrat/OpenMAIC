@@ -131,4 +131,14 @@ describe('scene source grounding', () => {
     expect(prompt).toContain('Never write a passage identifier');
     expect(prompt).not.toContain('Keep the passage identifiers available');
   });
+
+  it('exige que tout chiffre absent des passages soit une illustration qui respecte les échelles du document', () => {
+    const grounding = buildSceneSourceGrounding(outline(), [
+      source('guide', 'Le score va de 0 à 40.'),
+    ]);
+    const prompt = formatSourceGroundingForPrompt(grounding);
+
+    expect(prompt).toContain('invented illustration');
+    expect(prompt).toContain('never exceeds its stated maximum');
+  });
 });

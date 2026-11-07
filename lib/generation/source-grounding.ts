@@ -250,6 +250,7 @@ export function formatSourceGroundingForPrompt(
     issues ? `Issues that MUST be stated plainly in the learner-facing content:\n${issues}` : '',
     'Use only these passages for claims attributed to the supplied documents.',
     'Never write a passage identifier (the bracketed codes above) in the narration or on the slide: they are recorded separately and a voice would read them aloud. When citing a sourced claim, name the document by its title in plain words.',
+    'A figure that is not in the passages must be presented as an invented illustration, never as coming from the document, and it must respect the scales the document states (for example a score never exceeds its stated maximum).',
     'If a requested claim is absent or contradicted, say so explicitly; never fill the gap from assumption or unrelated world knowledge.',
   ]
     .filter(Boolean)
