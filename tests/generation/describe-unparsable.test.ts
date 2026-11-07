@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeUnparsable } from '@/lib/generation/scene-generator';
+import { describeUnparsable, unwrapQuestionList } from '@/lib/generation/scene-generator';
 
 describe('describeUnparsable', () => {
   it('never reproduces any text of the response', () => {
@@ -21,5 +21,22 @@ describe('describeUnparsable', () => {
 
   it('flags a prose preamble', () => {
     expect(describeUnparsable('Voici le JSON : []')).toContain('starts=other');
+  });
+});
+
+describe('unwrapQuestionList', () => {
+  it('keeps a bare array', () => {
+    expect(unwrapQuestionList([{ id: 'q1' }])).toHaveLength(1);
+  });
+
+  it('accepts a single wrapper object around the list', () => {
+    expect(unwrapQuestionList({ questions: [{ id: 'q1' }, { id: 'q2' }] })).toHaveLength(2);
+  });
+
+  it('refuses an ambiguous or empty wrapper and scalars', () => {
+    expect(unwrapQuestionList({ a: [1], b: [2] })).toBeNull();
+    expect(unwrapQuestionList({ title: 'x' })).toBeNull();
+    expect(unwrapQuestionList('texte')).toBeNull();
+    expect(unwrapQuestionList(null)).toBeNull();
   });
 });

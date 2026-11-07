@@ -1789,6 +1789,17 @@ export function describeUnparsable(response: string): string {
 }
 
 /**
+ * The prompt asks for a bare JSON array, but the model sometimes wraps it in an object such as
+ * `{ "questions": [...] }`. Accept that single wrapper, nothing deeper.
+ */
+export function unwrapQuestionList(parsed: unknown): QuizQuestion[] | null {
+  if (Array.isArray(parsed)) return parsed as QuizQuestion[]; // shape checked downstream per question
+  if (typeof parsed !== 'object' || parsed === null) return null;
+  const lists = Object.values(parsed).filter(Array.isArray);
+  return lists.length === 1 ? (lists[0] as QuizQuestion[]) : null;
+}
+
+/**
  * Generate quiz content
  */
 async function generateQuizContent(
@@ -1832,7 +1843,7 @@ async function generateQuizContent(
 
   log.debug(`Generating quiz content for: ${outline.title}`);
   const response = await aiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding));
-  const generatedQuestions = parseJsonResponse<QuizQuestion[]>(response);
+  const generatedQuestions = unwrapQuestionList(parseJsonResponse<unknown>(response));
 
   if (!generatedQuestions || !Array.isArray(generatedQuestions)) {
     log.error(`Failed to parse AI response for: ${outline.title} ${describeUnparsable(response)}`);
