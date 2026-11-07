@@ -2712,6 +2712,16 @@ function insertBeforeDiscussion(actions: Action[], intervention: Action): Action
   return [...actions.slice(0, discussionIndex), intervention, ...actions.slice(discussionIndex)];
 }
 
+const MAX_FALLBACK_KEY_POINT_LENGTH = 160;
+const TRAILING_PUNCTUATION = new Set(['.', '!', '?', '。', '۔', ':', ';', ' ', '\n', '\t']);
+
+/** Retire la ponctuation finale par un balayage arrière, sans expression régulière. */
+function stripTrailingPunctuation(text: string): string {
+  let end = text.length;
+  while (end > 0 && TRAILING_PUNCTUATION.has(text[end - 1])) end -= 1;
+  return text.slice(0, end);
+}
+
 /**
  * Question de secours d'un agent quand le modèle n'en a produit aucune : elle porte sur un point clé
  * de la scène (choisi selon son rang), pas sur son titre, pour ne pas se répéter d'une scène à l'autre.
@@ -2719,11 +2729,12 @@ function insertBeforeDiscussion(actions: Action[], intervention: Action): Action
 export function fallbackQuestionText(outline: SceneOutline, languageDirective?: string): string {
   const language = languageDirective?.toLowerCase() ?? '';
   const keyPoints = (outline.keyPoints ?? []).map((point) => point.trim()).filter(Boolean);
+  const rank = Math.abs(Math.trunc(Number(outline.order) || 0));
+  const candidate = keyPoints.length > 0 ? keyPoints[rank % keyPoints.length] : '';
+  // Longueur vérifiée avant tout traitement : un point clé trop long est inutilisable (repli sur le titre).
   const keyPoint =
-    keyPoints.length > 0
-      ? keyPoints[Math.abs(outline.order ?? 0) % keyPoints.length].replace(/[.!?。۔:;\s]+$/u, '')
-      : '';
-  const subject = keyPoint.length > 0 && keyPoint.length <= 160 ? keyPoint : outline.title;
+    candidate.length <= MAX_FALLBACK_KEY_POINT_LENGTH ? stripTrailingPunctuation(candidate) : '';
+  const subject = keyPoint.length > 0 ? keyPoint : outline.title;
   if (/arabic|arabe|ar-ma|ar-sa/u.test(language)) {
     return keyPoint
       ? `كيف تطبّقون «${subject}» في وضعية عملية من نشاطكم؟`

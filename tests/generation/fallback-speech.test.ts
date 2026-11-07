@@ -47,3 +47,31 @@ describe('fallbackQuestionText', () => {
     expect(fallbackQuestionText(outline, 'English')).toContain('How would you apply');
   });
 });
+
+describe('fallbackQuestionText, entrées hostiles', () => {
+  const base = { id: 's1', title: 'Titre de scène' };
+
+  it('accepte un rang fractionnaire ou absent sans lever d’erreur', () => {
+    for (const order of [1.5, -2.7, undefined, Number.NaN]) {
+      const outline = { ...base, order, keyPoints: ['Un point', 'Un autre'] };
+      expect(() =>
+        fallbackQuestionText(
+          outline as unknown as Parameters<typeof fallbackQuestionText>[0],
+          'français',
+        ),
+      ).not.toThrow();
+    }
+  });
+
+  it('retombe sur le titre pour un point clé trop long, sans ralentir', () => {
+    const long = `${'.'.repeat(60000)}x${' '.repeat(60000)}`;
+    const outline = { ...base, order: 0, keyPoints: [long] };
+    const started = Date.now();
+    const text = fallbackQuestionText(
+      outline as unknown as Parameters<typeof fallbackQuestionText>[0],
+      'français',
+    );
+    expect(Date.now() - started).toBeLessThan(200);
+    expect(text).toContain('Titre de scène');
+  });
+});
