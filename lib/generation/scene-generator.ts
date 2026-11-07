@@ -2712,17 +2712,39 @@ function insertBeforeDiscussion(actions: Action[], intervention: Action): Action
   return [...actions.slice(0, discussionIndex), intervention, ...actions.slice(discussionIndex)];
 }
 
+/**
+ * Question de secours d'un agent quand le modèle n'en a produit aucune : elle porte sur un point clé
+ * de la scène (choisi selon son rang), pas sur son titre, pour ne pas se répéter d'une scène à l'autre.
+ */
+export function fallbackQuestionText(outline: SceneOutline, languageDirective?: string): string {
+  const language = languageDirective?.toLowerCase() ?? '';
+  const keyPoints = (outline.keyPoints ?? []).map((point) => point.trim()).filter(Boolean);
+  const keyPoint =
+    keyPoints.length > 0
+      ? keyPoints[Math.abs(outline.order ?? 0) % keyPoints.length].replace(/[.!?。۔:;\s]+$/u, '')
+      : '';
+  const subject = keyPoint.length > 0 && keyPoint.length <= 160 ? keyPoint : outline.title;
+  if (/arabic|arabe|ar-ma|ar-sa/u.test(language)) {
+    return keyPoint
+      ? `كيف تطبّقون «${subject}» في وضعية عملية من نشاطكم؟`
+      : `ما المثال العملي الذي يساعدنا على التحقق من «${subject}»؟`;
+  }
+  if (/french|français|francais|fr-fr/u.test(language)) {
+    return keyPoint
+      ? `Comment appliqueriez-vous « ${subject} » dans une situation concrète de votre activité ?`
+      : `Quel exemple concret permet de vérifier « ${subject} » dans la pratique ?`;
+  }
+  return keyPoint
+    ? `How would you apply “${subject}” in a concrete situation from your own work?`
+    : `What concrete example would help us verify “${subject}” in practice?`;
+}
+
 function fallbackPreparedQuestion(
   outline: SceneOutline,
   agent: AgentInfo,
   languageDirective?: string,
 ): Action {
-  const language = languageDirective?.toLowerCase() ?? '';
-  const text = /arabic|arabe|ar-ma|ar-sa/u.test(language)
-    ? `ما المثال العملي الذي يساعدنا على التحقق من «${outline.title}»؟`
-    : /french|français|francais|fr-fr/u.test(language)
-      ? `Quel exemple concret permet de vérifier « ${outline.title} » dans la pratique ?`
-      : `What concrete example would help us verify “${outline.title}” in practice?`;
+  const text = fallbackQuestionText(outline, languageDirective);
   return {
     id: `action_${nanoid(8)}`,
     type: 'speech',

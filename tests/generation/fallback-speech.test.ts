@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { localizedFallbackSpeech, type FallbackSpeechKind } from '@/lib/generation/scene-generator';
+import {
+  fallbackQuestionText,
+  localizedFallbackSpeech,
+  type FallbackSpeechKind,
+} from '@/lib/generation/scene-generator';
 
 const KINDS: FallbackSpeechKind[] = ['quiz', 'interactive', 'pbl'];
 const HAN = /[一-鿿]/u;
@@ -18,5 +22,28 @@ describe('localizedFallbackSpeech', () => {
     expect(localizedFallbackSpeech('quiz', 'français').text).toMatch(/quiz/);
     expect(localizedFallbackSpeech('quiz', 'ar-MA').text).toMatch(/[؀-ۿ]/u);
     expect(localizedFallbackSpeech('quiz', 'English').text).toMatch(/quiz/);
+  });
+});
+
+describe('fallbackQuestionText', () => {
+  const outline = {
+    id: 's1',
+    order: 1,
+    title: 'Chapitre 3 : Scénarios chiffrés',
+    keyPoints: ['Hypothèses de base.', 'Comparaison des trois scénarios'],
+  } as unknown as Parameters<typeof fallbackQuestionText>[0];
+
+  it('porte sur un point clé et non sur le titre', () => {
+    const text = fallbackQuestionText(outline, 'français');
+    expect(text).toContain('Comparaison des trois scénarios');
+    expect(text).not.toContain('Chapitre 3');
+    expect(text).not.toMatch(HAN);
+  });
+
+  it('retombe sur le titre sans point clé et suit la langue', () => {
+    const bare = { ...outline, keyPoints: [] };
+    expect(fallbackQuestionText(bare, 'français')).toContain('Chapitre 3 : Scénarios chiffrés');
+    expect(fallbackQuestionText(outline, 'ar-MA')).toMatch(/[؀-ۿ]/u);
+    expect(fallbackQuestionText(outline, 'English')).toContain('How would you apply');
   });
 });
