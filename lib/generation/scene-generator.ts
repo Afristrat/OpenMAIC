@@ -1780,8 +1780,20 @@ export function buildLearningResourceSlide(
  */
 export function describeUnparsable(response: string): string {
   const trimmed = response.trim();
-  const opens = (trimmed.match(/[{[]/g) ?? []).length;
-  const closes = (trimmed.match(/[}\]]/g) ?? []).length;
+  // Crochets comptés hors des chaînes : ceux d'un texte cité ou d'un LaTeX ne signalent pas une troncature.
+  let opens = 0;
+  let closes = 0;
+  let inString = false;
+  let escaped = false;
+  for (const char of trimmed) {
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+    } else if (char === '"') inString = true;
+    else if (char === '{' || char === '[') opens += 1;
+    else if (char === '}' || char === ']') closes += 1;
+  }
   const lines = trimmed.split(/\r?\n/).filter((line) => line.trim().length > 0);
   const distinct = new Set(lines).size;
   const first = trimmed.charAt(0);
@@ -1796,13 +1808,55 @@ export function describeUnparsable(response: string): string {
 export const UNPARSABLE_RESPONSE_DIRECTIVE =
   'Your previous answer was not valid JSON. Return strictly valid JSON: every array item is a complete object wrapped in its own braces, every string is closed, no comment, no text outside the JSON.';
 
+const QUIZ_SHAPE_DIRECTIVE =
+  'Your previous answer was valid JSON but not a list of questions. Return a single JSON array whose items are the question objects, with nothing around it.';
+
 /**
  * The model sometimes closes a question with `},` and then writes the next one without its opening
  * brace (`"id": "q3", ...`). Question objects are the only place `"id"` follows a closing brace in
  * a quiz answer, so restoring the brace there is unambiguous.
  */
 export function restoreMissingQuestionBraces(response: string): string {
-  return response.replace(/\}(\s*),(\s*)(?="id"\s*:)/g, '}$1,$2{');
+  // Balayage conscient des chaînes et de la pile : l'accolade n'est restaurée que lorsque le `}`
+  // ferme un objet directement contenu dans un tableau (une question), jamais un objet imbriqué
+  // dans une question ni un `}, "id":` écrit à l'intérieur d'une chaîne.
+  const idAhead = /^(\s*),(\s*)(?="id"\s*:)/;
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  let output = '';
+  let copied = 0;
+  for (let index = 0; index < response.length; index += 1) {
+    const char = response[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === '{' || char === '[') stack.push(char);
+    else if (char === '}' || char === ']') {
+      stack.pop();
+      if (char === '}' && stack[stack.length - 1] === '[') {
+        const gap = idAhead.exec(response.slice(index + 1));
+        if (gap) {
+          const end = index + 1 + gap[0].length;
+          output += `${response.slice(copied, end)}{`;
+          copied = end;
+          index = end - 1;
+        }
+      }
+    }
+  }
+  return output + response.slice(copied);
+}
+
+/** Un quiz rendu comme `{"questions": [...]}` : l'unique propriété tableau est la liste. */
+export function unwrapQuestionList(parsed: unknown): unknown {
+  if (Array.isArray(parsed) || parsed === null || typeof parsed !== 'object') return parsed;
+  const lists = Object.values(parsed).filter(Array.isArray);
+  return lists.length === 1 ? lists[0] : parsed;
 }
 
 /**
@@ -1849,13 +1903,16 @@ async function generateQuizContent(
 
   log.debug(`Generating quiz content for: ${outline.title}`);
   const response = await aiCall(prompts.system, withSourceGrounding(prompts.user, sourceGrounding));
-  const generatedQuestions = parseJsonResponse<QuizQuestion[]>(
-    restoreMissingQuestionBraces(response),
+  const parsedQuiz = unwrapQuestionList(
+    parseJsonResponse<unknown>(restoreMissingQuestionBraces(response)),
   );
+  const generatedQuestions = Array.isArray(parsedQuiz) ? (parsedQuiz as QuizQuestion[]) : null;
 
-  if (!generatedQuestions || !Array.isArray(generatedQuestions)) {
+  if (!generatedQuestions) {
     log.error(`Failed to parse AI response for: ${outline.title} ${describeUnparsable(response)}`);
-    onValidationFailure?.(UNPARSABLE_RESPONSE_DIRECTIVE);
+    onValidationFailure?.(
+      parsedQuiz === null ? UNPARSABLE_RESPONSE_DIRECTIVE : QUIZ_SHAPE_DIRECTIVE,
+    );
     return null;
   }
 
@@ -2749,7 +2806,21 @@ function insertBeforeDiscussion(actions: Action[], intervention: Action): Action
 }
 
 const MAX_FALLBACK_KEY_POINT_LENGTH = 160;
-const TRAILING_PUNCTUATION = new Set(['.', '!', '?', '。', '۔', ':', ';', ' ', '\n', '\t']);
+const TRAILING_PUNCTUATION = new Set([
+  '.',
+  '!',
+  '?',
+  '。',
+  '۔',
+  '؟',
+  '،',
+  '؛',
+  ':',
+  ';',
+  ' ',
+  '\n',
+  '\t',
+]);
 
 /** Retire la ponctuation finale par un balayage arrière, sans expression régulière. */
 function stripTrailingPunctuation(text: string): string {

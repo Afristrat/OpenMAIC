@@ -981,6 +981,7 @@ export async function generateClassroom(
             imageMapping,
             validationDirective: sceneValidationDirective,
             onValidationFailure: (directive) => {
+              if (sceneValidationDirective?.includes(directive)) return;
               sceneValidationDirective = sceneValidationDirective
                 ? `${sceneValidationDirective}\n${directive}`
                 : directive;

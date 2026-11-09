@@ -15,21 +15,17 @@ function repairQuotedPropertyFragments(jsonStr: string): string {
 
 function logJsonParseError(stage: string, jsonStr: string, error: unknown): void {
   const message = error instanceof Error ? error.message : String(error);
+  // Le message natif de JSON.parse peut citer un extrait du texte : seul le type d'erreur est consigné.
+  const kind = error instanceof Error ? error.name : 'unknown';
   const positionMatch = message.match(/position\s+(\d+)/i);
   const position = positionMatch ? Number(positionMatch[1]) : undefined;
 
   if (typeof position === 'number' && Number.isFinite(position)) {
-    const start = Math.max(0, position - 120);
-    const end = Math.min(jsonStr.length, position + 120);
-    log.warn(
-      `${stage} parse error at position ${position}: ${message}. Context: ${jsonStr
-        .slice(start, end)
-        .replace(/\n/g, '\\n')}`,
-    );
+    log.warn(`${stage} parse error at position ${position}: ${kind} (length ${jsonStr.length})`);
     return;
   }
 
-  log.warn(`${stage} parse error: ${message}`);
+  log.warn(`${stage} parse error: ${kind} (length ${jsonStr.length})`);
 }
 
 export function parseJsonResponse<T>(response: string): T | null {
@@ -115,11 +111,8 @@ export function parseJsonResponse<T>(response: string): T | null {
   }
 
   log.error('Failed to parse JSON from response');
-  log.error('Raw response (first 500 chars):', response.substring(0, 500));
-  log.error(
-    'Raw response (last 500 chars):',
-    response.substring(Math.max(0, response.length - 500)),
-  );
+  // Aucun extrait de la réponse : elle cite les documents de l'apprenant (voir describeUnparsable).
+  log.error(`Raw response length: ${response.length}`);
 
   return null;
 }

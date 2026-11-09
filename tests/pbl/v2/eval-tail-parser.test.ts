@@ -23,15 +23,14 @@ describe('parseEvaluationTail', () => {
   it('returns null on empty / blank input', () => {
     expectConsoleMessages({
       warn: [
-        '[WARN] [Generation] Attempt 1 parse error: Unexpected end of JSON input',
-        '[WARN] [Generation] Attempt 2 parse error: Unexpected end of JSON input',
+        '[WARN] [Generation] Attempt 1 parse error: SyntaxError (length 0)',
+        '[WARN] [Generation] Attempt 2 parse error: SyntaxError (length 0)',
         /^\[WARN\] \[Generation\] Attempt 3 parse error at position 0:/,
-        '[WARN] [Generation] Attempt 4 parse error: Unexpected end of JSON input',
+        '[WARN] [Generation] Attempt 4 parse error: SyntaxError (length 0)',
       ],
       error: [
         '[ERROR] [Generation] Failed to parse JSON from response',
-        '[ERROR] [Generation] Raw response (first 500 chars): ',
-        '[ERROR] [Generation] Raw response (last 500 chars): ',
+        '[ERROR] [Generation] Raw response length: 0',
       ],
     });
     expect(parseEvaluationTail('')).toBeNull();

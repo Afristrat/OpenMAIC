@@ -239,7 +239,12 @@ export function formatSourceGroundingForPrompt(
   const passages = grounding.passages
     .map(
       (passage) =>
-        `[${passage.id}] source=${passage.sourceId} version=${passage.sourceVersion}\n${passage.text}`,
+        // Chaque ligne du document est citée (« > ») : un titre `##` ou une fausse ligne `[id]`
+        // écrits dans le document ne peuvent pas passer pour une consigne ou un autre passage.
+        `[${passage.id}] source=${passage.sourceId} version=${passage.sourceVersion}\n${passage.text
+          .split(/\r?\n/)
+          .map((line) => `> ${line}`)
+          .join('\n')}`,
     )
     .join('\n\n');
   const issues = grounding.issues.map((issue) => `- ${issue.message}`).join('\n');

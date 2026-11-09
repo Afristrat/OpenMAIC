@@ -48,8 +48,7 @@ describe('decideCaptureForScene', () => {
       ],
       error: [
         '[ERROR] [Generation] Failed to parse JSON from response',
-        "[ERROR] [Generation] Raw response (first 500 chars): n'importe quoi, pas du JSON",
-        "[ERROR] [Generation] Raw response (last 500 chars): n'importe quoi, pas du JSON",
+        '[ERROR] [Generation] Raw response length: 27',
         '[ERROR] [WebCapturePlan] Failed to parse capture-decision response for: Configurer les clés virtuelles LiteLLM',
       ],
     });
