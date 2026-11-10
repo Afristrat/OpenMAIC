@@ -22,6 +22,21 @@ function languageOf(directive?: string): Language {
   return 'en';
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Le modèle rend la liste demandée, mais aussi, selon l'humeur, un objet qui l'enveloppe
+ * (`{"replies": [...]}`) ou, pour une seule intervention, la réplique seule : les trois sont lisibles.
+ */
+function replyItems(parsed: unknown): unknown[] | null {
+  if (Array.isArray(parsed)) return parsed;
+  if (!isRecord(parsed)) return null;
+  if (typeof parsed.interventionId === 'string') return [parsed];
+  return Object.values(parsed).find((value): value is unknown[] => Array.isArray(value)) ?? null;
+}
+
 function isPreparedIntervention(action: Action, teacherId: string): action is SpeechAction {
   return action.type === 'speech' && Boolean(action.interventionId) && action.agentId !== teacherId;
 }
@@ -80,13 +95,14 @@ export async function ensureTeacherTakesUpInterventions(
         })
         .join('\n\n'),
     );
-    const parsed =
-      parseJsonResponse<Array<{ interventionId?: unknown; content?: unknown }>>(response);
-    // Une réponse qui n'est pas une liste est illisible : null, jamais un verdict du modèle.
-    if (!Array.isArray(parsed)) return null;
+    // Une réponse sans aucune réplique exploitable est illisible : null, jamais un verdict du modèle.
+    const items = replyItems(parseJsonResponse<unknown>(response));
+    if (items === null) return null;
     return new Map(
-      parsed.flatMap((item) =>
-        typeof item.interventionId === 'string' && typeof item.content === 'string'
+      items.flatMap((item) =>
+        isRecord(item) &&
+        typeof item.interventionId === 'string' &&
+        typeof item.content === 'string'
           ? [[item.interventionId, item.content.trim()] as const]
           : [],
       ),

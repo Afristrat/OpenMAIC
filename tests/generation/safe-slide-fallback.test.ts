@@ -47,6 +47,11 @@ describe('buildSafeSlideFallback', () => {
     expect(audit(buildSafeSlideFallback(OUTLINE, []))).toEqual([]);
   });
 
+  it('reste valide quand le plan du modèle n’a aucun point clé', () => {
+    const sansPointsCles = { ...OUTLINE, keyPoints: undefined } as unknown as SceneOutline;
+    expect(audit(buildSafeSlideFallback(sansPointsCles, []))).toEqual([]);
+  });
+
   it('range une image posée par le modèle sur le texte dans une colonne réservée', () => {
     const elements = buildSafeSlideFallback(OUTLINE, [image('image_a', 100, 150, 400, 300)]);
     expect(audit(elements)).toEqual([]);

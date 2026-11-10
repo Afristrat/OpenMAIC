@@ -1136,10 +1136,12 @@ export function buildSafeSlideFallback(
   margin = 60,
 ): PPTElement[] {
   const width = 1000 - margin * 2;
+  // The outline comes from the model: a page without key points must still get its safe layout.
+  const keyPoints = outline.keyPoints ?? [];
   const learningContent = [
     `<p style="font-size:19px;line-height:1.35;margin:0 0 18px">${escapeResourceHtml(outline.description)}</p>`,
-    outline.keyPoints.length > 0
-      ? `<ul style="margin:0;padding-left:24px">${outline.keyPoints
+    keyPoints.length > 0
+      ? `<ul style="margin:0;padding-left:24px">${keyPoints
           .slice(0, 4)
           .map(
             (point) =>
@@ -1720,7 +1722,7 @@ export function buildLearningResourceSlide(
     width: 480,
     height: 240,
     rotate: 0,
-    content: `<ul>${outline.keyPoints
+    content: `<ul>${(outline.keyPoints ?? [])
       .slice(0, 4)
       .map(
         (point) =>

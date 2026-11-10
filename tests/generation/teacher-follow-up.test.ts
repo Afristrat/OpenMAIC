@@ -125,6 +125,33 @@ describe('ensureTeacherTakesUpInterventions', () => {
     expect(result[1].type === 'speech' && result[1].text).toBe('Karim, parce que.');
   });
 
+  test.each([
+    [
+      'liste enveloppée dans un objet',
+      JSON.stringify({ replies: [{ interventionId: 'i-1', content: 'Karim, parce que.' }] }),
+    ],
+    [
+      'réplique seule, sans liste',
+      JSON.stringify({ interventionId: 'i-1', content: 'Karim, parce que.' }),
+    ],
+  ])(
+    'lit la réponse du modèle quand elle est une %s, sans phrase neutre ni reprise',
+    async (_forme, reponse) => {
+      let calls = 0;
+      const result = await ensureTeacherTakesUpInterventions(
+        [speech('a2', 'curious', 'Pourquoi ?', 'i-1')],
+        agents,
+        async () => {
+          calls += 1;
+          return reponse;
+        },
+        'Français',
+      );
+      expect(calls).toBe(1);
+      expect(result[1].type === 'speech' && result[1].text).toBe('Karim, parce que.');
+    },
+  );
+
   test('emploie la phrase neutre, avec un avertissement, quand la réponse reste illisible', async () => {
     expectConsoleMessages({
       warn: [
