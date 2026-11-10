@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { expectConsoleMessages } from '@/tests/helpers/expected-console';
 import {
   FOLLOW_UP_ID_PREFIX,
   ensureLearnerDiscussion,
@@ -75,6 +76,55 @@ describe('ensureTeacherTakesUpInterventions', () => {
     );
     expect(result).toHaveLength(2);
     expect(result[1].type === 'speech' && result[1].text).toContain('Karim');
+  });
+
+  test('demande une seconde fois, pour les seules interventions omises, avant la phrase neutre', async () => {
+    const prompts: string[] = [];
+    const result = await ensureTeacherTakesUpInterventions(
+      [
+        speech('a2', 'curious', 'Pourquoi ?', 'i-1'),
+        speech('a3', 'prof', 'Suite.'),
+        speech('a4', 'curious', 'Et si non ?', 'i-2'),
+      ],
+      agents,
+      async (_system, user) => {
+        prompts.push(user);
+        return prompts.length === 1
+          ? JSON.stringify([{ interventionId: 'i-1', content: 'Karim, parce que.' }])
+          : JSON.stringify([{ interventionId: 'i-2', content: 'Karim, alors autrement.' }]);
+      },
+      'Français',
+    );
+
+    expect(prompts).toHaveLength(2);
+    expect(prompts[1]).toContain('i-2');
+    expect(prompts[1]).not.toContain('i-1');
+    const texts = result.map((a) => (a.type === 'speech' ? a.text : a.type));
+    expect(texts).toContain('Karim, parce que.');
+    expect(texts).toContain('Karim, alors autrement.');
+    expect(texts.some((text) => text.includes('Gardons ce point en tête'))).toBe(false);
+  });
+
+  test('emploie la phrase neutre, avec un avertissement, quand le modèle omet encore l’intervention', async () => {
+    expectConsoleMessages({
+      warn: [
+        '[WARN] [TeacherFollowUp] Teacher follow-up: no reply for i-1, asking again',
+        '[WARN] [TeacherFollowUp] Teacher follow-up: neutral acknowledgement used for i-1',
+      ],
+    });
+    let calls = 0;
+    const result = await ensureTeacherTakesUpInterventions(
+      [speech('a2', 'curious', 'Pourquoi ?', 'i-1')],
+      agents,
+      async () => {
+        calls += 1;
+        return '[]';
+      },
+      'Français',
+    );
+
+    expect(calls).toBe(2);
+    expect(result[1].type === 'speech' && result[1].text).toContain('Gardons ce point en tête');
   });
 
   test('is idempotent: an intervention already followed by a reply gets no second one', async () => {

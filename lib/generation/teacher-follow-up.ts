@@ -53,8 +53,7 @@ export async function ensureTeacherTakesUpInterventions(
   });
   if (pending.length === 0) return actions;
 
-  let replies = new Map<string, string>();
-  try {
+  const askReplies = async (batch: typeof pending): Promise<Map<string, string>> => {
     const response = await aiCall(
       [
         `You write the lead teacher's spoken replies in a classroom. The teacher is "${teacher.name}" (${teacher.persona || teacher.role}).`,
@@ -68,7 +67,7 @@ export async function ensureTeacherTakesUpInterventions(
       ]
         .filter(Boolean)
         .join('\n'),
-      pending
+      batch
         .map(({ intervention, nextTeacherLine }) => {
           const speaker = agents.find((agent) => agent.id === intervention.agentId);
           return [
@@ -84,13 +83,28 @@ export async function ensureTeacherTakesUpInterventions(
     const parsed =
       parseJsonResponse<Array<{ interventionId?: unknown; content?: unknown }>>(response);
     // Une réponse vide est un verdict du modèle : la ligne suivante du professeur reprend déjà l'intervention.
-    replies = new Map(
+    return new Map(
       (Array.isArray(parsed) ? parsed : []).flatMap((item) =>
         typeof item.interventionId === 'string' && typeof item.content === 'string'
           ? [[item.interventionId, item.content.trim()] as const]
           : [],
       ),
     );
+  };
+  const unanswered = (batch: typeof pending, answered: Map<string, string>): typeof pending =>
+    batch.filter(({ intervention }) => !answered.has(intervention.interventionId ?? ''));
+
+  let replies = new Map<string, string>();
+  try {
+    replies = await askReplies(pending);
+    // Le modèle peut omettre une intervention ou en recopier mal l'identifiant : une seule reprise, limitée aux manquantes.
+    const missing = unanswered(pending, replies);
+    if (missing.length > 0) {
+      log.warn(
+        `Teacher follow-up: no reply for ${missing.map(({ intervention }) => intervention.interventionId).join(', ')}, asking again`,
+      );
+      for (const [id, text] of await askReplies(missing)) replies.set(id, text);
+    }
   } catch (error) {
     log.warn('Teacher follow-up generation failed, using the neutral acknowledgement:', error);
   }
@@ -99,9 +113,13 @@ export async function ensureTeacherTakesUpInterventions(
   const inserted = new Map<number, Action>();
   for (const { index, intervention } of pending) {
     const speaker = agents.find((agent) => agent.id === intervention.agentId);
-    const text =
-      replies.get(intervention.interventionId ?? '') ??
-      neutralAcknowledgement(language, speaker?.name ?? '');
+    const answer = replies.get(intervention.interventionId ?? '');
+    if (answer === undefined) {
+      log.warn(
+        `Teacher follow-up: neutral acknowledgement used for ${intervention.interventionId ?? 'an intervention without id'}`,
+      );
+    }
+    const text = answer ?? neutralAcknowledgement(language, speaker?.name ?? '');
     if (!text) continue;
     inserted.set(index, {
       id: `${FOLLOW_UP_ID_PREFIX}${nanoid(8)}`,
