@@ -49,7 +49,7 @@ describe('decideCaptureForScene', () => {
       error: [
         '[ERROR] [Generation] Failed to parse JSON from response',
         '[ERROR] [Generation] Raw response length: 27',
-        '[ERROR] [WebCapturePlan] Failed to parse capture-decision response for: Configurer les clés virtuelles LiteLLM',
+        /^\[ERROR\] \[WebCapturePlan\] Failed to parse capture-decision response for: Configurer les clés virtuelles LiteLLM \(réponse de 27 caractères, forme vide\)$/,
       ],
     });
     const aiCall = vi.fn().mockResolvedValue("n'importe quoi, pas du JSON");
@@ -60,7 +60,7 @@ describe('decideCaptureForScene', () => {
   it('returns null when format is neither image nor video', async () => {
     expectConsoleMessages({
       error: [
-        '[ERROR] [WebCapturePlan] Failed to parse capture-decision response for: Configurer les clés virtuelles LiteLLM',
+        /^\[ERROR\] \[WebCapturePlan\] Failed to parse capture-decision response for: Configurer les clés virtuelles LiteLLM \(réponse de \d+ caractères, forme objet\[needsCapture,url,interactionSteps,format[^\]]*\]\)$/,
       ],
     });
     const aiCall = vi.fn().mockResolvedValue(

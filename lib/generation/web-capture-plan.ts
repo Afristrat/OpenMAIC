@@ -21,6 +21,17 @@ export interface CaptureDecision {
   reason: string;
 }
 
+/**
+ * Forme d'une réponse illisible, sans aucun contenu : type, longueur des tableaux, noms des champs.
+ * Le texte du modèle cite des documents d'Amine, il ne doit jamais aller dans les journaux.
+ */
+function describeShape(value: unknown): string {
+  if (value === null || value === undefined) return 'vide';
+  if (Array.isArray(value)) return `tableau(${value.length})`;
+  if (typeof value === 'object') return `objet[${Object.keys(value).join(',')}]`;
+  return typeof value;
+}
+
 function isValidDecision(value: unknown): value is CaptureDecision {
   if (!value || typeof value !== 'object') return false;
   const d = value as Record<string, unknown>;
@@ -56,7 +67,9 @@ export async function decideCaptureForScene(
   const decision = parseJsonResponse<CaptureDecision>(response);
 
   if (!isValidDecision(decision)) {
-    log.error(`Failed to parse capture-decision response for: ${outline.title}`);
+    log.error(
+      `Failed to parse capture-decision response for: ${outline.title} (réponse de ${response.length} caractères, forme ${describeShape(decision)})`,
+    );
     return null;
   }
 
