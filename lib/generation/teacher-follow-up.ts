@@ -53,7 +53,7 @@ export async function ensureTeacherTakesUpInterventions(
   });
   if (pending.length === 0) return actions;
 
-  const askReplies = async (batch: typeof pending): Promise<Map<string, string>> => {
+  const askReplies = async (batch: typeof pending): Promise<Map<string, string> | null> => {
     const response = await aiCall(
       [
         `You write the lead teacher's spoken replies in a classroom. The teacher is "${teacher.name}" (${teacher.persona || teacher.role}).`,
@@ -82,28 +82,26 @@ export async function ensureTeacherTakesUpInterventions(
     );
     const parsed =
       parseJsonResponse<Array<{ interventionId?: unknown; content?: unknown }>>(response);
-    // Une réponse vide est un verdict du modèle : la ligne suivante du professeur reprend déjà l'intervention.
+    // Une réponse qui n'est pas une liste est illisible : null, jamais un verdict du modèle.
+    if (!Array.isArray(parsed)) return null;
     return new Map(
-      (Array.isArray(parsed) ? parsed : []).flatMap((item) =>
+      parsed.flatMap((item) =>
         typeof item.interventionId === 'string' && typeof item.content === 'string'
           ? [[item.interventionId, item.content.trim()] as const]
           : [],
       ),
     );
   };
-  const unanswered = (batch: typeof pending, answered: Map<string, string>): typeof pending =>
-    batch.filter(({ intervention }) => !answered.has(intervention.interventionId ?? ''));
 
-  let replies = new Map<string, string>();
+  // Une liste lisible qui omet une intervention (ou la rend vide) est un verdict du modèle : la ligne
+  // suivante du professeur la reprend déjà, et ajouter une phrase neutre ferait dire deux fois la même chose.
+  // Seule une réponse illisible ou un échec d'appel donne la phrase neutre.
+  let replies: Map<string, string> | null = null;
   try {
     replies = await askReplies(pending);
-    // Le modèle peut omettre une intervention ou en recopier mal l'identifiant : une seule reprise, limitée aux manquantes.
-    const missing = unanswered(pending, replies);
-    if (missing.length > 0) {
-      log.warn(
-        `Teacher follow-up: no reply for ${missing.map(({ intervention }) => intervention.interventionId).join(', ')}, asking again`,
-      );
-      for (const [id, text] of await askReplies(missing)) replies.set(id, text);
+    if (replies === null) {
+      log.warn('Teacher follow-up: unreadable answer, asking again');
+      replies = await askReplies(pending);
     }
   } catch (error) {
     log.warn('Teacher follow-up generation failed, using the neutral acknowledgement:', error);
@@ -113,8 +111,9 @@ export async function ensureTeacherTakesUpInterventions(
   const inserted = new Map<number, Action>();
   for (const { index, intervention } of pending) {
     const speaker = agents.find((agent) => agent.id === intervention.agentId);
-    const answer = replies.get(intervention.interventionId ?? '');
-    if (answer === undefined) {
+    const answer = replies?.get(intervention.interventionId ?? '');
+    if (replies !== null && answer === undefined) continue;
+    if (replies === null) {
       log.warn(
         `Teacher follow-up: neutral acknowledgement used for ${intervention.interventionId ?? 'an intervention without id'}`,
       );

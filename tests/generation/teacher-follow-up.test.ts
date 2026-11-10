@@ -78,37 +78,57 @@ describe('ensureTeacherTakesUpInterventions', () => {
     expect(result[1].type === 'speech' && result[1].text).toContain('Karim');
   });
 
-  test('demande une seconde fois, pour les seules interventions omises, avant la phrase neutre', async () => {
-    const prompts: string[] = [];
+  test('n’ajoute aucune phrase neutre quand le modèle omet une intervention que la ligne suivante reprend déjà', async () => {
+    let calls = 0;
+    const actions = [
+      speech('a2', 'curious', 'Pourquoi ?', 'i-1'),
+      speech('a3', 'prof', 'Très bonne question, Karim : parce que.'),
+      speech('a4', 'curious', 'Et si non ?', 'i-2'),
+      speech('a5', 'prof', 'Suite.'),
+    ];
     const result = await ensureTeacherTakesUpInterventions(
-      [
-        speech('a2', 'curious', 'Pourquoi ?', 'i-1'),
-        speech('a3', 'prof', 'Suite.'),
-        speech('a4', 'curious', 'Et si non ?', 'i-2'),
-      ],
+      actions,
       agents,
-      async (_system, user) => {
-        prompts.push(user);
-        return prompts.length === 1
-          ? JSON.stringify([{ interventionId: 'i-1', content: 'Karim, parce que.' }])
-          : JSON.stringify([{ interventionId: 'i-2', content: 'Karim, alors autrement.' }]);
+      async () => {
+        calls += 1;
+        return JSON.stringify([{ interventionId: 'i-2', content: 'Karim, alors autrement.' }]);
       },
       'Français',
     );
 
-    expect(prompts).toHaveLength(2);
-    expect(prompts[1]).toContain('i-2');
-    expect(prompts[1]).not.toContain('i-1');
+    expect(calls).toBe(1);
     const texts = result.map((a) => (a.type === 'speech' ? a.text : a.type));
-    expect(texts).toContain('Karim, parce que.');
-    expect(texts).toContain('Karim, alors autrement.');
-    expect(texts.some((text) => text.includes('Gardons ce point en tête'))).toBe(false);
+    expect(texts).toEqual([
+      'Pourquoi ?',
+      'Très bonne question, Karim : parce que.',
+      'Et si non ?',
+      'Karim, alors autrement.',
+      'Suite.',
+    ]);
   });
 
-  test('emploie la phrase neutre, avec un avertissement, quand le modèle omet encore l’intervention', async () => {
+  test('redemande une fois quand la réponse du modèle est illisible, puis utilise la nouvelle', async () => {
+    let calls = 0;
+    const result = await ensureTeacherTakesUpInterventions(
+      [speech('a2', 'curious', 'Pourquoi ?', 'i-1')],
+      agents,
+      async () => {
+        calls += 1;
+        return calls === 1
+          ? '{}'
+          : JSON.stringify([{ interventionId: 'i-1', content: 'Karim, parce que.' }]);
+      },
+      'Français',
+    );
+
+    expect(calls).toBe(2);
+    expect(result[1].type === 'speech' && result[1].text).toBe('Karim, parce que.');
+  });
+
+  test('emploie la phrase neutre, avec un avertissement, quand la réponse reste illisible', async () => {
     expectConsoleMessages({
       warn: [
-        '[WARN] [TeacherFollowUp] Teacher follow-up: no reply for i-1, asking again',
+        '[WARN] [TeacherFollowUp] Teacher follow-up: unreadable answer, asking again',
         '[WARN] [TeacherFollowUp] Teacher follow-up: neutral acknowledgement used for i-1',
       ],
     });
@@ -118,7 +138,7 @@ describe('ensureTeacherTakesUpInterventions', () => {
       agents,
       async () => {
         calls += 1;
-        return '[]';
+        return '{}';
       },
       'Français',
     );
