@@ -28,8 +28,15 @@ export interface CaptureDecision {
 function describeShape(value: unknown): string {
   if (value === null || value === undefined) return 'vide';
   if (Array.isArray(value)) return `tableau(${value.length})`;
-  if (typeof value === 'object') return `objet[${Object.keys(value).join(',')}]`;
-  return typeof value;
+  if (typeof value !== 'object') return typeof value;
+  const fields = Object.entries(value).map(([name, field]) => {
+    // `format` ne doit prendre que deux valeurs : on journalise laquelle, jamais une chaîne libre.
+    if (name === 'format')
+      return `format:${field === 'image' || field === 'video' ? field : 'autre'}`;
+    if (Array.isArray(field)) return `${name}:tableau(${field.length})`;
+    return `${name}:${field === null ? 'null' : typeof field}`;
+  });
+  return `objet[${fields.join(',')}]`;
 }
 
 function isValidDecision(value: unknown): value is CaptureDecision {

@@ -60,7 +60,7 @@ describe('decideCaptureForScene', () => {
   it('returns null when format is neither image nor video', async () => {
     expectConsoleMessages({
       error: [
-        /^\[ERROR\] \[WebCapturePlan\] Failed to parse capture-decision response for: Configurer les clés virtuelles LiteLLM \(réponse de \d+ caractères, forme objet\[needsCapture,url,interactionSteps,format[^\]]*\]\)$/,
+        /^\[ERROR\] \[WebCapturePlan\] Failed to parse capture-decision response for: Configurer les clés virtuelles LiteLLM \(réponse de \d+ caractères, forme objet\[needsCapture:boolean,url:string,interactionSteps:tableau\(0\),format:autre,reason:string\]\)$/,
       ],
     });
     const aiCall = vi.fn().mockResolvedValue(
