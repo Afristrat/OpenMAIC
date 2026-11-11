@@ -259,6 +259,7 @@ export function YoutubePublishDialog({
             </label>
             <input
               id={`${id}-title`}
+              dir="auto"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               maxLength={YOUTUBE_TITLE_MAX}
@@ -277,6 +278,7 @@ export function YoutubePublishDialog({
             </label>
             <textarea
               id={`${id}-description`}
+              dir="auto"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               maxLength={YOUTUBE_DESCRIPTION_MAX}
@@ -295,6 +297,7 @@ export function YoutubePublishDialog({
             </label>
             <input
               id={`${id}-tags`}
+              dir="auto"
               value={tagsText}
               onChange={(event) => setTagsText(event.target.value)}
               disabled={disabled}
