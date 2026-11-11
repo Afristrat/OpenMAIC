@@ -1,6 +1,13 @@
 import { expect, test as base } from '@playwright/test';
 import { MockApi } from './mock-api';
 
+// Avertissements produits uniquement parce que le navigateur de test bloque les service workers.
+// Liste fermée : tout autre avertissement console reste une erreur.
+const BLOCKED_SERVICE_WORKER_WARNINGS = [
+  'Service Worker registration blocked by Playwright',
+  '[SW] Registration failed: TypeError: Cannot read properties of undefined',
+];
+
 type Fixtures = {
   browserConsoleContract: {
     expectHttpError(pathname: string, status: number): void;
@@ -21,6 +28,9 @@ export const test = base.extend<Fixtures>({
         text(): string;
         location(): { url: string };
       }) => {
+        // Artefact du navigateur de test : serviceWorkers est bloqué par la configuration, donc l'enregistrement échoue.
+        if (BLOCKED_SERVICE_WORKER_WARNINGS.some((ignored) => message.text().includes(ignored)))
+          return;
         if (message.type() === 'warning' || message.type() === 'error') {
           const location = message.location();
           if (message.type() === 'error' && message.text().startsWith('Failed to load resource:')) {
