@@ -117,9 +117,47 @@ describe('POST /api/youtube/publish', () => {
         chapter_index: 1,
         title: 'Chapitre 1',
         privacy_status: 'unlisted',
+        tags: [],
+        category_id: '27',
+        default_language: null,
       }),
     );
     expect(mocks.enqueue).toHaveBeenCalledWith({ uploadId: 'up-1' });
+  });
+
+  it('enregistre les étiquettes, la catégorie et la langue choisies', async () => {
+    const res = await POST(
+      post({
+        exportJobId: JOB,
+        title: 'T',
+        chapterIndex: 0,
+        tags: ['leasing', 'marketing digital', 'Leasing'],
+        categoryId: '28',
+        defaultLanguage: 'ar',
+      }),
+    );
+    expect(res.status).toBe(202);
+    expect(mocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tags: ['leasing', 'marketing digital'],
+        category_id: '28',
+        default_language: 'ar',
+      }),
+    );
+  });
+
+  it('refuse une catégorie non proposée, une langue inconnue, des étiquettes trop longues', async () => {
+    const base = { exportJobId: JOB, title: 'T', chapterIndex: 0 };
+    for (const extra of [
+      { categoryId: '10' },
+      { defaultLanguage: 'de' },
+      { tags: Array.from({ length: 60 }, (_, i) => `etiquette-${i}`) },
+      { tags: 'pas une liste' },
+    ]) {
+      const res = await POST(post({ ...base, ...extra }));
+      expect(res.status).toBe(400);
+    }
+    expect(mocks.insert).not.toHaveBeenCalled();
   });
 
   it('ne double pas un envoi déjà en file pour le même contenu', async () => {

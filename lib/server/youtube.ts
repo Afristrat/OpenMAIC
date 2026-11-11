@@ -326,6 +326,10 @@ export async function uploadVideoResumable(input: {
   title: string;
   description: string;
   privacyStatus: YoutubePrivacy;
+  tags?: string[];
+  categoryId?: string;
+  /** Langue du titre, de la description et de la voix ; absente, YouTube ne la déclare pas. */
+  defaultLanguage?: string | null;
 }): Promise<UploadedVideo> {
   const total = input.file.length;
   const init = await fetch(UPLOAD_URL, {
@@ -340,7 +344,11 @@ export async function uploadVideoResumable(input: {
       snippet: {
         title: input.title,
         description: input.description,
-        categoryId: EDUCATION_CATEGORY_ID,
+        categoryId: input.categoryId ?? EDUCATION_CATEGORY_ID,
+        ...(input.tags && input.tags.length > 0 ? { tags: input.tags } : {}),
+        ...(input.defaultLanguage
+          ? { defaultLanguage: input.defaultLanguage, defaultAudioLanguage: input.defaultLanguage }
+          : {}),
       },
       status: { privacyStatus: input.privacyStatus, selfDeclaredMadeForKids: false },
     }),

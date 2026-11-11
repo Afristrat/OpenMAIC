@@ -1,7 +1,7 @@
 /**
  * POST /api/youtube/publish — publie un export fini sur la chaîne YouTube de la personne.
  *
- * Body : { exportJobId, chapterIndex?, title, description? }.
+ * Body : { exportJobId, chapterIndex?, title, description?, tags?, categoryId?, defaultLanguage? }.
  *  - export `video` : la vidéo entière du cours (pas de chapterIndex) ;
  *  - export `mp4`   : un chapitre (scène) de l'archive, désigné par chapterIndex.
  * L'export doit appartenir à la personne (lecture sous sa session, politique RLS). La vidéo est
@@ -81,6 +81,9 @@ export async function POST(request: NextRequest) {
         chapter_index: input.chapterIndex,
         title: input.title,
         description: input.description,
+        tags: input.tags,
+        category_id: input.categoryId,
+        default_language: input.defaultLanguage,
         privacy_status: 'unlisted',
       })
       .select('id, status')

@@ -32,7 +32,9 @@ export async function runYoutubeUpload(uploadId: string): Promise<void> {
   const supabase = createServiceSupabaseClient();
   const { data: upload, error: readError } = await supabase
     .from('youtube_uploads')
-    .select('id, user_id, export_job_id, chapter_index, title, description, privacy_status, status')
+    .select(
+      'id, user_id, export_job_id, chapter_index, title, description, privacy_status, status, tags, category_id, default_language',
+    )
     .eq('id', uploadId)
     .single();
   if (readError || !upload) throw new Error(`YouTube upload ${uploadId} not found`);
@@ -83,6 +85,9 @@ export async function runYoutubeUpload(uploadId: string): Promise<void> {
       title: upload.title,
       description: upload.description,
       privacyStatus: privacy,
+      tags: upload.tags ?? [],
+      categoryId: upload.category_id,
+      defaultLanguage: upload.default_language,
     });
     await supabase
       .from('youtube_uploads')

@@ -141,7 +141,6 @@ export default function ExportsPage(): React.ReactElement {
                 {item.status === 'done' && (item.format === 'video' || item.format === 'mp4') && (
                   <YoutubePublish
                     exportJobId={item.id}
-                    courseName={item.courseName}
                     format={item.format}
                     chapterCount={item.sceneCount}
                     uploads={youtube.state.uploads.filter((u) => u.exportJobId === item.id)}

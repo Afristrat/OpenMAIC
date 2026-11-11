@@ -294,7 +294,15 @@ describe('demande de publication', () => {
   it('accepte une vidéo entière ou un chapitre, et nettoie les espaces', () => {
     expect(parsePublishInput({ exportJobId: JOB, title: '  Titre  ' })).toEqual({
       ok: true,
-      value: { exportJobId: JOB, chapterIndex: null, title: 'Titre', description: '' },
+      value: {
+        exportJobId: JOB,
+        chapterIndex: null,
+        title: 'Titre',
+        description: '',
+        tags: [],
+        categoryId: '27',
+        defaultLanguage: null,
+      },
     });
     expect(parsePublishInput({ exportJobId: JOB, chapterIndex: 2, title: 'T' })).toMatchObject({
       ok: true,
@@ -311,6 +319,7 @@ describe('demande de publication', () => {
     [{ exportJobId: JOB, title: 'T', description: 'x'.repeat(5001) }],
     [{ exportJobId: JOB, title: 'T', chapterIndex: -1 }],
     [{ exportJobId: JOB, title: 'T', chapterIndex: 1.5 }],
+    [{ exportJobId: JOB, title: 'T', chapterIndex: '1' }],
     [null],
   ])('refuse %j', (body) => {
     expect(parsePublishInput(body).ok).toBe(false);
