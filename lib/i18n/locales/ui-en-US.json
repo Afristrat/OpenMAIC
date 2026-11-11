@@ -1996,7 +1996,7 @@
   "youtube.result.connected": "Your YouTube channel is connected.",
   "youtube.result.denied": "Connection cancelled: you did not allow access to YouTube.",
   "youtube.result.scope": "Incomplete connection: allow both video upload and reading your channel.",
-  "youtube.result.nochannel": "This Google account has no YouTube channel: create one, then try again.",
+  "youtube.result.nochannel": "This Google account has no YouTube channel: create one, then try again. If your channel belongs to a brand account, choose it on the Google screen.",
   "youtube.result.invalid": "The connection expired: start it again.",
   "youtube.result.error": "The YouTube connection failed: try again.",
   "exports.emailSubject": "Your export “{{course}}” is ready",

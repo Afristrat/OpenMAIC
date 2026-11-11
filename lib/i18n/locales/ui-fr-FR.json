@@ -1996,7 +1996,7 @@
   "youtube.result.connected": "Votre chaîne YouTube est connectée.",
   "youtube.result.denied": "Connexion annulée : vous n’avez pas autorisé l’accès à YouTube.",
   "youtube.result.scope": "Connexion incomplète : autorisez à la fois l’envoi de vidéos et la lecture de votre chaîne.",
-  "youtube.result.nochannel": "Ce compte Google n’a pas de chaîne YouTube : créez-en une, puis réessayez.",
+  "youtube.result.nochannel": "Ce compte Google n’a pas de chaîne YouTube : créez-en une, puis réessayez. Si votre chaîne appartient à un compte de marque, choisissez-le à l’écran Google.",
   "youtube.result.invalid": "La connexion a expiré : relancez-la.",
   "youtube.result.error": "La connexion à YouTube a échoué : réessayez.",
   "exports.emailSubject": "Votre export « {{course}} » est prêt",

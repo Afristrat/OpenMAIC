@@ -85,7 +85,9 @@ export function buildAuthorizationUrl(origin: string, state: string): string {
   url.searchParams.set('scope', YOUTUBE_SCOPES.join(' '));
   // Hors ligne et consentement forcé : seul ce couple garantit un jeton de rafraîchissement.
   url.searchParams.set('access_type', 'offline');
-  url.searchParams.set('prompt', 'consent');
+  // `select_account` : une chaîne rattachée à un compte de marque n'est visible que si la personne
+  // choisit cette identité à l'écran Google ; sans lui, Google reprend l'identité déjà connectée.
+  url.searchParams.set('prompt', 'select_account consent');
   url.searchParams.set('state', state);
   return url.toString();
 }
@@ -152,8 +154,18 @@ export async function fetchOwnChannel(
     headers: { Authorization: `Bearer ${accessToken}` },
     signal: AbortSignal.timeout(15_000),
   });
-  if (!response.ok) return null;
   const json: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    // Une API désactivée ou un jeton refusé n'est pas « pas de chaîne » : on le dit, avec la raison de Google.
+    const reason =
+      isRecord(json) && isRecord(json.error) && typeof json.error.status === 'string'
+        ? json.error.status
+        : String(response.status);
+    throw new YoutubeError(
+      'OAUTH_FAILED',
+      `YouTube channel lookup refused (${response.status} ${reason})`,
+    );
+  }
   if (!isRecord(json) || !Array.isArray(json.items)) return null;
   const item: unknown = json.items[0];
   if (!isRecord(item) || typeof item.id !== 'string' || !isRecord(item.snippet)) return null;

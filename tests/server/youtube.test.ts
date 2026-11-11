@@ -4,6 +4,7 @@ import { openSecret, sealSecret } from '@/lib/server/secret-box';
 import {
   buildAuthorizationUrl,
   createOAuthState,
+  fetchOwnChannel,
   readOAuthState,
   uploadVideoResumable,
   YoutubeError,
@@ -59,7 +60,7 @@ describe('état OAuth', () => {
   it('demande l’accès hors ligne, le consentement et les deux droits', () => {
     const url = new URL(buildAuthorizationUrl('https://qalem.ma', 'etat'));
     expect(url.searchParams.get('access_type')).toBe('offline');
-    expect(url.searchParams.get('prompt')).toBe('consent');
+    expect(url.searchParams.get('prompt')).toBe('select_account consent');
     expect(url.searchParams.get('redirect_uri')).toBe('https://qalem.ma/api/youtube/callback');
     expect(url.searchParams.get('scope')).toContain('youtube.upload');
     expect(url.searchParams.get('scope')).toContain('youtube.readonly');
@@ -212,5 +213,35 @@ describe('demande de publication', () => {
     [null],
   ])('refuse %j', (body) => {
     expect(parsePublishInput(body).ok).toBe(false);
+  });
+});
+
+describe('lecture de la chaîne connectée', () => {
+  const answer = (status: number, body: unknown): Response =>
+    new Response(JSON.stringify(body), { status });
+
+  it('rend la chaîne trouvée', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          answer(200, { items: [{ id: 'UC1', snippet: { title: 'Ma chaîne' } }] }),
+        ),
+    );
+    await expect(fetchOwnChannel('jeton')).resolves.toEqual({ id: 'UC1', title: 'Ma chaîne' });
+  });
+
+  it('rend null quand le compte n’a vraiment aucune chaîne', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(answer(200, { items: [] })));
+    await expect(fetchOwnChannel('jeton')).resolves.toBeNull();
+  });
+
+  it('signale l’échec de Google au lieu de le faire passer pour une absence de chaîne', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(answer(403, { error: { status: 'PERMISSION_DENIED' } })),
+    );
+    await expect(fetchOwnChannel('jeton')).rejects.toThrow(/403 PERMISSION_DENIED/);
   });
 });
