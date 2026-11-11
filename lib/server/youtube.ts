@@ -302,10 +302,16 @@ async function failureOf(response: Response, context = ''): Promise<YoutubeError
   );
 }
 
-/** Nom et message d'une exception réseau (délai dépassé, connexion coupée), sans pile. */
+/**
+ * Nom et message d'une exception réseau (délai dépassé, connexion coupée), sans pile. fetch enveloppe
+ * la cause réelle (ECONNRESET, certificat, longueur incohérente…) dans `cause` : on la rapporte aussi.
+ */
 function networkCause(error: unknown): string {
-  if (error instanceof Error) return `${error.name}: ${error.message}`.slice(0, 160);
-  return String(error).slice(0, 160);
+  if (!(error instanceof Error)) return String(error).slice(0, 240);
+  const inner = error.cause;
+  const code = isRecord(inner) && typeof inner.code === 'string' ? ` ${inner.code}` : '';
+  const detail = inner instanceof Error ? ` <-${code} ${inner.name}: ${inner.message}` : code;
+  return `${error.name}: ${error.message}${detail}`.slice(0, 240);
 }
 
 /** Octets déjà reçus par YouTube, d'après l'en-tête Range d'une réponse 308 (« bytes=0-N »). */

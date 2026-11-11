@@ -178,6 +178,33 @@ describe('envoi résumable', () => {
     await assertion;
   });
 
+  it('rapporte la cause enveloppée par fetch (code et message)', async () => {
+    vi.useFakeTimers();
+    const reset = Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' });
+    const failed = new TypeError('fetch failed', { cause: reset });
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValueOnce(initOk());
+    for (let i = 0; i < 5; i += 1) {
+      fetchMock.mockRejectedValueOnce(failed);
+      if (i < 4) fetchMock.mockResolvedValueOnce(new Response(null, { status: 308 }));
+    }
+    vi.stubGlobal('fetch', fetchMock);
+    const pending = uploadVideoResumable({
+      accessToken: 'j',
+      file: Buffer.alloc(2048),
+      title: 'T',
+      description: '',
+      privacyStatus: 'unlisted',
+    });
+    const assertion = expect(pending).rejects.toMatchObject({
+      message: expect.stringContaining(
+        'TypeError: fetch failed <- ECONNRESET Error: read ECONNRESET',
+      ),
+    });
+    await vi.runAllTimersAsync();
+    await assertion;
+  });
+
   it('rend le motif de Google et la position quand les 503 persistent', async () => {
     vi.useFakeTimers();
     const busy = (): Response =>
