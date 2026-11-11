@@ -365,10 +365,9 @@ export async function uploadVideoResumable(input: {
     try {
       response = await fetch(sessionUrl, {
         method: 'PUT',
-        headers: {
-          'Content-Length': String(end - offset),
-          'Content-Range': `bytes ${offset}-${end - 1}/${total}`,
-        },
+        // Pas de Content-Length à la main : fetch (undici) le calcule depuis le corps et refuse
+        // l'en-tête posé par l'appelant (« invalid content-length header », constaté le 11/11).
+        headers: { 'Content-Range': `bytes ${offset}-${end - 1}/${total}` },
         body: new Uint8Array(input.file.subarray(offset, end)),
         signal: AbortSignal.timeout(5 * 60 * 1000),
       });
@@ -400,7 +399,8 @@ export async function uploadVideoResumable(input: {
     await new Promise((resolve) => setTimeout(resolve, 2000 * failures));
     const probe = await fetch(sessionUrl, {
       method: 'PUT',
-      headers: { 'Content-Length': '0', 'Content-Range': `bytes */${total}` },
+      // Corps vide : fetch envoie lui-même Content-Length: 0 pour un PUT.
+      headers: { 'Content-Range': `bytes */${total}` },
       signal: AbortSignal.timeout(30_000),
     }).catch(() => null);
     if (probe && (probe.status === 200 || probe.status === 201)) return finished(probe);

@@ -112,6 +112,10 @@ describe('envoi résumable', () => {
     expect(fetchMock.mock.calls[2][1].headers['Content-Range']).toBe(
       `bytes ${8 * 1024 * 1024}-${video.length - 1}/${video.length}`,
     );
+    // fetch (undici) refuse un Content-Length posé à la main : aucun envoi ne doit en porter.
+    for (const [, init] of fetchMock.mock.calls.slice(1)) {
+      expect(Object.keys(init.headers)).not.toContain('Content-Length');
+    }
   });
 
   it('rapporte la confidentialité réellement appliquée par YouTube', async () => {
