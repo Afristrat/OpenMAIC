@@ -38,6 +38,28 @@ describe('decideCaptureForScene', () => {
     });
   });
 
+  it('accepte une décision sans capture écrite avec url null, sans erreur journalisée', async () => {
+    const aiCall = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        needsCapture: false,
+        url: null,
+        interactionSteps: [],
+        format: 'image',
+        reason: 'Scène conceptuelle.',
+      }),
+    );
+    const decision = await decideCaptureForScene(outline, aiCall);
+    expect(decision).toMatchObject({ needsCapture: false, url: '' });
+  });
+
+  it('accepte une décision sans capture réduite à needsCapture et reason', async () => {
+    const aiCall = vi
+      .fn()
+      .mockResolvedValue(JSON.stringify({ needsCapture: false, reason: 'Scène conceptuelle.' }));
+    const decision = await decideCaptureForScene(outline, aiCall);
+    expect(decision).toMatchObject({ needsCapture: false, reason: 'Scène conceptuelle.' });
+  });
+
   it('returns null when the LLM response is not valid JSON', async () => {
     expectConsoleMessages({
       warn: [
@@ -60,7 +82,7 @@ describe('decideCaptureForScene', () => {
   it('returns null when format is neither image nor video', async () => {
     expectConsoleMessages({
       error: [
-        /^\[ERROR\] \[WebCapturePlan\] Failed to parse capture-decision response for: Configurer les clés virtuelles LiteLLM \(réponse de \d+ caractères, forme objet\[needsCapture:boolean,url:string,interactionSteps:tableau\(0\),format:autre,reason:string\]\)$/,
+        /^\[ERROR\] \[WebCapturePlan\] Failed to parse capture-decision response for: Configurer les clés virtuelles LiteLLM \(réponse de \d+ caractères, forme objet\[needsCapture:true,url:string,interactionSteps:tableau\(0\),format:autre,reason:string\]\)$/,
       ],
     });
     const aiCall = vi.fn().mockResolvedValue(

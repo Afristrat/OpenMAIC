@@ -33,10 +33,30 @@ function describeShape(value: unknown): string {
     // `format` ne doit prendre que deux valeurs : on journalise laquelle, jamais une chaîne libre.
     if (name === 'format')
       return `format:${field === 'image' || field === 'video' ? field : 'autre'}`;
+    // `needsCapture` est un booléen : sa valeur seule dit si le modèle voulait une capture.
+    if (name === 'needsCapture' && typeof field === 'boolean') return `needsCapture:${field}`;
     if (Array.isArray(field)) return `${name}:tableau(${field.length})`;
     return `${name}:${field === null ? 'null' : typeof field}`;
   });
   return `objet[${fields.join(',')}]`;
+}
+
+/**
+ * Quand le modèle décide qu'aucune capture n'est utile, il écrit souvent `url: null` ou omet les
+ * autres champs. Ce refus n'a aucune conséquence (pas de capture), mais le rejeter journalisait une
+ * erreur pour une décision valide : on le ramène à la forme complète, sans capture.
+ */
+function normalizeNoCaptureDecision(value: unknown): unknown {
+  if (!value || typeof value !== 'object') return value;
+  const d = value as Record<string, unknown>;
+  if (d.needsCapture !== false) return value;
+  return {
+    needsCapture: false,
+    url: typeof d.url === 'string' ? d.url : '',
+    interactionSteps: Array.isArray(d.interactionSteps) ? d.interactionSteps : [],
+    format: d.format === 'video' ? 'video' : 'image',
+    reason: typeof d.reason === 'string' ? d.reason : '',
+  };
 }
 
 function isValidDecision(value: unknown): value is CaptureDecision {
@@ -71,7 +91,7 @@ export async function decideCaptureForScene(
   if (!prompts) return null;
 
   const response = await aiCall(prompts.system, prompts.user);
-  const decision = parseJsonResponse<CaptureDecision>(response);
+  const decision = normalizeNoCaptureDecision(parseJsonResponse<unknown>(response));
 
   if (!isValidDecision(decision)) {
     log.error(
