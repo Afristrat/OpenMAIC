@@ -8,7 +8,7 @@
 
 import { NextRequest } from 'next/server';
 import { callLLM } from '@/lib/ai/llm';
-import { requireAuth } from '@/lib/api/auth';
+import { requireAuth, requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { runWithUsageMeteringContext } from '@/lib/billing/usage-context';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
@@ -74,6 +74,10 @@ export async function POST(request: NextRequest) {
     if (!context.orgId) {
       return apiError('NO_ORGANIZATION', 409, "La formation n'est rattachée à aucune organisation");
     }
+    // Facturer l'organisation exige d'y être aujourd'hui autrice, gestionnaire ou administratrice
+    // (ou super-administratrice), comme pour les autres appels de génération.
+    const author = await requireSuperAdminOrOrgAuthor(request, context.orgId);
+    if (author.response) return author.response;
 
     const language = LANGUAGE_NAME[youtubeLanguageOf(context.language)];
     const sceneTitles = context.scenes.map((scene, index) => `${index + 1}. ${scene.title ?? ''}`);

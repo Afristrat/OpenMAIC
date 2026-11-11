@@ -1,5 +1,4 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { createServiceSupabaseClient } from '@/lib/supabase/service';
 
 export type YoutubeExportContext = {
   exportJobId: string;
@@ -46,15 +45,17 @@ export async function loadYoutubeExport(
     return { ok: false, status: 400, message: 'Chapitre inconnu dans cet export' };
   }
 
-  const service = createServiceSupabaseClient();
+  // Formation et scènes lues sous la session de la personne : les politiques RLS décident de ce
+  // qu'elle voit encore aujourd'hui (propriété, adhésion, partage), jamais la seule propriété de l'export.
   const [{ data: stage }, { data: scenes }] = await Promise.all([
-    service
+    supabase
       .from('stages')
       .select('org_id, name, description, language')
       .eq('id', job.stage_id)
       .maybeSingle(),
-    service.from('scenes').select('title, order').eq('stage_id', job.stage_id).order('order'),
+    supabase.from('scenes').select('title, order').eq('stage_id', job.stage_id).order('order'),
   ]);
+  if (!stage) return { ok: false, status: 404, message: 'Formation introuvable' };
 
   return {
     ok: true,
@@ -62,10 +63,10 @@ export async function loadYoutubeExport(
       exportJobId: job.id,
       format: job.format,
       sceneCount,
-      orgId: stage?.org_id ?? null,
-      courseName: stage?.name ?? null,
-      courseDescription: stage?.description ?? null,
-      language: stage?.language ?? null,
+      orgId: stage.org_id ?? null,
+      courseName: stage.name ?? null,
+      courseDescription: stage.description ?? null,
+      language: stage.language ?? null,
       scenes: (scenes ?? []).map((scene) => ({ title: scene.title ?? null })),
     },
   };

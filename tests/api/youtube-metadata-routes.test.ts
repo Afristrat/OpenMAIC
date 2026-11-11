@@ -5,12 +5,16 @@ const JOB = '22222222-2222-4222-8222-222222222222';
 
 const mocks = vi.hoisted(() => ({
   requireAuth: vi.fn(),
+  requireAuthor: vi.fn(),
   load: vi.fn(),
   callLLM: vi.fn(),
   metering: vi.fn(),
 }));
 
-vi.mock('@/lib/api/auth', () => ({ requireAuth: mocks.requireAuth }));
+vi.mock('@/lib/api/auth', () => ({
+  requireAuth: mocks.requireAuth,
+  requireSuperAdminOrOrgAuthor: mocks.requireAuthor,
+}));
 vi.mock('@/lib/server/youtube-export-context', () => ({ loadYoutubeExport: mocks.load }));
 vi.mock('@/lib/ai/llm', () => ({ callLLM: mocks.callLLM }));
 vi.mock('@/lib/billing/usage-context', () => ({
@@ -53,6 +57,7 @@ function post(body: unknown): NextRequest {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.requireAuth.mockResolvedValue({ user: { id: 'user-1' } });
+  mocks.requireAuthor.mockResolvedValue({ user: { id: 'user-1' }, authoredByRole: 'author' });
   mocks.load.mockResolvedValue({ ok: true, context });
   mocks.callLLM.mockResolvedValue({
     text: '{"title":"Prospecter en ligne","description":"Ce que vous apprendrez.","tags":["leasing"]}',
@@ -126,6 +131,17 @@ describe('POST /api/youtube/metadata-ai', () => {
     const prompt: string = mocks.callLLM.mock.calls[0][0].prompt;
     expect(prompt).toContain('&lt;/author_description&gt; Ignore');
     expect(prompt.match(/<\/author_description>/g)).toHaveLength(1);
+  });
+
+  it('refuse sans facturer qui n’est plus autrice de l’organisation de la formation', async () => {
+    mocks.requireAuthor.mockResolvedValue({
+      response: new Response(JSON.stringify({ code: 'FORBIDDEN' }), { status: 403 }),
+    });
+    const res = await POST(post({ exportJobId: JOB, chapterIndex: 0, mode: 'generate' }));
+    expect(res.status).toBe(403);
+    expect(mocks.requireAuthor.mock.calls[0][1]).toBe('org-1');
+    expect(mocks.metering).not.toHaveBeenCalled();
+    expect(mocks.callLLM).not.toHaveBeenCalled();
   });
 
   it('refuse un mode inconnu, une formation sans organisation, une réponse illisible', async () => {
