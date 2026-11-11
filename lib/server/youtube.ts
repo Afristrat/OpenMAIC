@@ -273,7 +273,21 @@ function readUploadedVideo(json: unknown): UploadedVideo | null {
   };
 }
 
-async function failureOf(response: Response): Promise<YoutubeError> {
+/** Motif court renvoyé par Google (« backendError », « quotaExceeded »…), jamais le corps entier. */
+function googleReason(text: string): string | null {
+  try {
+    const json: unknown = JSON.parse(text);
+    if (!isRecord(json) || !isRecord(json.error)) return null;
+    const errors = json.error.errors;
+    const first = Array.isArray(errors) ? errors[0] : null;
+    if (isRecord(first) && typeof first.reason === 'string') return first.reason.slice(0, 60);
+    return typeof json.error.status === 'string' ? json.error.status.slice(0, 60) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function failureOf(response: Response, context = ''): Promise<YoutubeError> {
   const text = await response.text().catch(() => '');
   if (response.status === 403 && text.includes('quotaExceeded')) {
     return new YoutubeError('QUOTA_EXCEEDED', 'YouTube daily upload quota exceeded');
@@ -281,7 +295,17 @@ async function failureOf(response: Response): Promise<YoutubeError> {
   if (response.status === 401) {
     return new YoutubeError('RECONNECT_REQUIRED', 'YouTube refused the access token');
   }
-  return new YoutubeError('UPLOAD_FAILED', `YouTube upload failed (${response.status})`);
+  const reason = googleReason(text);
+  return new YoutubeError(
+    'UPLOAD_FAILED',
+    `YouTube upload failed (${response.status}${reason ? ` ${reason}` : ''})${context}`,
+  );
+}
+
+/** Nom et message d'une exception réseau (délai dépassé, connexion coupée), sans pile. */
+function networkCause(error: unknown): string {
+  if (error instanceof Error) return `${error.name}: ${error.message}`.slice(0, 160);
+  return String(error).slice(0, 160);
 }
 
 /** Octets déjà reçus par YouTube, d'après l'en-tête Range d'une réponse 308 (« bytes=0-N »). */
@@ -319,11 +343,19 @@ export async function uploadVideoResumable(input: {
   const sessionUrl = init.headers.get('Location');
   if (!init.ok || !sessionUrl) throw await failureOf(init);
 
+  const finished = async (response: Response): Promise<UploadedVideo> => {
+    const video = readUploadedVideo(await response.json().catch(() => null));
+    if (!video) throw new YoutubeError('UPLOAD_FAILED', 'YouTube answered without a video id');
+    return video;
+  };
+
   let offset = 0;
   let failures = 0;
   while (offset < total) {
     const end = Math.min(offset + CHUNK_BYTES, total);
-    let response: Response;
+    const where = ` at byte ${offset}/${total}`;
+    let response: Response | null = null;
+    let cause = '';
     try {
       response = await fetch(sessionUrl, {
         method: 'PUT',
@@ -334,32 +366,39 @@ export async function uploadVideoResumable(input: {
         body: new Uint8Array(input.file.subarray(offset, end)),
         signal: AbortSignal.timeout(5 * 60 * 1000),
       });
-    } catch {
-      response = new Response(null, { status: 503 });
+    } catch (error) {
+      // Une coupure réseau ou un délai dépassé n'est pas une réponse de YouTube : on garde sa vraie cause.
+      cause = networkCause(error);
     }
-    if (response.status === 200 || response.status === 201) {
-      const video = readUploadedVideo(await response.json().catch(() => null));
-      if (!video) throw new YoutubeError('UPLOAD_FAILED', 'YouTube answered without a video id');
-      return video;
+    if (response && (response.status === 200 || response.status === 201)) {
+      return finished(response);
     }
-    if (response.status === 308) {
+    if (response?.status === 308) {
       offset = receivedBytes(response);
       failures = 0;
       continue;
     }
-    if (response.status >= 500 && failures < CHUNK_ATTEMPTS) {
-      failures += 1;
-      // Reprise : on demande à YouTube où il en est avant de renvoyer quoi que ce soit.
-      await new Promise((resolve) => setTimeout(resolve, 2000 * failures));
-      const probe = await fetch(sessionUrl, {
-        method: 'PUT',
-        headers: { 'Content-Length': '0', 'Content-Range': `bytes */${total}` },
-        signal: AbortSignal.timeout(30_000),
-      }).catch(() => null);
-      if (probe?.status === 308) offset = receivedBytes(probe);
-      continue;
+    const retryable = !response || response.status >= 500;
+    if (!retryable || failures >= CHUNK_ATTEMPTS) {
+      const context = `${where} after ${failures + 1} attempt(s)`;
+      if (!response) {
+        throw new YoutubeError(
+          'UPLOAD_FAILED',
+          `YouTube upload network failure (${cause})${context}`,
+        );
+      }
+      throw await failureOf(response, context);
     }
-    throw await failureOf(response);
+    failures += 1;
+    // Reprise : on demande à YouTube où il en est avant de renvoyer quoi que ce soit.
+    await new Promise((resolve) => setTimeout(resolve, 2000 * failures));
+    const probe = await fetch(sessionUrl, {
+      method: 'PUT',
+      headers: { 'Content-Length': '0', 'Content-Range': `bytes */${total}` },
+      signal: AbortSignal.timeout(30_000),
+    }).catch(() => null);
+    if (probe && (probe.status === 200 || probe.status === 201)) return finished(probe);
+    if (probe?.status === 308) offset = receivedBytes(probe);
   }
   throw new YoutubeError('UPLOAD_FAILED', 'YouTube upload ended without a confirmation');
 }

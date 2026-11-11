@@ -151,6 +151,76 @@ describe('envoi résumable', () => {
     expect(fetchMock.mock.calls[2][1].headers['Content-Range']).toBe('bytes */2048');
   });
 
+  it('rend la vraie cause d’une coupure réseau persistante au lieu d’un faux 503', async () => {
+    vi.useFakeTimers();
+    const timeout = Object.assign(new Error('The operation was aborted due to timeout'), {
+      name: 'TimeoutError',
+    });
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValueOnce(initOk());
+    for (let i = 0; i < 5; i += 1) {
+      fetchMock.mockRejectedValueOnce(timeout); // envoi du morceau
+      if (i < 4) fetchMock.mockResolvedValueOnce(new Response(null, { status: 308 })); // sondage
+    }
+    vi.stubGlobal('fetch', fetchMock);
+    const pending = uploadVideoResumable({
+      accessToken: 'j',
+      file: Buffer.alloc(2048),
+      title: 'T',
+      description: '',
+      privacyStatus: 'unlisted',
+    });
+    const assertion = expect(pending).rejects.toMatchObject({
+      code: 'UPLOAD_FAILED',
+      message: expect.stringContaining('network failure (TimeoutError'),
+    });
+    await vi.runAllTimersAsync();
+    await assertion;
+  });
+
+  it('rend le motif de Google et la position quand les 503 persistent', async () => {
+    vi.useFakeTimers();
+    const busy = (): Response =>
+      new Response('{"error":{"errors":[{"reason":"backendError"}]}}', { status: 503 });
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValueOnce(initOk());
+    for (let i = 0; i < 5; i += 1) {
+      fetchMock.mockResolvedValueOnce(busy());
+      if (i < 4) fetchMock.mockResolvedValueOnce(new Response(null, { status: 308 }));
+    }
+    vi.stubGlobal('fetch', fetchMock);
+    const pending = uploadVideoResumable({
+      accessToken: 'j',
+      file: Buffer.alloc(2048),
+      title: 'T',
+      description: '',
+      privacyStatus: 'unlisted',
+    });
+    const assertion = expect(pending).rejects.toMatchObject({
+      message: 'YouTube upload failed (503 backendError) at byte 0/2048 after 5 attempt(s)',
+    });
+    await vi.runAllTimersAsync();
+    await assertion;
+  });
+
+  it('termine quand le sondage révèle que YouTube a déjà tout reçu', async () => {
+    vi.useFakeTimers();
+    stubFetch([
+      initOk(),
+      new Response(null, { status: 503 }),
+      new Response(doneBody, { status: 201 }), // sondage : envoi déjà complet
+    ]);
+    const pending = uploadVideoResumable({
+      accessToken: 'j',
+      file: Buffer.alloc(2048),
+      title: 'T',
+      description: '',
+      privacyStatus: 'unlisted',
+    });
+    await vi.runAllTimersAsync();
+    await expect(pending).resolves.toMatchObject({ videoId: 'abc123' });
+  });
+
   it('distingue le quota quotidien épuisé et la connexion expirée', async () => {
     stubFetch([new Response('{"error":{"errors":[{"reason":"quotaExceeded"}]}}', { status: 403 })]);
     await expect(
