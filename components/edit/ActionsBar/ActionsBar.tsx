@@ -75,6 +75,7 @@ import {
   audioExists,
   audioObjectUrl,
   discardSpeechAudio,
+  regenerateAllSceneSpeech,
   regenerateSpeechAudio,
   resolveSpeechAudioId,
   speechAudioId,
@@ -917,39 +918,25 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
   );
 
   // Regenerate TTS for every speech line in the scene, then stamp audioIds.
-  // Reads the latest actions from the store at each step so a concurrent edit
-  // isn't clobbered, and stamps by id (index-stale-safe).
+  // Each line is read again from the store just before it is sent, so an edit
+  // made while an earlier line synthesizes leaves with its current wording.
   const regenerateAllAudio = useCallback(async () => {
     if (regenAll) return;
     const latest = () => useStageStore.getState().scenes.find((s) => s.id === sceneId);
-    const speeches = (latest()?.actions ?? []).filter(
-      (a) => a.type === 'speech' && ((a as { text?: string }).text ?? '').trim(),
-    );
-    if (!speeches.length) return;
-    const order = latest()?.order ?? 0;
+    const hasSpeech = (latest()?.actions ?? []).some((a) => a.type === 'speech' && a.text.trim());
+    if (!hasSpeech) return;
     setRegenAll(true);
-    // Stamp audioId only for lines that actually synthesized — a skipped/failed
-    // line must not get an id pointing at a blob that was never written.
-    const okIds = new Set<string>();
-    let failedCount = 0;
     try {
-      for (const a of speeches) {
-        if (!a.id) continue;
-        try {
-          const id = await regenerateSpeechAudio(order, {
-            id: a.id,
-            text: (a as { text?: string }).text ?? '',
-          });
-          if (id) okIds.add(a.id);
-        } catch {
-          failedCount += 1;
-        }
-      }
-      if (okIds.size > 0) {
+      const { okIds, failed: failedCount } = await regenerateAllSceneSpeech(sceneId);
+      const order = latest()?.order ?? 0;
+      // Stamp audioId only for lines that actually synthesized — a skipped/failed
+      // line must not get an id pointing at a blob that was never written.
+      const ok = new Set(okIds);
+      if (ok.size > 0) {
         commit((cur) => {
           let next = cur;
           for (const a of cur) {
-            if (a.type === 'speech' && a.id && okIds.has(a.id))
+            if (a.type === 'speech' && a.id && ok.has(a.id))
               next = setAudioIdById(next, a.id, speechAudioId(order, a.id));
           }
           return next;
@@ -958,8 +945,8 @@ export function ActionsBar({ sceneId }: { sceneId: string }) {
       }
       if (failedCount > 0) {
         toast.error(t('edit.tts.regenerationFailed', { count: failedCount }));
-      } else if (okIds.size > 0) {
-        toast.success(t('edit.tts.regenerationSucceeded', { count: okIds.size }));
+      } else if (ok.size > 0) {
+        toast.success(t('edit.tts.regenerationSucceeded', { count: ok.size }));
       }
     } finally {
       setRegenAll(false);

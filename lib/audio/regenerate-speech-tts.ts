@@ -10,6 +10,7 @@ import { db } from '@/lib/utils/database';
 import { useSettingsStore } from '@/lib/store/settings';
 import { isTTSProviderEnabled } from '@/lib/audio/provider-enablement';
 import { flushClassroomPersistence } from '@/lib/edit/classroom-persistence';
+import { mergeRegeneratedSpeech } from '@/lib/audio/merge-regenerated-speech';
 import type { Action, SpeechAction } from '@/lib/types/action';
 import type { Scene } from '@/lib/types/stage';
 
@@ -48,11 +49,18 @@ export function missingSpeechAudioActions(scene: Scene): SpeechAction[] {
   );
 }
 
+/** Réponse du serveur quand le texte enregistré a changé pendant la synthèse : rien n'a été écrit. */
+const SPEECH_TEXT_CHANGED_STATUS = 409;
+
+/**
+ * Demande la voix d'une ligne. Retourne les actions de la scène telles que le serveur les a
+ * enregistrées, ou `null` quand le texte a changé pendant la synthèse (le serveur n'a rien écrit).
+ */
 async function requestSpeechAudio(
   sceneId: string,
   action: Pick<SpeechAction, 'id' | 'text'>,
   signal?: AbortSignal,
-): Promise<Action[]> {
+): Promise<Action[] | null> {
   const { useStageStore } = await import('@/lib/store/stage');
   const stageId = useStageStore.getState().stage?.id;
   if (!stageId) {
@@ -65,6 +73,7 @@ async function requestSpeechAudio(
     body: JSON.stringify({ sceneId, actionId: action.id, text: action.text.trim() }),
     signal,
   });
+  if (response.status === SPEECH_TEXT_CHANGED_STATUS) return null;
   if (!response.ok) {
     throw new Error('La régénération de la voix off n’a pas pu être enregistrée.');
   }
@@ -75,9 +84,17 @@ async function requestSpeechAudio(
   return payload.actions;
 }
 
+/** Actions actuelles d'une scène dans le store (relues à chaque appel, jamais une copie ancienne). */
+async function currentSceneActions(sceneId: string): Promise<Action[] | null> {
+  const { useStageStore } = await import('@/lib/store/stage');
+  return useStageStore.getState().scenes.find((scene) => scene.id === sceneId)?.actions ?? null;
+}
+
 /**
  * Generate only missing managed-TTS lines, one request at a time.
- * The caller owns the single final scene update.
+ * The caller owns the single final scene update: the returned actions are the scene's CURRENT
+ * actions (read again after the last synthesis) in which only the voiced lines were replaced, so
+ * an edit made meanwhile is kept.
  */
 export async function preflightMissingSpeechAudio(
   scene: Scene,
@@ -86,12 +103,24 @@ export async function preflightMissingSpeechAudio(
   if (!isManagedTtsActive()) return null;
   const missing = missingSpeechAudioActions(scene);
   if (missing.length === 0) return null;
-
-  let actions: Action[] | null = null;
-  for (const action of missing) {
-    actions = await requestSpeechAudio(scene.id, action, signal);
+  // Le serveur n'écrit une voix que si le texte enregistré est celui synthétisé : la copie
+  // locale doit donc être enregistrée avant l'envoi.
+  if (!(await flushClassroomPersistence())) {
+    throw new Error('La classroom doit être enregistrée avant de régénérer une voix off.');
   }
-  return actions;
+
+  const voiced: Array<{ id: string; text: string; actions: Action[] }> = [];
+  for (const action of missing) {
+    const text = action.text.trim();
+    const actions = await requestSpeechAudio(scene.id, { id: action.id, text }, signal);
+    if (actions) voiced.push({ id: action.id, text, actions });
+  }
+  if (voiced.length === 0) return null;
+  let next = (await currentSceneActions(scene.id)) ?? scene.actions ?? [];
+  for (const line of voiced) {
+    next = mergeRegeneratedSpeech(next, line.actions, line.id, line.text) ?? next;
+  }
+  return next;
 }
 
 /** True if an audio blob is cached under this exact audioId. */
@@ -162,6 +191,43 @@ export async function regenerateSpeechAudio(
     throw new Error('La classroom doit être enregistrée avant de régénérer une voix off.');
   }
   const actions = await requestSpeechAudio(scene.id, { id: action.id, text }, signal);
-  useStageStore.getState().updateScene(scene.id, { actions });
+  if (!actions) return null;
+  // Relire la scène APRÈS la synthèse : seule la ligne régénérée change, et seulement si
+  // l'auteur ne l'a pas réécrite entre-temps. Les autres modifications restent intactes.
+  const current = useStageStore.getState().scenes.find((item) => item.id === scene.id);
+  const merged = current?.actions
+    ? mergeRegeneratedSpeech(current.actions, actions, action.id, text)
+    : null;
+  if (!merged) return null;
+  useStageStore.getState().updateScene(scene.id, { actions: merged });
   return audioId;
+}
+
+/**
+ * « Générer toutes les voix » d'une scène, une ligne après l'autre. Chaque ligne est relue dans
+ * le store au moment de son envoi : une correction faite pendant la synthèse d'une ligne
+ * précédente part avec son texte du moment, et une ligne supprimée entre-temps est sautée.
+ */
+export async function regenerateAllSceneSpeech(
+  sceneId: string,
+): Promise<{ okIds: string[]; failed: number }> {
+  const { useStageStore } = await import('@/lib/store/stage');
+  const latest = () => useStageStore.getState().scenes.find((scene) => scene.id === sceneId);
+  const ids = (latest()?.actions ?? [])
+    .filter((action) => action.type === 'speech' && action.text.trim())
+    .map((action) => action.id)
+    .filter(Boolean);
+  const okIds: string[] = [];
+  let failed = 0;
+  for (const id of ids) {
+    const scene = latest();
+    const line = scene?.actions?.find((action) => action.id === id);
+    if (!scene || line?.type !== 'speech' || !line.text.trim()) continue;
+    try {
+      if (await regenerateSpeechAudio(scene.order, { id, text: line.text })) okIds.push(id);
+    } catch {
+      failed += 1;
+    }
+  }
+  return { okIds, failed };
 }

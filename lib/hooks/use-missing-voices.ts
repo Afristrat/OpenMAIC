@@ -9,6 +9,7 @@ import {
   voiceCompletionErrorKey,
   type MissingVoicesProgress,
 } from '@/lib/audio/complete-missing-voices';
+import { completedVoiceUpdates } from '@/lib/audio/merge-regenerated-speech';
 import { summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
 import { persistCurrentClassroomForExport } from '@/lib/export/persist-before-server-export';
 
@@ -41,7 +42,14 @@ export function useMissingVoices() {
           id: toastId,
         });
       });
-      for (const updated of result.updatedScenes) {
+      // Seules les lignes encore identiques à celles envoyées reçoivent leur voix : une
+      // modification faite pendant la complétion n'est jamais écrasée.
+      const updates = completedVoiceUpdates(
+        current,
+        result.updatedScenes,
+        useStageStore.getState().scenes,
+      );
+      for (const updated of updates) {
         useStageStore.getState().updateScene(updated.id, { actions: updated.actions });
       }
       if (result.failed > 0) {

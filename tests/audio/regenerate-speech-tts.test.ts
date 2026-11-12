@@ -39,6 +39,7 @@ import {
   isManagedTtsActive,
   missingSpeechAudioActions,
   preflightMissingSpeechAudio,
+  regenerateAllSceneSpeech,
   regenerateSpeechAudio,
 } from '@/lib/audio/regenerate-speech-tts';
 
@@ -122,7 +123,12 @@ describe('managed speech preflight', () => {
 
     expect(calls).toEqual(['missing-1', 'missing-2']);
     expect(maxActive).toBe(1);
-    expect(result).toEqual(finalActions);
+    // Seule la ligne effectivement voisée est remplacée, dans les actions de la scène.
+    expect(result).toEqual(
+      (scene().actions ?? []).map((action) =>
+        action.id === 'missing-2' ? finalActions[0] : action,
+      ),
+    );
     expect(missingSpeechAudioActions(scene()).map((action) => action.id)).toEqual([
       'missing-1',
       'missing-2',
@@ -183,5 +189,162 @@ describe('managed speech preflight', () => {
     expect(editorMocks.updateScene).toHaveBeenCalledWith(currentScene.id, {
       actions: currentScene.actions,
     });
+  });
+
+  it('garde le texte modifié localement d’une autre ligne pendant la synthèse', async () => {
+    const twoLines = (bText: string): Scene =>
+      ({
+        ...scene(),
+        actions: [
+          { id: 'A', type: 'speech', text: 'a1' },
+          { id: 'B', type: 'speech', text: bText },
+        ],
+      }) as unknown as Scene;
+    editorMocks.state.scenes = [twoLines('b1')];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        // L'auteur corrige B pendant que le serveur synthétise A.
+        editorMocks.state.scenes = [twoLines('b2')];
+        return new Response(
+          JSON.stringify({
+            success: true,
+            actions: [
+              { id: 'A', type: 'speech', text: 'a1', audioUrl: '/a.wav' },
+              { id: 'B', type: 'speech', text: 'b1' },
+            ],
+          }),
+          { status: 200 },
+        );
+      }),
+    );
+
+    await regenerateSpeechAudio(1, { id: 'A', text: 'a1' });
+
+    expect(editorMocks.updateScene).toHaveBeenCalledWith('scene-1', {
+      actions: [
+        { id: 'A', type: 'speech', text: 'a1', audioUrl: '/a.wav' },
+        { id: 'B', type: 'speech', text: 'b2' },
+      ],
+    });
+  });
+
+  it('n’écrase pas la ligne régénérée si son texte a changé pendant la synthèse', async () => {
+    const line = (text: string): Scene =>
+      ({ ...scene(), actions: [{ id: 'A', type: 'speech', text }] }) as unknown as Scene;
+    editorMocks.state.scenes = [line('a1')];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        editorMocks.state.scenes = [line('a2')];
+        return new Response(
+          JSON.stringify({
+            success: true,
+            actions: [{ id: 'A', type: 'speech', text: 'a1', audioUrl: '/a.wav' }],
+          }),
+          { status: 200 },
+        );
+      }),
+    );
+
+    await expect(regenerateSpeechAudio(1, { id: 'A', text: 'a1' })).resolves.toBeNull();
+    expect(editorMocks.updateScene).not.toHaveBeenCalled();
+  });
+
+  it('rend null sans rien écrire quand le serveur signale un texte changé (409)', async () => {
+    editorMocks.state.scenes = [scene()];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ success: false }), { status: 409 })),
+    );
+
+    await expect(
+      regenerateSpeechAudio(1, { id: 'missing-1', text: 'Première ligne' }),
+    ).resolves.toBeNull();
+    expect(editorMocks.updateScene).not.toHaveBeenCalled();
+  });
+
+  it('le préchargement ne remplace que les lignes synthétisées dans les actions actuelles', async () => {
+    const initial = scene();
+    editorMocks.state.scenes = [initial];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        const body = JSON.parse(String(init?.body)) as { actionId: string; text: string };
+        // Pendant la synthèse, une autre ligne est corrigée dans l'éditeur.
+        editorMocks.state.scenes = [
+          {
+            ...initial,
+            actions: (initial.actions ?? []).map((action) =>
+              action.id === 'valid-id' ? { ...action, text: 'Corrigée' } : action,
+            ),
+          } as Scene,
+        ];
+        return new Response(
+          JSON.stringify({
+            success: true,
+            actions: [
+              { id: body.actionId, type: 'speech', text: body.text, audioUrl: `/${body.actionId}` },
+              { id: 'valid-id', type: 'speech', text: 'Déjà valide', audioId: 'audio-1' },
+            ],
+          }),
+          { status: 200 },
+        );
+      }),
+    );
+
+    const result = await preflightMissingSpeechAudio(initial);
+
+    expect(result?.map((action) => action.id)).toEqual([
+      'missing-1',
+      'valid-id',
+      'empty',
+      'missing-2',
+      'valid-url',
+    ]);
+    expect(result?.find((action) => action.id === 'valid-id')).toMatchObject({
+      text: 'Corrigée',
+    });
+    expect(result?.find((action) => action.id === 'missing-2')).toMatchObject({
+      audioUrl: '/missing-2',
+    });
+  });
+
+  it('« toutes les voix » relit chaque ligne au moment de l’envoyer et saute celles supprimées', async () => {
+    const lines = (bText: string, withC: boolean): Scene =>
+      ({
+        ...scene(),
+        actions: [
+          { id: 'A', type: 'speech', text: 'a1' },
+          { id: 'B', type: 'speech', text: bText },
+          ...(withC ? [{ id: 'C', type: 'speech', text: 'c1' }] : []),
+        ],
+      }) as unknown as Scene;
+    editorMocks.state.scenes = [lines('b1', true)];
+    const sent: Array<{ actionId: string; text: string }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        const body = JSON.parse(String(init?.body)) as { actionId: string; text: string };
+        sent.push({ actionId: body.actionId, text: body.text });
+        // Pendant la synthèse de A, l'auteur corrige B et supprime C.
+        if (body.actionId === 'A') editorMocks.state.scenes = [lines('b2', false)];
+        return new Response(
+          JSON.stringify({
+            success: true,
+            actions: [{ id: body.actionId, type: 'speech', text: body.text, audioUrl: '/x' }],
+          }),
+          { status: 200 },
+        );
+      }),
+    );
+
+    const result = await regenerateAllSceneSpeech('scene-1');
+
+    expect(sent).toEqual([
+      { actionId: 'A', text: 'a1' },
+      { actionId: 'B', text: 'b2' },
+    ]);
+    expect(result).toEqual({ okIds: ['A', 'B'], failed: 0 });
   });
 });
