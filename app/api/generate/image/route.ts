@@ -19,10 +19,13 @@ import { NextRequest } from 'next/server';
 import { aspectRatioToDimensions, IMAGE_PROVIDERS } from '@/lib/media/image-providers';
 import { generateMeteredImage } from '@/lib/server/metered-media-providers';
 import {
+  getServerImageDefaultProviderId,
+  getServerImageProviders,
   isServerConfiguredProvider,
   resolveImageApiKey,
   resolveImageBaseUrl,
 } from '@/lib/server/provider-config';
+import { selectRequestImageTarget } from '@/lib/media/image-provider-selection';
 import type { ImageProviderId, ImageGenerationOptions } from '@/lib/media/types';
 import { createLogger } from '@/lib/logger';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
@@ -65,12 +68,21 @@ export async function POST(request: NextRequest) {
       : await requireSuperAdminOrOrgAuthor(request, tenantId);
     if (auth.response) return auth.response;
 
-    const providerId = (request.headers.get('x-image-provider') || 'seedream') as ImageProviderId;
+    // The browser's stored settings may be stale (unconfigured provider, empty model):
+    // administered providers and the server default win unless the caller brings a key.
+    const target = selectRequestImageTarget({
+      requestedProviderId: request.headers.get('x-image-provider') || undefined,
+      requestedModelId: request.headers.get('x-image-model') || undefined,
+      hasClientApiKey: !!request.headers.get('x-api-key'),
+      serverProviders: getServerImageProviders(),
+      defaultProviderId: getServerImageDefaultProviderId(),
+    });
+    const providerId: ImageProviderId = target.providerId;
     // Managed providers are admin-owned: ignore any client-sent key/baseUrl.
-    const managed = isServerConfiguredProvider('image', providerId);
+    const managed = target.managed || isServerConfiguredProvider('image', providerId);
     const clientApiKey = managed ? undefined : request.headers.get('x-api-key') || undefined;
     const clientBaseUrl = managed ? undefined : request.headers.get('x-base-url') || undefined;
-    const clientModel = request.headers.get('x-image-model') || undefined;
+    const clientModel = target.modelId;
 
     if (clientBaseUrl) {
       const ssrfError = await validateUrlForSSRF(clientBaseUrl);

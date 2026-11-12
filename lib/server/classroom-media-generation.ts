@@ -32,7 +32,10 @@ import {
 import type { SceneOutline } from '@/lib/types/generation';
 import type { Scene } from '@/lib/types/stage';
 import type { SpeechAction } from '@/lib/types/action';
-import type { ImageProviderId } from '@/lib/media/types';
+import {
+  selectClassroomImageModel,
+  selectClassroomImageProvider,
+} from '@/lib/media/image-provider-selection';
 import type { VideoProviderId } from '@/lib/media/types';
 import type { TTSProviderId } from '@/lib/audio/types';
 import {
@@ -128,31 +131,7 @@ export function resolveCanonicalSpeechVoice(
   };
 }
 
-export function selectClassroomImageModel(
-  providerId: ImageProviderId,
-  serverProviders: Record<string, { models?: string[] }>,
-  requestedModelId?: string,
-): string | undefined {
-  const administeredModels = serverProviders[providerId]?.models ?? [];
-  if (requestedModelId && administeredModels.includes(requestedModelId)) {
-    return requestedModelId;
-  }
-  return administeredModels[0] ?? IMAGE_PROVIDERS[providerId]?.models?.[0]?.id;
-}
-
-export function selectClassroomImageProvider(
-  serverProviders: Record<string, { models?: string[] }>,
-  requestedProviderId?: string,
-  defaultProviderId?: string,
-): ImageProviderId | undefined {
-  if (requestedProviderId && requestedProviderId in serverProviders) {
-    return requestedProviderId as ImageProviderId;
-  }
-  if (defaultProviderId && defaultProviderId in serverProviders) {
-    return defaultProviderId as ImageProviderId;
-  }
-  return Object.keys(serverProviders)[0] as ImageProviderId | undefined;
-}
+export { selectClassroomImageModel, selectClassroomImageProvider };
 
 export function describeMediaProviderFailure(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);

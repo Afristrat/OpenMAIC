@@ -17,6 +17,8 @@ vi.mock('@/lib/server/metered-media-providers', () => ({
   generateMeteredImage: mocks.generateMeteredImage,
 }));
 vi.mock('@/lib/server/provider-config', () => ({
+  getServerImageProviders: () => ({ seedream: { models: ['seedream-test'] } }),
+  getServerImageDefaultProviderId: () => 'seedream',
   isServerConfiguredProvider: () => true,
   resolveImageApiKey: () => '',
   resolveImageBaseUrl: () => undefined,

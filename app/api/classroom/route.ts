@@ -277,19 +277,29 @@ export async function GET(request: NextRequest) {
 
     let presentationBranding = presentationBrandingFromOrganization(undefined, undefined);
     try {
-      const { data: organization, error: organizationError } = await createServiceSupabaseClient()
-        .from('organizations')
-        .select('logo, settings')
-        .eq('id', ownership.orgId)
-        .maybeSingle();
-      if (organizationError) {
+      const service = createServiceSupabaseClient();
+      const [
+        { data: organization, error: organizationError },
+        { data: stageBrand, error: stageBrandError },
+      ] = await Promise.all([
+        service
+          .from('organizations')
+          .select('logo, settings')
+          .eq('id', ownership.orgId)
+          .maybeSingle(),
+        service.from('stages').select('logo').eq('id', id).maybeSingle(),
+      ]);
+      if (organizationError || stageBrandError) {
         log.warn(
-          `Presentation branding unavailable for classroom ${id}: ${organizationError.message}`,
+          `Presentation branding unavailable for classroom ${id}: ${
+            (organizationError ?? stageBrandError)?.message
+          }`,
         );
       } else {
         presentationBranding = presentationBrandingFromOrganization(
           organization?.logo,
           organization?.settings as Record<string, unknown> | undefined,
+          stageBrand?.logo,
         );
       }
     } catch (error) {

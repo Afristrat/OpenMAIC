@@ -41,7 +41,7 @@ export async function loadOrganizationBillboardBrand(
   const supabase = createServiceSupabaseClient();
   const { data: stage } = await supabase
     .from('stages')
-    .select('name, org_id')
+    .select('name, org_id, logo')
     .eq('id', stageId)
     .maybeSingle();
   if (!stage?.org_id) return null;
@@ -57,16 +57,18 @@ export async function loadOrganizationBillboardBrand(
       ? (organization.settings as Record<string, unknown>)
       : {};
   const charter = brandCharterFromSettings(settings);
+  // Une seule règle pour le lecteur et la vidéo : le logo de la formation, sinon celui de l'organisation.
+  const branding = presentationBrandingFromOrganization(organization.logo, settings, stage.logo);
   return {
     organizationName: String(organization.name ?? ''),
     courseTitle: String(stage.name ?? ''),
     language: billboardLanguage(organization.default_locale),
-    branding: presentationBrandingFromOrganization(organization.logo, settings),
+    branding,
     palette: billboardPalette({
       background: charter?.colors.background,
       accent: charter?.colors.accent,
     }),
-    ...(organization.logo?.trim() ? { logoUrl: organization.logo.trim() } : {}),
+    ...(branding.organizationLogoUrl ? { logoUrl: branding.organizationLogoUrl } : {}),
   };
 }
 

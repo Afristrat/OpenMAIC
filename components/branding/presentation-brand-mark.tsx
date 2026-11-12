@@ -2,6 +2,7 @@
 
 import { useStageStore } from '@/lib/store';
 import type { PresentationBranding } from '@/lib/branding/presentation-branding';
+import { useI18n } from '@/lib/hooks/use-i18n';
 
 function isVisible(branding: PresentationBranding, mark: 'organization' | 'qalem'): boolean {
   return branding.mode === mark || branding.mode === 'both';
@@ -13,6 +14,7 @@ function isVisible(branding: PresentationBranding, mark: 'organization' | 'qalem
  * classroom without mutating authored content or duplicating image elements.
  */
 export function PresentationBrandMark() {
+  const { t } = useI18n();
   const branding = useStageStore((state) => state.stage?.presentationBranding);
   if (!branding || branding.mode === 'none') return null;
 
@@ -22,13 +24,13 @@ export function PresentationBrandMark() {
 
   return (
     <div
-      aria-label="Identité de la présentation"
+      aria-label={t('presentation.brandAria')}
       className="pointer-events-none absolute bottom-3 right-4 z-[70] flex max-w-[30%] items-center gap-2 rounded-full bg-white/85 px-2.5 py-1.5 shadow-sm ring-1 ring-black/5 backdrop-blur dark:bg-zinc-950/80 dark:ring-white/10"
     >
       {showOrganization && (
         <img
           src={branding.organizationLogoUrl}
-          alt="Logo de l’organisation"
+          alt={t('presentation.logoAlt')}
           className="max-h-7 max-w-24 object-contain"
         />
       )}

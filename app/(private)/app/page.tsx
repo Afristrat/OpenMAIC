@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { useI18n } from '@/lib/hooks/use-i18n';
+import { ClassroomLogoDialog } from '@/components/branding/classroom-logo-dialog';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { createLogger } from '@/lib/logger';
 import { Button } from '@/components/ui/button';
@@ -2664,6 +2665,7 @@ function ClassroomCard({
   const [thumbWidth, setThumbWidth] = useState(0);
   const [editing, setEditing] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+  const [logoOpen, setLogoOpen] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -2807,6 +2809,21 @@ function ClassroomCard({
               >
                 <Pencil className="size-3.5" />
               </Button>
+              {!isDemo && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label={t('classroom.logo.open')}
+                  title={t('classroom.logo.open')}
+                  className="absolute top-2 right-20 size-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity bg-black/30 hover:bg-black/50 text-white hover:text-white backdrop-blur-sm rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLogoOpen(true);
+                  }}
+                >
+                  <ImagePlus className="size-3.5" />
+                </Button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -2902,6 +2919,17 @@ function ClassroomCard({
           </Tooltip>
         )}
       </div>
+      {logoOpen && (
+        // Les événements d'un portail remontent l'arbre React : on les arrête ici pour
+        // qu'un clic dans le dialogue n'ouvre pas la formation.
+        <div className="contents" onClick={(e) => e.stopPropagation()}>
+          <ClassroomLogoDialog
+            classroomId={classroom.id}
+            open={logoOpen}
+            onOpenChange={setLogoOpen}
+          />
+        </div>
+      )}
     </div>
   );
 }
