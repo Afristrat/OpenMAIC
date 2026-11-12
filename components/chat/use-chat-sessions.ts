@@ -23,6 +23,8 @@ import { useStageStore } from '@/lib/store';
 import { useCanvasStore } from '@/lib/store/canvas';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useUserProfileStore } from '@/lib/store/user-profile';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { buildChatUserProfile } from '@/lib/auth/first-name';
 import { useAgentRegistry } from '@/lib/orchestration/registry/store';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { getCurrentOrganizationId } from '@/lib/hooks/use-organizations';
@@ -110,6 +112,12 @@ function readLearnerResumeDiscussion(
 
 export function useChatSessions(options: UseChatSessionsOptions = {}) {
   const learnerCourseId = useSearchParams().get('learnerCourseId');
+  // Compte connecté, lu au moment de l'envoi (référence : pas de fermeture périmée).
+  const { user: authUser } = useAuth();
+  const authUserRef = useRef(authUser);
+  useEffect(() => {
+    authUserRef.current = authUser;
+  }, [authUser]);
   const onLiveSpeechRef = useRef(options.onLiveSpeech);
   const onSpeechProgressRef = useRef(options.onSpeechProgress);
   const onThinkingRef = useRef(options.onThinking);
@@ -1085,10 +1093,9 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
               agentIds,
               sessionType: session.type,
             },
-            userProfile: {
-              nickname: userProfileState.nickname || undefined,
-              bio: userProfileState.bio || undefined,
-            },
+            // Repli sur le prénom du compte : sans lui, le formateur ne peut pas
+            // nommer l'auteur d'une intervention (pseudonyme local vide par défaut).
+            userProfile: buildChatUserProfile(userProfileState, authUserRef.current),
             apiKey: mc.apiKey,
             baseUrl: mc.baseUrl,
             model: mc.modelString,
@@ -1303,10 +1310,9 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
               agentIds,
               sessionType,
             },
-            userProfile: {
-              nickname: userProfileState.nickname || undefined,
-              bio: userProfileState.bio || undefined,
-            },
+            // Repli sur le prénom du compte : sans lui, le formateur ne peut pas
+            // nommer l'auteur d'une intervention (pseudonyme local vide par défaut).
+            userProfile: buildChatUserProfile(userProfileState, authUserRef.current),
             apiKey: mc.apiKey,
             baseUrl: mc.baseUrl,
             model: mc.modelString,
@@ -1457,10 +1463,9 @@ export function useChatSessions(options: UseChatSessionsOptions = {}) {
               explicitTrigger: request.explicitTrigger,
               interactionId: request.interactionId || `discussion-${sessionId}`,
             },
-            userProfile: {
-              nickname: userProfileState.nickname || undefined,
-              bio: userProfileState.bio || undefined,
-            },
+            // Repli sur le prénom du compte : sans lui, le formateur ne peut pas
+            // nommer l'auteur d'une intervention (pseudonyme local vide par défaut).
+            userProfile: buildChatUserProfile(userProfileState, authUserRef.current),
             apiKey: mc.apiKey,
             baseUrl: mc.baseUrl,
             model: mc.modelString,

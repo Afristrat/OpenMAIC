@@ -5,10 +5,15 @@ import type { StatelessChatRequest } from '@/lib/types/chat';
 /**
  * Convert UI messages to OpenAI format
  * Includes tool call information so the model knows what actions were taken
+ *
+ * @param userName - Prénom de la personne : signe ses interventions côté
+ *   modèle (`[Amine]: …`) à la place du libellé d'affichage (« Vous »), pour
+ *   que l'agent puisse nommer l'auteur de l'intervention à laquelle il répond.
  */
 export function convertMessagesToOpenAI(
   messages: StatelessChatRequest['messages'],
   currentAgentId?: string,
+  userName?: string,
 ): Array<{ role: 'system' | 'user' | 'assistant'; content: string }> {
   return messages
     .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
@@ -86,8 +91,13 @@ export function convertMessagesToOpenAI(
         }
       }
 
-      // Extract speaker name from metadata (e.g. other agents' messages in discussion)
-      const senderName = msg.metadata?.senderName;
+      // Extract speaker name from metadata (e.g. other agents' messages in discussion).
+      // Une intervention humaine (sans agentId) est signée du prénom de la
+      // personne quand il est connu, l'affichage gardant son propre libellé.
+      const isHumanTurn = !msg.metadata?.agentId;
+      const trimmedUserName = userName?.trim();
+      const senderName =
+        isHumanTurn && trimmedUserName ? trimmedUserName : msg.metadata?.senderName;
       let content = contentParts.join('\n');
       if (senderName) {
         content = `[${senderName}]: ${content}`;

@@ -183,7 +183,11 @@ export async function directorNode(
 
   write({ type: 'thinking', data: { stage: 'director' } });
 
-  const openaiMessages = convertMessagesToOpenAI(state.messages);
+  const openaiMessages = convertMessagesToOpenAI(
+    state.messages,
+    undefined,
+    state.userProfile?.nickname,
+  );
   const conversationSummary = summarizeConversation(openaiMessages);
 
   const prompt = buildDirectorPrompt(
@@ -429,7 +433,11 @@ async function runAgentGeneration(
     state.agentResponses,
     state.animationConstitution,
   );
-  const openaiMessages = convertMessagesToOpenAI(state.messages, agentId);
+  const openaiMessages = convertMessagesToOpenAI(
+    state.messages,
+    agentId,
+    state.userProfile?.nickname,
+  );
   const adapter = new AISdkLangGraphAdapter(
     state.languageModel,
     state.thinkingConfig ?? undefined,

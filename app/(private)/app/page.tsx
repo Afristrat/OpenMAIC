@@ -76,6 +76,7 @@ import { useDraftCache } from '@/lib/hooks/use-draft-cache';
 import { SpeechButton } from '@/components/audio/speech-button';
 import { shouldShowVocationalTestUi } from '@/lib/config/feature-flags';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { authenticatedFirstName } from '@/lib/auth/first-name';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { useCreditStatus } from '@/lib/hooks/use-credit-status';
 import { CreditStatusNotice } from '@/components/billing/credit-status-notice';
@@ -159,17 +160,6 @@ async function readJsonResponse<T extends object>(
   } catch {
     throw new Error(fallbackMessage);
   }
-}
-
-function authenticatedFirstName(user: User | null): string {
-  if (!user) return '';
-  const metadata = user.user_metadata as Record<string, unknown>;
-  const candidate = [metadata.given_name, metadata.first_name, metadata.full_name, metadata.name]
-    .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
-    ?.trim();
-  if (candidate) return candidate.split(/\s+/)[0] ?? candidate;
-  const emailPrefix = user.email?.split('@')[0]?.trim();
-  return emailPrefix ? (emailPrefix.split(/[._-]+/)[0] ?? emailPrefix) : '';
 }
 
 // PPTX import is still scaffolding: `useImportPptx` has no `onImported` consumer

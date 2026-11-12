@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSettingsStore } from '@/lib/store/settings';
 import { useBrowserTTS } from '@/lib/hooks/use-browser-tts';
 import {
-  resolveAgentVoice,
+  resolveDiscussionVoice,
   getSelectableProvidersWithVoices,
   type ResolvedVoice,
 } from '@/lib/audio/voice-resolver';
@@ -38,10 +38,10 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
   const ttsMuted = useSettingsStore((s) => s.ttsMuted);
   const ttsVolume = useSettingsStore((s) => s.ttsVolume);
   const playbackSpeed = useSettingsStore((s) => s.playbackSpeed);
-  // Global lecture voice — used as fallback for teacher agent
+  // Voix de lecture globale du navigateur : repli seulement, quand le formateur
+  // n'a pas de voix de formation utilisable.
   const globalTtsProviderId = useSettingsStore((s) => s.ttsProviderId);
   const globalTtsVoice = useSettingsStore((s) => s.ttsVoice);
-  const agentVoiceOverrides = useSettingsStore((s) => s.agentVoiceOverrides);
 
   const queueRef = useRef<QueueItem[]>([]);
   const isPlayingRef = useRef(false);
@@ -104,49 +104,41 @@ export function useDiscussionTTS({ enabled, agents, onAudioStateChange }: Discus
     (agentId: string | null): ResolvedVoice | null => {
       // ONE selectable-provider list shared with the AgentBar picker: enabled
       // server/custom providers + opt-in browser-native. Students resolve against
-      // it (fixes the #665 student-silence bug); the teacher uses the global
-      // lecture voice (below).
+      // it (fixes the #665 student-silence bug), and so does the teacher.
       const providers = getSelectableProvidersWithVoices(ttsProvidersConfig, browserVoices);
-      const firstVoice = (): ResolvedVoice | null =>
-        providers.length > 0
+      const agent = agentId ? agents.find((a) => a.id === agentId) : undefined;
+      if (!agent) {
+        return providers.length > 0
           ? {
               providerId: providers[0].providerId,
               voiceId: providers[0].voices[0]?.id ?? 'default',
             }
           : null;
+      }
 
-      const agent = agentId ? agents.find((a) => a.id === agentId) : undefined;
-      if (!agent) return firstVoice();
-
-      // Teacher's voice = the global lecture selection, honored VERBATIM (incl.
-      // its model) whenever that provider is enabled — identical to what the
-      // pre-generated lecture sends (use-scene-generator), so lecture and
-      // discussion teacher never diverge. No voiceId re-validation/fallback that
-      // could swap the user's chosen voice. Only if the global provider is itself
-      // disabled does the teacher fall back to an enabled provider.
-      if (agent.role === 'teacher') {
-        if (isTTSProviderEnabled(globalTtsProviderId, ttsProvidersConfig[globalTtsProviderId])) {
-          return {
+      // La voix d'un agent est celle chargée avec SA formation (voiceConfig) ; la
+      // voix globale, commune à toutes les formations du navigateur, ne sert
+      // qu'en repli. Sinon un auteur entendait « Hanae » avec la voix de Younes.
+      const globalVoice = isTTSProviderEnabled(
+        globalTtsProviderId,
+        ttsProvidersConfig[globalTtsProviderId],
+      )
+        ? {
             providerId: globalTtsProviderId,
             voiceId: globalTtsVoice,
             modelId: ttsProvidersConfig[globalTtsProviderId]?.modelId,
-          };
-        }
-        return firstVoice();
-      }
+          }
+        : null;
 
-      const index = agentIndexMap.current.get(agentId!) ?? 0;
-      return resolveAgentVoice(agent, index, providers, agentVoiceOverrides, locale);
+      return resolveDiscussionVoice({
+        agent,
+        agentIndex: agentIndexMap.current.get(agent.id) ?? 0,
+        providers,
+        globalVoice,
+        locale,
+      });
     },
-    [
-      agents,
-      ttsProvidersConfig,
-      browserVoices,
-      globalTtsProviderId,
-      globalTtsVoice,
-      agentVoiceOverrides,
-      locale,
-    ],
+    [agents, ttsProvidersConfig, browserVoices, globalTtsProviderId, globalTtsVoice, locale],
   );
 
   const processQueue = useCallback(async () => {

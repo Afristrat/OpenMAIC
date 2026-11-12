@@ -24,6 +24,52 @@ export interface AgentVoiceOverride {
 /** Persisted per-agent voice picks, keyed by agent id (settings store). */
 export type AgentVoiceOverrides = Record<string, AgentVoiceOverride>;
 
+export interface DiscussionVoiceInput {
+  agent: AgentConfig;
+  agentIndex: number;
+  /** Selectable providers (getSelectableProvidersWithVoices): enabled only. */
+  providers: ProviderWithVoices[];
+  /** Global lecture voice, or null when its provider is disabled. Fallback only. */
+  globalVoice?: ResolvedVoice | null;
+  locale?: string;
+}
+
+/**
+ * Voice of an agent in the live discussion.
+ *
+ * The agent's own voiceConfig, loaded with the formation, comes first: the
+ * creation-page picks (AgentVoiceOverrides) were already baked into it at
+ * generation (applyClassroomVoiceOverrides), and re-reading those picks here
+ * would apply them, keyed by agent id alone, to every formation (the same
+ * persona-professor is Hanae in one formation and Younes in another). The
+ * teacher's voiceConfig is honored verbatim as soon as its provider is enabled;
+ * only then does the browser-wide lecture voice serve as a fallback. Other
+ * agents fall back to the deterministic, locale-aware pick.
+ */
+export function resolveDiscussionVoice({
+  agent,
+  agentIndex,
+  providers,
+  globalVoice,
+  locale,
+}: DiscussionVoiceInput): ResolvedVoice | null {
+  const isEnabled = (providerId: TTSProviderId) =>
+    providers.some((p) => p.providerId === providerId);
+
+  if (agent.role !== 'teacher') {
+    return resolveAgentVoice(agent, agentIndex, providers, undefined, locale);
+  }
+
+  const own = agent.voiceConfig;
+  if (own && isEnabled(own.providerId)) {
+    return { providerId: own.providerId, modelId: own.modelId, voiceId: own.voiceId };
+  }
+  if (globalVoice) return globalVoice;
+  return providers.length > 0
+    ? { providerId: providers[0].providerId, voiceId: providers[0].voices[0]?.id ?? 'default' }
+    : null;
+}
+
 export function isVoiceGenderCompatible(
   agentGender: AgentConfig['gender'],
   voiceGender?: 'male' | 'female' | 'neutral',

@@ -92,7 +92,7 @@ function buildStudentProfileSection(userProfile?: { nickname?: string; bio?: str
   if (!userProfile?.nickname && !userProfile?.bio) return '';
   return `\n# Student Profile
 You are teaching ${userProfile.nickname || 'a student'}.${userProfile.bio ? `\nTheir background: ${userProfile.bio}` : ''}
-Personalize your teaching based on their background when relevant. Address them by name naturally.\n`;
+Personalize your teaching based on their background when relevant. Address them by name naturally: when you respond to their intervention, name them in your first sentence, only once.\n`;
 }
 
 function buildLanguageConstraint(langDirective?: string): string {

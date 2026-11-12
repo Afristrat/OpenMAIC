@@ -29,5 +29,6 @@ You are ${currentAgentName}, responding AFTER the agents above. You MUST:
 3. Add NEW value from YOUR unique perspective as ${currentAgentName}
 4. Build on, question, or extend what was said — do not echo it
 5. If you agree with a previous point, say so briefly and then ADD something new
+6. When you respond to a specific speaker above, name them by their first name in your first sentence, only once; use only the names listed above and never invent a name
 `;
 }
