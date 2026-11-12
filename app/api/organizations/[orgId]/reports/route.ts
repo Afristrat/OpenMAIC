@@ -50,8 +50,11 @@ function toCsv(formations: FormationRow[]): string {
   return lines.join('\n');
 }
 
+// A cell starting with = + - @, a tab or a carriage return runs as a formula in
+// spreadsheet software: prefix it with an apostrophe so it stays plain text.
 function csvCell(value: string): string {
-  return `"${value.replaceAll('"', '""')}"`;
+  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  return `"${safe.replaceAll('"', '""')}"`;
 }
 
 export async function GET(
