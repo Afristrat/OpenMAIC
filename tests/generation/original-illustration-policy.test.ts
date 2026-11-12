@@ -53,6 +53,79 @@ describe('original illustration policy', () => {
     expect(twice.mediaGenerations).toEqual(once.mediaGenerations);
   });
 
+  it('écrit la consigne d’originalité dans la langue du cours, jamais en anglais pour un cours français', () => {
+    const french =
+      'L’ensemble du cours est produit en français (fr-FR), avec une terminologie métier.';
+    const [result] = enforceOriginalIllustrations(
+      [
+        {
+          ...outline,
+          mediaGenerations: [
+            {
+              type: 'image' as const,
+              elementId: 'gen_img_1',
+              prompt: 'Schéma du cycle de l’eau, flèches claires.',
+            },
+          ],
+        },
+      ],
+      true,
+      french,
+    );
+    const prompt = result.mediaGenerations?.[0]?.prompt ?? '';
+
+    expect(prompt).toContain('Schéma du cycle de l’eau, flèches claires.');
+    expect(prompt).toMatch(/illustration pédagogique originale/);
+    expect(prompt).toMatch(/texte visible dans l’image est en français/);
+    expect(prompt).not.toMatch(/Create a new original|Do not reproduce/);
+  });
+
+  it('écrit en arabe pour un cours arabe, avec le texte des images en arabe', () => {
+    const [result] = enforceOriginalIllustrations(
+      [{ ...outline, suggestedImageIds: ['img_pdf_1'] }],
+      true,
+      'يُقدَّم المحتوى كاملاً باللغة العربية (ar-MA).',
+    );
+    const prompt = result.mediaGenerations?.[0]?.prompt ?? '';
+
+    expect(prompt).toMatch(/[؀-ۿ]/);
+    expect(prompt).toMatch(/بالعربية/);
+    expect(prompt).not.toMatch(/Create a new original|Illustrate the single/);
+  });
+
+  it('choisit la langue d’enseignement même quand la consigne cite une autre langue ensuite', () => {
+    const [result] = enforceOriginalIllustrations(
+      [{ ...outline, suggestedImageIds: ['img_pdf_1'] }],
+      true,
+      'Deliver the entire course in English. Keep French legal terms in French.',
+    );
+
+    expect(result.mediaGenerations?.[0]?.prompt).toMatch(/Create a new original/);
+    expect(result.mediaGenerations?.[0]?.prompt).toMatch(
+      /Any text visible in the image is in English/,
+    );
+  });
+
+  it('remplace l’ancienne consigne anglaise d’un plan déjà enregistré par celle de la langue du cours, une seule fois', () => {
+    const legacy = {
+      type: 'image' as const,
+      elementId: 'gen_img_1',
+      prompt:
+        'Create a new original explanatory illustration. Do not reproduce, trace, imitate, or reuse any image from the supplied documents. Schéma des flux.',
+    };
+    const french = 'Cours en français (fr-FR).';
+    const [once] = enforceOriginalIllustrations(
+      [{ ...outline, mediaGenerations: [legacy] }],
+      true,
+      french,
+    );
+    const [twice] = enforceOriginalIllustrations([once], true, french);
+
+    expect(once.mediaGenerations?.[0]?.prompt).not.toMatch(/Create a new original/);
+    expect(once.mediaGenerations?.[0]?.prompt).toContain('Schéma des flux.');
+    expect(twice.mediaGenerations).toEqual(once.mediaGenerations);
+  });
+
   it('strips source suggestions without creating media when generation is disabled', () => {
     const [result] = enforceOriginalIllustrations(
       [{ ...outline, suggestedImageIds: ['img_pdf_1'] }],

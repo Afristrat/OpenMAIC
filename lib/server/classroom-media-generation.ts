@@ -489,6 +489,14 @@ export interface GenerateTTSOptions {
    * generation batch only: line-by-line callers would pay the pause on every failing line.
    */
   secondPass?: boolean;
+  /**
+   * Retire les prénoms des agents du texte avant la synthèse ET avant la persistance : réservé au
+   * texte produit par l'IA à la génération initiale. Tout texte déjà enregistré (corrigé ou écrit
+   * par l'auteur, voix régénérée, voix complétée) est l'autorité de l'auteur et reste intact : sans
+   * cette réserve, « L'humour de Rim est apprécié » redevenait « L'humour de est apprécié » à
+   * chaque régénération.
+   */
+  stripAgentNames?: boolean;
 }
 
 export async function generateTTSForClassroom(
@@ -531,22 +539,17 @@ export async function generateTTSForClassroom(
     // splitters preserve agent and intervention identity on every resulting segment.
     scene.actions = scene.actions.flatMap((action) => {
       if (action.type !== 'speech') return [action];
-      const speechWithoutAgentNames = {
-        ...action,
-        text: removeAgentNamesFromSpeech(action.text, agents),
-      };
-      const requestedVoice = resolveCanonicalSpeechVoice(
-        speechWithoutAgentNames,
-        preferredVoice,
-        agents,
-      );
+      const speechToVoice = options.stripAgentNames
+        ? { ...action, text: removeAgentNamesFromSpeech(action.text, agents) }
+        : action;
+      const requestedVoice = resolveCanonicalSpeechVoice(speechToVoice, preferredVoice, agents);
       const actionProviderId = (
         requestedVoice && ttsProviderIds.includes(requestedVoice.providerId)
           ? requestedVoice.providerId
           : providerId
       ) as TTSProviderId;
       return splitSpeechActionsByAnglicisms(
-        splitLongSpeechActions([speechWithoutAgentNames], actionProviderId),
+        splitLongSpeechActions([speechToVoice], actionProviderId),
         actionProviderId,
       );
     });
