@@ -65,6 +65,11 @@ export function activateClassroomPersistence(controller: ClassroomPersistence): 
   };
 }
 
+/** Vrai quand l'éditeur tient une file d'enregistrement pour la formation ouverte. */
+export function hasActiveClassroomPersistence(): boolean {
+  return activeController != null;
+}
+
 export function flushClassroomPersistence(): Promise<boolean> {
   return activeController?.flush() ?? Promise.resolve(true);
 }
