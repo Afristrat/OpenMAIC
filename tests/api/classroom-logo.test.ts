@@ -104,14 +104,45 @@ describe('/api/classroom/[classroomId]/logo', () => {
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ['image/svg+xml', 'logo.svg'],
-    ['text/html', 'logo.html'],
-  ])('rejects the unsafe format %s', async (type, name) => {
-    const response = await POST(upload(new File(['<svg/>'], name, { type })), params());
+  it('rejects the unsafe format text/html', async () => {
+    const response = await POST(
+      upload(new File(['<html/>'], 'logo.html', { type: 'text/html' })),
+      params(),
+    );
 
     expect(response.status).toBe(400);
     expect(mocks.upload).not.toHaveBeenCalled();
+  });
+
+  it('stores an SVG logo as a PNG, never as an SVG', async () => {
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" width="10" height="10"><script>alert(1)</script><rect width="10" height="10"/></svg>';
+
+    const response = await POST(
+      upload(new File([svg], 'saham.svg', { type: 'image/svg+xml' })),
+      params(),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.upload).toHaveBeenCalledWith(
+      `classroom-brand/${CLASSROOM_ID}/logo`,
+      expect.any(ArrayBuffer),
+      { contentType: 'image/png', upsert: true },
+    );
+    const stored = Buffer.from(mocks.upload.mock.calls[0][1] as ArrayBuffer);
+    expect(Array.from(stored.subarray(0, 4))).toEqual([0x89, 0x50, 0x4e, 0x47]);
+    expect(stored.toString('latin1')).not.toContain('<script');
+  });
+
+  it('rejects an unreadable SVG before touching storage', async () => {
+    const response = await POST(
+      upload(new File(['<svg'], 'broken.svg', { type: 'image/svg+xml' })),
+      params(),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mocks.upload).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
   });
 
   it('rejects a logo larger than 2 MB', async () => {

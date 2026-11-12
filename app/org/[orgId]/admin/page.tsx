@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { LOGO_ACCEPTED_TYPES } from '@/lib/branding/logo-formats';
 import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { supportedLocales } from '@/lib/i18n/locales';
@@ -982,7 +983,7 @@ export default function OrgAdminPage() {
                   {uploadingLogo ? t('common.loading') : t('org.uploadLogo')}
                   <input
                     type="file"
-                    accept="image/png,image/jpeg,image/webp"
+                    accept={LOGO_ACCEPTED_TYPES.join(',')}
                     className="sr-only"
                     disabled={uploadingLogo}
                     onChange={(event) => void handleUploadLogo(event.target.files?.[0])}
