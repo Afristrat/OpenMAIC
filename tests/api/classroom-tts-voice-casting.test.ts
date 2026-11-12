@@ -215,6 +215,63 @@ describe('régénération TTS et casting persistant', () => {
     );
   });
 
+  it('relit la formation après la synthèse : une modification arrivée entre-temps est conservée', async () => {
+    const withTwoLines = (bText: string) => {
+      const saved = classroom();
+      saved.scenes[0].actions = [
+        { id: 'speech-1', type: 'speech', text: 'Bienvenue dans cette formation.' },
+        { id: 'speech-2', type: 'speech', text: bText },
+      ];
+      return saved;
+    };
+    mocks.readClassroom
+      .mockResolvedValueOnce(withTwoLines('b1'))
+      .mockResolvedValueOnce(withTwoLines('b2'));
+
+    const response = await regenerateOneSpeech(
+      new NextRequest('https://qalem.ma/api/classroom/classroom-1/tts', {
+        method: 'POST',
+        body: JSON.stringify({
+          sceneId: 'scene-1',
+          actionId: 'speech-1',
+          text: 'Bienvenue dans cette formation.',
+        }),
+      }),
+      { params: Promise.resolve({ classroomId: 'classroom-1' }) },
+    );
+
+    expect(response.status).toBe(200);
+    const persisted = mocks.persistClassroom.mock.calls[0]?.[0] as {
+      scenes: Array<{ actions: Array<{ id: string; text: string; audioUrl?: string }> }>;
+    };
+    expect(persisted.scenes[0].actions).toEqual([
+      expect.objectContaining({ id: 'speech-1', audioUrl: expect.any(String) }),
+      expect.objectContaining({ id: 'speech-2', text: 'b2' }),
+    ]);
+  });
+
+  it('n’écrit pas la voix si le texte de la ligne a changé pendant la synthèse', async () => {
+    const changed = classroom();
+    changed.scenes[0].actions[0].text = 'Texte corrigé pendant la synthèse.';
+    mocks.readClassroom.mockResolvedValueOnce(classroom()).mockResolvedValueOnce(changed);
+
+    const response = await regenerateOneSpeech(
+      new NextRequest('https://qalem.ma/api/classroom/classroom-1/tts', {
+        method: 'POST',
+        body: JSON.stringify({
+          sceneId: 'scene-1',
+          actionId: 'speech-1',
+          text: 'Bienvenue dans cette formation.',
+        }),
+      }),
+      { params: Promise.resolve({ classroomId: 'classroom-1' }) },
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ errorCode: 'SPEECH_TEXT_CHANGED' });
+    expect(mocks.persistClassroom).not.toHaveBeenCalled();
+  });
+
   it('conserve le même casting pour la régénération complète', async () => {
     const response = await regenerateClassroomSpeech(
       new NextRequest('https://qalem.ma/api/classroom/classroom-1/tts/regenerate', {

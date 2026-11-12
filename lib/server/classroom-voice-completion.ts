@@ -3,6 +3,7 @@ import { isSilentSpeech, summarizeSpeechAudio } from '@/lib/audio/speech-audio-r
 import { createLogger } from '@/lib/logger';
 import { generateTTSForClassroom } from '@/lib/server/classroom-media-generation';
 import { persistClassroom, readClassroom } from '@/lib/server/classroom-storage';
+import { mergeRegeneratedSpeech } from '@/lib/audio/merge-regenerated-speech';
 import type { Action } from '@/lib/types/action';
 import type { Scene } from '@/lib/types/stage';
 
@@ -36,6 +37,25 @@ export class VoiceCompletionError extends Error {
   }
 }
 
+function normalizeCastingOrThrow(
+  stage: Parameters<typeof normalizeClassroomCasting>[0],
+  scenes: Parameters<typeof normalizeClassroomCasting>[1],
+) {
+  let casting;
+  try {
+    casting = normalizeClassroomCasting(stage, scenes);
+  } catch (error) {
+    throw new VoiceCompletionError(
+      'INVALID_CASTING',
+      error instanceof ClassroomCastingError ? error.message : 'Le casting vocal est invalide.',
+    );
+  }
+  if (!casting) {
+    throw new VoiceCompletionError('NO_CASTING', 'Cette classroom ne possède aucun casting vocal.');
+  }
+  return casting;
+}
+
 /**
  * Generates only the voices a persisted course is missing, one line at a time so that a failing
  * line never costs the others, and persists what succeeded. Lines that stay silent are reported.
@@ -56,18 +76,7 @@ export async function completeMissingSpeechAudio(input: {
   const classroom = await readClassroom(input.classroomId);
   if (!classroom) throw new VoiceCompletionError('NOT_FOUND', 'Classroom introuvable');
 
-  let casting;
-  try {
-    casting = normalizeClassroomCasting(classroom.stage, classroom.scenes);
-  } catch (error) {
-    throw new VoiceCompletionError(
-      'INVALID_CASTING',
-      error instanceof ClassroomCastingError ? error.message : 'Le casting vocal est invalide.',
-    );
-  }
-  if (!casting) {
-    throw new VoiceCompletionError('NO_CASTING', 'Cette classroom ne possède aucun casting vocal.');
-  }
+  const casting = normalizeCastingOrThrow(classroom.stage, classroom.scenes);
 
   const report: VoiceCompletionReport = {
     requested: 0,
@@ -75,19 +84,15 @@ export async function completeMissingSpeechAudio(input: {
     failed: [],
     updatedScenes: [],
   };
-  const scenes: Scene[] = [];
   if (input.sceneId && !casting.scenes.some((scene) => scene.id === input.sceneId)) {
     throw new VoiceCompletionError('NOT_FOUND', 'Scène introuvable');
   }
+  /** Voix produites, par scène : ligne d'origine, texte synthétisé et morceaux obtenus. */
+  const voiced = new Map<string, Array<{ id: string; text: string; produced: Action[] }>>();
   for (const scene of casting.scenes) {
-    const actions: Action[] = [];
-    const generatedBefore = report.generated;
-    const selected = !input.sceneId || scene.id === input.sceneId;
+    if (input.sceneId && scene.id !== input.sceneId) continue;
     for (const action of scene.actions ?? []) {
-      if (!selected || !isSilentSpeech(action)) {
-        actions.push(action);
-        continue;
-      }
+      if (!isSilentSpeech(action) || action.type !== 'speech') continue;
       report.requested += 1;
       // The generator splits long lines and writes the audio on the scene it receives.
       const single: Scene = { ...scene, actions: [{ ...action }] };
@@ -110,10 +115,11 @@ export async function completeMissingSpeechAudio(input: {
       }
       const produced = single.actions ?? [];
       if (produced.length > 0 && !produced.some(isSilentSpeech)) {
-        actions.push(...produced);
+        const lines = voiced.get(scene.id) ?? [];
+        lines.push({ id: action.id, text: action.text, produced });
+        voiced.set(scene.id, lines);
         report.generated += 1;
       } else {
-        actions.push(action);
         report.failed.push({ sceneId: scene.id, actionId: action.id });
       }
       input.onProgress?.({
@@ -122,22 +128,54 @@ export async function completeMissingSpeechAudio(input: {
         failed: [...report.failed],
       });
     }
-    scenes.push({ ...scene, actions });
-    if (report.generated > generatedBefore) report.updatedScenes.push({ id: scene.id, actions });
   }
 
+  let scenes: Scene[] = casting.scenes;
   if (report.generated > 0) {
     await input.assertAccess();
-    await persistClassroom(
-      {
-        id: input.classroomId,
-        stage: casting.stage,
-        scenes,
-        ownerId: input.ownerId,
-        orgId: input.orgId,
-      },
-      input.baseUrl,
-    );
+    // La complétion dure des minutes : l'éditeur a pu enregistrer d'autres modifications entre-temps.
+    // On relit la formation et on n'y insère que les voix dont le texte enregistré n'a pas changé ;
+    // une ligne réécrite pendant la synthèse reste muette et le rapport le dit.
+    const fresh = await readClassroom(input.classroomId);
+    if (!fresh) throw new VoiceCompletionError('NOT_FOUND', 'Classroom introuvable');
+    const freshCasting = normalizeCastingOrThrow(fresh.stage, fresh.scenes);
+    scenes = freshCasting.scenes.map((scene) => {
+      const lines = voiced.get(scene.id);
+      if (!lines) return scene;
+      let actions = scene.actions ?? [];
+      let applied = 0;
+      for (const line of lines) {
+        const merged = mergeRegeneratedSpeech(actions, line.produced, line.id, line.text);
+        if (merged) {
+          actions = merged;
+          applied += 1;
+        } else {
+          report.generated -= 1;
+          report.failed.push({ sceneId: scene.id, actionId: line.id });
+        }
+      }
+      if (applied === 0) return scene;
+      report.updatedScenes.push({ id: scene.id, actions });
+      return { ...scene, actions };
+    });
+    for (const [sceneId, lines] of voiced) {
+      // Scène supprimée pendant la synthèse : ses voix ne s'appliquent plus à rien.
+      if (freshCasting.scenes.some((scene) => scene.id === sceneId)) continue;
+      report.generated -= lines.length;
+      report.failed.push(...lines.map((line) => ({ sceneId, actionId: line.id })));
+    }
+    if (report.updatedScenes.length > 0) {
+      await persistClassroom(
+        {
+          id: input.classroomId,
+          stage: freshCasting.stage,
+          scenes,
+          ownerId: input.ownerId,
+          orgId: input.orgId,
+        },
+        input.baseUrl,
+      );
+    }
   }
   log.info(
     `Voice completion ${input.classroomId}: ${report.generated}/${report.requested} generated, ` +

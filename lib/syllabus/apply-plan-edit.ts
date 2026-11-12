@@ -1,4 +1,5 @@
 import { completeMissingVoices } from '@/lib/audio/complete-missing-voices';
+import { completedVoiceUpdates } from '@/lib/audio/merge-regenerated-speech';
 import { summarizeSpeechAudio } from '@/lib/audio/speech-audio-report';
 import { persistCurrentClassroomForExport } from '@/lib/export/persist-before-server-export';
 import { createLogger } from '@/lib/logger';
@@ -32,12 +33,15 @@ export async function savePlan(stageId: string, plan: ClassroomPlan): Promise<vo
 async function completeVoices(stageId: string): Promise<void> {
   if (summarizeSpeechAudio(useStageStore.getState().scenes).missing === 0) return;
   await persistCurrentClassroomForExport();
-  const result = await completeMissingVoices(
-    stageId,
+  const sent = useStageStore.getState().scenes;
+  const result = await completeMissingVoices(stageId, sent, () => undefined);
+  // Seules les lignes inchangées depuis l'envoi reçoivent leur voix : rien n'est écrasé.
+  const updates = completedVoiceUpdates(
+    sent,
+    result.updatedScenes,
     useStageStore.getState().scenes,
-    () => undefined,
   );
-  for (const updated of result.updatedScenes) {
+  for (const updated of updates) {
     useStageStore.getState().updateScene(updated.id, { actions: updated.actions });
   }
 }

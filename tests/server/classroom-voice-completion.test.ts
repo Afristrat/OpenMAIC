@@ -101,6 +101,33 @@ describe('completeMissingSpeechAudio', () => {
     expect(mocks.persistClassroom).toHaveBeenCalledTimes(1);
   });
 
+  test('relit la formation avant d’écrire : les modifications faites pendant la synthèse restent', async () => {
+    const edited = scenes();
+    // Pendant la synthèse : « b » est corrigée, « c » aussi (sa voix ne lui correspond plus).
+    (edited[0].actions?.[1] as Action & { text: string }).text = 'b corrigée';
+    (edited[0].actions?.[2] as Action & { text: string }).text = 'c corrigée';
+    mocks.readClassroom
+      .mockResolvedValueOnce({ stage: { id: 'room-1' }, scenes: scenes() })
+      .mockResolvedValueOnce({ stage: { id: 'room-1' }, scenes: edited });
+    mocks.generateTTS.mockImplementation(async (list: Scene[]) => {
+      const action = list[0].actions?.[0] as Action & { audioUrl?: string };
+      action.audioUrl = `/${action.id}.mp3`;
+      return { requested: 1, generated: 1 };
+    });
+
+    const report = await completeMissingSpeechAudio(input);
+
+    const persisted = mocks.persistClassroom.mock.calls[0][0] as { scenes: Scene[] };
+    const sc1 = persisted.scenes[0].actions as Array<Action & { text: string; audioUrl?: string }>;
+    expect(sc1.map((a) => [a.id, a.text, a.audioUrl])).toEqual([
+      ['a', 'Texte a', '/a.mp3'],
+      ['b', 'b corrigée', '/b.mp3'],
+      ['c', 'c corrigée', undefined],
+    ]);
+    expect(report.generated).toBe(2);
+    expect(report.failed).toEqual([{ sceneId: 'sc1', actionId: 'c' }]);
+  });
+
   test('limits the completion to one scene', async () => {
     mocks.generateTTS.mockImplementation(async (list: Scene[]) => {
       (list[0].actions?.[0] as Action & { audioUrl?: string }).audioUrl = '/x.mp3';
