@@ -11,10 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { LOGO_ACCEPTED_TYPES, LOGO_MAX_BYTES } from '@/lib/branding/logo-formats';
 import { useI18n } from '@/lib/hooks/use-i18n';
-
-const MAX_LOGO_BYTES = 2 * 1024 * 1024;
-const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
 /**
  * Lets an editor give one classroom its own logo (for example the client's),
@@ -39,7 +37,11 @@ export function ClassroomLogoDialog({
   const endpoint = `/api/classroom/${encodeURIComponent(classroomId)}/logo`;
 
   const upload = async (file: File) => {
-    if (!ACCEPTED_TYPES.includes(file.type) || file.size === 0 || file.size > MAX_LOGO_BYTES) {
+    if (
+      !(LOGO_ACCEPTED_TYPES as readonly string[]).includes(file.type) ||
+      file.size === 0 ||
+      file.size > LOGO_MAX_BYTES
+    ) {
       toast.error(t('classroom.logo.invalid'));
       return;
     }
@@ -100,7 +102,7 @@ export function ClassroomLogoDialog({
         <input
           ref={inputRef}
           type="file"
-          accept={ACCEPTED_TYPES.join(',')}
+          accept={LOGO_ACCEPTED_TYPES.join(',')}
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
