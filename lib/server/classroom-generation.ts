@@ -685,6 +685,7 @@ export async function generateClassroom(
     enforceOriginalIllustrations(
       outlinesResult.data.outlines,
       input.enableImageGeneration === true,
+      languageDirective,
     ),
   );
   log.info(
@@ -1201,7 +1202,7 @@ export async function generateClassroom(
           });
         },
         languageDirective,
-        { secondPass: true },
+        { secondPass: true, stripAgentNames: true },
       );
       const speechAudio = summarizeSpeechAudio(scenes);
       const ttsOutcome = evaluateTtsOutcome(ttsReport, speechAudio);
