@@ -3243,5 +3243,12 @@
   "syllabi.resumeLaunch": "Resume course launch",
   "syllabi.review": "Open syllabus",
   "syllabi.previous": "Previous",
-  "syllabi.next": "Next"
+  "syllabi.next": "Next",
+  "exports.courses": "My courses",
+  "exports.history": "Export history",
+  "exports.noCourses": "No saved courses.",
+  "exports.noVideo": "Video not prepared",
+  "exports.startingVideo": "Starting video…",
+  "exports.prepareVideo": "Prepare video",
+  "exports.loadingCourses": "Loading courses…"
 }

@@ -47,18 +47,25 @@ export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
   if (auth.response) return auth.response;
 
+  const page = Number(request.nextUrl.searchParams.get('page') ?? 0);
+  if (!Number.isSafeInteger(page) || page < 0 || page > 20_000) {
+    return apiError('INVALID_REQUEST', 400, 'Invalid export page');
+  }
+  const pageSize = 50;
+  const offset = page * pageSize;
   const { data, error } = await createServiceSupabaseClient()
     .from('export_jobs')
     .select('id, stage_id, format, status, scene_count, created_at, stages(name)')
     .eq('owner_id', auth.user.id)
     .order('created_at', { ascending: false })
-    .limit(50);
+    .order('id', { ascending: false })
+    .range(offset, offset + pageSize);
   if (error) {
     log.error('Failed to list export jobs', error.message);
     return apiError('INTERNAL_ERROR', 500, 'Échec de la lecture des exports');
   }
 
-  const exports = (data ?? []).map((row) => {
+  const exports = (data ?? []).slice(0, pageSize).map((row) => {
     const stage = row.stages as { name?: string } | { name?: string }[] | null;
     const courseName = Array.isArray(stage) ? stage[0]?.name : stage?.name;
     return {
@@ -71,7 +78,7 @@ export async function GET(request: NextRequest) {
       createdAt: row.created_at as string,
     };
   });
-  const response = apiSuccess({ exports });
+  const response = apiSuccess({ exports, hasMore: (data?.length ?? 0) > pageSize });
   response.headers.set('Cache-Control', 'private, no-store');
   return response;
 }

@@ -6,6 +6,7 @@ import { useI18n } from '@/lib/hooks/use-i18n';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useYoutube } from '@/lib/hooks/use-youtube';
 import { YoutubeConnectionCard } from '@/components/exports/youtube-connection-card';
+import { ExportCourses } from '@/components/exports/export-courses';
 import { YoutubePublish } from '@/components/exports/youtube-publish';
 import { cn } from '@/lib/utils';
 
@@ -37,19 +38,23 @@ export default function ExportsPage(): React.ReactElement {
   const [items, setItems] = useState<ExportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [exportPage, setExportPage] = useState(0);
+  const [moreExports, setMoreExports] = useState(false);
   const youtube = useYoutube(!authLoading);
 
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(false);
     try {
-      const response = await fetch('/api/export-jobs', { cache: 'no-store' });
+      const response = await fetch(`/api/export-jobs?page=${exportPage}`, { cache: 'no-store' });
       if (!response.ok) throw new Error(`Export list request failed: ${response.status}`);
       const body = (await response.json()) as {
         success?: boolean;
+        hasMore?: boolean;
         exports?: Array<Omit<ExportItem, 'status'> & { status: string }>;
       };
       if (!body.success || !Array.isArray(body.exports)) throw new Error('Invalid export list');
+      setMoreExports(body.hasMore === true);
       setItems(
         body.exports.flatMap((item) =>
           isExportStatus(item.status) ? [{ ...item, status: item.status }] : [],
@@ -61,7 +66,7 @@ export default function ExportsPage(): React.ReactElement {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [exportPage]);
 
   useEffect(() => {
     if (!authLoading) void load();
@@ -81,6 +86,8 @@ export default function ExportsPage(): React.ReactElement {
           <YoutubeConnectionCard state={youtube.state} onDisconnect={youtube.disconnect} />
         </Suspense>
 
+        {!authLoading && <ExportCourses youtube={youtube} onExportStarted={() => void load()} />}
+        <h2 className="mb-4 text-lg font-semibold">{t('exports.history')}</h2>
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="size-8 animate-spin rounded-full border-2 border-purple-300 border-t-purple-600" />
@@ -151,6 +158,20 @@ export default function ExportsPage(): React.ReactElement {
               </li>
             ))}
           </ul>
+        )}
+        {!loading && !loadError && (exportPage > 0 || moreExports) && (
+          <div className="mt-4 flex gap-4">
+            {exportPage > 0 && (
+              <button type="button" onClick={() => setExportPage(exportPage - 1)}>
+                {t('syllabi.previous')}
+              </button>
+            )}
+            {moreExports && (
+              <button type="button" onClick={() => setExportPage(exportPage + 1)}>
+                {t('syllabi.next')}
+              </button>
+            )}
+          </div>
         )}
       </main>
     </div>

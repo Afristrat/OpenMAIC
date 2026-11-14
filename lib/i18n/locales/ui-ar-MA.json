@@ -3243,5 +3243,12 @@
   "syllabi.resumeLaunch": "استئناف إطلاق التكوين",
   "syllabi.review": "فتح المنهج",
   "syllabi.previous": "السابق",
-  "syllabi.next": "التالي"
+  "syllabi.next": "التالي",
+  "exports.courses": "تكويناتي",
+  "exports.history": "سجل عمليات التصدير",
+  "exports.noCourses": "لا توجد تكوينات محفوظة.",
+  "exports.noVideo": "الفيديو بانتظار الإعداد",
+  "exports.startingVideo": "جارٍ بدء إعداد الفيديو…",
+  "exports.prepareVideo": "إعداد الفيديو",
+  "exports.loadingCourses": "جارٍ تحميل التكوينات…"
 }

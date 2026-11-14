@@ -3243,5 +3243,12 @@
   "syllabi.resumeLaunch": "Reprendre le lancement",
   "syllabi.review": "Ouvrir le syllabus",
   "syllabi.previous": "Précédent",
-  "syllabi.next": "Suivant"
+  "syllabi.next": "Suivant",
+  "exports.courses": "Mes formations",
+  "exports.history": "Historique des exports",
+  "exports.noCourses": "Aucune formation enregistrée.",
+  "exports.noVideo": "Vidéo à préparer",
+  "exports.startingVideo": "Préparation en cours…",
+  "exports.prepareVideo": "Préparer la vidéo",
+  "exports.loadingCourses": "Chargement des formations…"
 }

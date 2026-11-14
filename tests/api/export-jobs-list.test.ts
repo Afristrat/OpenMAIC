@@ -24,7 +24,7 @@ vi.mock('@/lib/supabase/service', () => ({
           return chain;
         },
         order: () => chain,
-        limit: async () => mocks.rows(),
+        range: async () => mocks.rows(),
       };
       return chain;
     },
