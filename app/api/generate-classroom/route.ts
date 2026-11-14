@@ -1,4 +1,5 @@
 import { type NextRequest } from 'next/server';
+import { createHash } from 'node:crypto';
 import { nanoid } from 'nanoid';
 import { rejectIfInsufficientCredits } from '@/lib/server/credit-gate-response';
 import { apiError, apiSuccess } from '@/lib/server/api-response';
@@ -6,7 +7,12 @@ import { type GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import {
   createClassroomGenerationJob,
   markClassroomGenerationJobFailed,
+  readClassroomGenerationJob,
 } from '@/lib/server/classroom-job-store';
+import {
+  readClassroomPlanJob,
+  saveApprovedClassroomPlan,
+} from '@/lib/server/classroom-plan-job-store';
 import { buildRequestOrigin } from '@/lib/server/classroom-storage';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { validateBody } from '@/lib/api/validate';
@@ -122,9 +128,36 @@ export async function POST(req: NextRequest) {
       ...(parsed.competencyFramework ? { competencyFramework: parsed.competencyFramework } : {}),
     };
 
+    let jobId = nanoid(10);
+    if (parsed.planJobId && parsed.approvedPlan) {
+      const planJob = await readClassroomPlanJob(parsed.planJobId);
+      if (
+        !planJob ||
+        planJob.ownerId !== auth.user.id ||
+        planJob.orgId !== parsed.orgId ||
+        planJob.status !== 'succeeded'
+      ) {
+        return apiError('INVALID_REQUEST', 404, 'Classroom plan job not found');
+      }
+      let attempt = planJob.id;
+      for (;;) {
+        jobId = createHash('sha256').update(`course:${attempt}`).digest('hex').slice(0, 32);
+        const launch = await readClassroomGenerationJob(jobId);
+        if (!launch) break;
+        if (launch.status !== 'failed') return apiSuccess({ jobId, status: launch.status }, 202);
+        attempt = jobId;
+      }
+      await saveApprovedClassroomPlan(planJob.id, parsed.approvedPlan);
+    }
+
     const baseUrl = buildRequestOrigin(req);
-    const jobId = nanoid(10);
-    const job = await createClassroomGenerationJob(jobId, body, auth.user.id);
+    const planJobId = parsed.approvedPlan ? parsed.planJobId : undefined;
+    const job = await createClassroomGenerationJob(jobId, body, auth.user.id, planJobId);
+    if (!job) {
+      const existing = await readClassroomGenerationJob(jobId);
+      if (!existing) return apiError('INTERNAL_ERROR', 500, 'Missing classroom launch');
+      return apiSuccess({ jobId, status: existing.status }, 202);
+    }
     const pollUrl = `${baseUrl}/api/generate-classroom/${jobId}`;
 
     try {

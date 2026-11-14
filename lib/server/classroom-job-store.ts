@@ -22,6 +22,7 @@ export interface ClassroomGenerationJob {
   completedAt?: string;
   ownerId?: string;
   orgId?: string;
+  planJobId?: string;
   input?: GenerateClassroomInput;
   inputSummary: {
     requirementPreview: string;
@@ -56,7 +57,7 @@ function markStaleIfNeeded(
   lastHeartbeatAt: string,
 ): ClassroomGenerationJob {
   if (
-    job.status !== 'running' ||
+    !['running', 'queued'].includes(job.status) ||
     Date.now() - new Date(lastHeartbeatAt).getTime() <= STALE_JOB_TIMEOUT_MS
   )
     return job;
@@ -80,7 +81,8 @@ export async function createClassroomGenerationJob(
   jobId: string,
   input: GenerateClassroomInput,
   ownerId: string,
-): Promise<ClassroomGenerationJob> {
+  planJobId?: string,
+): Promise<ClassroomGenerationJob | null> {
   const now = new Date().toISOString();
   const durableInput = { ...input };
   delete durableInput.webSearchApiKey;
@@ -93,6 +95,7 @@ export async function createClassroomGenerationJob(
     createdAt: now,
     updatedAt: now,
     ownerId,
+    ...(planJobId ? { planJobId } : {}),
     orgId: input.orgId,
     input: durableInput,
     inputSummary: buildInputSummary(input),
@@ -105,6 +108,7 @@ export async function createClassroomGenerationJob(
     status: job.status,
     payload: job,
   });
+  if (error?.code === '23505' && planJobId) return null;
   if (error) throw new Error(`Failed to persist generation job: ${error.message}`);
   return job;
 }

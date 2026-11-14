@@ -23,6 +23,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ job
     if (!job) return apiError('INVALID_REQUEST', 404, 'Classroom plan job not found');
     const auth = await requireSuperAdminOrOrgAuthor(request, job.orgId);
     if (auth.response) return auth.response;
+    if (job.ownerId !== auth.user.id) {
+      return apiError('INVALID_REQUEST', 404, 'Classroom plan job not found');
+    }
 
     const done = job.status === 'succeeded' || job.status === 'failed';
     const { data: organization } = await createServiceSupabaseClient()

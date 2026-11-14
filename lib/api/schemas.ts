@@ -674,6 +674,10 @@ export const generateClassroomSchema = z
       .optional(),
     activeSkillId: z.string().min(1).max(120).optional(),
     approvedPlan: approvedClassroomPlanSchema.optional(),
+    planJobId: z
+      .string()
+      .regex(/^plan-[a-zA-Z0-9_-]+$/)
+      .optional(),
     /** Métier ESCO et compétences visées : exigés par les routes de plan et de création. */
     competencyFramework: competencyFrameworkSchema.optional(),
   })

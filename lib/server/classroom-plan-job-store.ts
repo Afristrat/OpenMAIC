@@ -19,6 +19,7 @@ export interface ClassroomPlanJob {
   orgId: string;
   input?: GenerateClassroomInput;
   result?: ClassroomPlan;
+  approvedAt?: string;
   error?: string;
   errorCode?: 'SOURCE_MATERIAL_CONFLICT';
   sourceAlignment?: SourceAlignmentVerdict;
@@ -108,6 +109,10 @@ async function updateClassroomPlanJob(
     .eq('id', jobId);
   if (error) throw new Error(`Failed to update classroom plan job: ${error.message}`);
   return updated;
+}
+
+export function saveApprovedClassroomPlan(jobId: string, result: ClassroomPlan) {
+  return updateClassroomPlanJob(jobId, { result, approvedAt: new Date().toISOString() });
 }
 
 export function markClassroomPlanJobRunning(jobId: string): Promise<ClassroomPlanJob> {

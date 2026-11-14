@@ -1,4 +1,7 @@
 import { type NextRequest } from 'next/server';
+import { z } from 'zod';
+import { describeGenerationFailure } from '@/lib/generation/generation-tracking';
+import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { nanoid } from 'nanoid';
 import { requireSuperAdminOrOrgAuthor } from '@/lib/api/auth';
 import { generateClassroomSchema } from '@/lib/api/schemas';
@@ -8,6 +11,8 @@ import { apiError, apiSuccess } from '@/lib/server/api-response';
 import type { GenerateClassroomInput } from '@/lib/server/classroom-generation';
 import {
   createClassroomPlanJob,
+  readClassroomPlanJob,
+  type ClassroomPlanJob,
   markClassroomPlanJobFailed,
 } from '@/lib/server/classroom-plan-job-store';
 import { enqueueClassroomPlan } from '@/lib/jobs/queue';
@@ -21,12 +26,92 @@ import {
 
 export const maxDuration = 30;
 
+export async function GET(request: NextRequest) {
+  const orgId = z.string().uuid().safeParse(request.nextUrl.searchParams.get('orgId'));
+  if (!orgId.success) return apiError('INVALID_REQUEST', 400, 'Invalid organization');
+  const auth = await requireSuperAdminOrOrgAuthor(request, orgId.data);
+  if (auth.response) return auth.response;
+
+  const offset = Number(request.nextUrl.searchParams.get('offset') ?? 0);
+  if (!Number.isSafeInteger(offset) || offset < 0 || offset > 1_000_000) {
+    return apiError('INVALID_REQUEST', 400, 'Invalid offset');
+  }
+  const pageSize = 25;
+  const { data, error } = await createServiceSupabaseClient()
+    .from('classroom_generation_jobs')
+    .select(
+      'id,status,created_at,updated_at,title:payload->result->>courseTitle,requirement:payload->input->>requirement,error:payload->>error,approved:payload->>approvedAt',
+    )
+    .eq('owner_id', auth.user.id)
+    .eq('org_id', orgId.data)
+    .eq('payload->>kind', 'classroom-plan')
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .range(offset, offset + pageSize);
+  if (error) return apiError('INTERNAL_ERROR', 500, 'Failed to list classroom plans');
+
+  const plans = (data ?? []).slice(0, pageSize);
+  const { data: launches, error: launchError } = plans.length
+    ? await createServiceSupabaseClient()
+        .from('classroom_generation_jobs')
+        .select('id,status,updated_at,planId:payload->>planJobId')
+        .eq('owner_id', auth.user.id)
+        .eq('org_id', orgId.data)
+        .in(
+          'payload->>planJobId',
+          plans.map((plan) => plan.id),
+        )
+        .order('created_at', { ascending: false })
+    : { data: [], error: null };
+  if (launchError) return apiError('INTERNAL_ERROR', 500, 'Failed to list classroom launches');
+
+  return apiSuccess({
+    jobs: plans.map((plan) => {
+      const launch = launches?.find((candidate) => candidate.planId === plan.id);
+      const status = getPlanStatus(plan.status, plan.updated_at);
+      return {
+        id: plan.id,
+        title: plan.title || plan.requirement?.slice(0, 160),
+        createdAt: plan.created_at,
+        status,
+        approved: Boolean(plan.approved),
+        failure:
+          status === 'failed' ? describeGenerationFailure(plan.error ?? undefined) : undefined,
+        launch: launch
+          ? { id: launch.id, status: getPlanStatus(launch.status, launch.updated_at) }
+          : undefined,
+      };
+    }),
+    nextOffset: (data?.length ?? 0) > pageSize ? offset + pageSize : null,
+  });
+}
+
+function getPlanStatus(status: string, updatedAt: string) {
+  return ['queued', 'running'].includes(status) &&
+    Date.now() - new Date(updatedAt).getTime() > 30 * 60 * 1000
+    ? 'failed'
+    : status;
+}
+
 export async function POST(request: NextRequest) {
   let jobId: string | undefined;
   try {
+    const rawBody = await request.json().catch(() => null);
+    let previous: ClassroomPlanJob | null = null;
+    if (typeof rawBody?.retryJobId === 'string') {
+      const auth = await requireSuperAdminOrOrgAuthor(request, rawBody.orgId ?? '');
+      if (auth.response) return auth.response;
+      previous = await readClassroomPlanJob(rawBody.retryJobId);
+      if (!previous || previous.ownerId !== auth.user.id || previous.orgId !== rawBody.orgId) {
+        return apiError('INVALID_REQUEST', 404, 'Classroom plan job not found');
+      }
+      if (getPlanStatus(previous.status, previous.updatedAt) !== 'failed' || !previous.input) {
+        return apiError('INVALID_REQUEST', 409, 'Classroom plan cannot be retried');
+      }
+    }
     const validation = validateBody(
       generateClassroomSchema,
-      await request.json().catch(() => null),
+      previous ? { ...previous.input, modelString: rawBody.modelString } : rawBody,
     );
     if (!validation.success) return validation.response;
     const parsed = validation.data;

@@ -1,5 +1,6 @@
 'use client';
 
+import { MySyllabi } from '@/components/my-syllabi';
 import { DEFAULT_DESIGN_DIRECTIVE } from '@/lib/branding/design-directive';
 import type { BrandCharter } from '@/lib/branding/brand-charter';
 import {
@@ -1179,6 +1180,7 @@ function HomePage() {
         toast.error(insufficientCreditsMessage(null));
         return;
       }
+      const approvedPlanJobId = new URLSearchParams(window.location.search).get('planJobId');
       const response = await fetch('/api/generate-classroom', {
         method: 'POST',
         headers: {
@@ -1189,6 +1191,7 @@ function HomePage() {
           ...pendingGenerationRequest,
           ...(framework ? { competencyFramework: framework } : {}),
           approvedPlan: draftPlan,
+          ...(approvedPlanJobId ? { planJobId: approvedPlanJobId } : {}),
         }),
       });
       const result = await response.json();
@@ -1210,7 +1213,6 @@ function HomePage() {
         const cleared = await clearCurrentSourceSelection();
         if (!cleared) toast.error(t('sources.clearAfterGenerationFailed'));
       }
-      const approvedPlanJobId = new URLSearchParams(window.location.search).get('planJobId');
       clearPlanJobLocation();
       const statusParams = new URLSearchParams({ jobId: result.jobId });
       if (approvedPlanJobId) statusParams.set('planJobId', approvedPlanJobId);
@@ -1353,6 +1355,13 @@ function HomePage() {
 
   return (
     <div className="min-h-[100dvh] w-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center p-4 pt-16 md:p-8 md:pt-16 overflow-x-hidden">
+      {currentOrg && canAuthor && (
+        <MySyllabi
+          key={currentOrg.id}
+          orgId={currentOrg.id}
+          modelString={`${languageProviderId}:${languageModelId}`}
+        />
+      )}
       <SourceConflictDialog
         conflict={sourceConflict}
         onReview={() => setSourceConflict(null)}
@@ -1420,6 +1429,7 @@ function HomePage() {
                 setDraftPlan(null);
                 setPendingGenerationRequest(null);
                 setResumePlanRecovered(false);
+                clearPlanJobLocation();
               }}
               alwaysReview
               isLoading={isStartingGeneration}
